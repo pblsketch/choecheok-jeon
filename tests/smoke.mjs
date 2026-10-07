@@ -206,7 +206,7 @@ async function hudClear(page) {
   ok(await page.evaluate(() => { const im = document.querySelector('.om-img'); return im.complete && im.naturalWidth > 0; }), '고지도 그림이 뜬다');
   ok((await page.locator('.om-tray .opt').count()) === 2 && (await page.textContent('.om-tray')).includes('연안길') && (await page.textContent('.om-tray')).includes('바다길'), '2막 뱃길: 연안길 / 바다길');
   await page.click('.om-tray .opt:has-text("바다길")');
-  await page.waitForFunction(() => window.__route === 'open');
+  await page.waitForFunction(() => window.__route === 'sea');
   ok(await page.evaluate(() => G.oldmap.state().at === 'suncheon'), '바다길을 고르면 배가 순천에 닿는다');
   await page.evaluate(() => { G.oldmap.fast = false; });
 
