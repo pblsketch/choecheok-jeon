@@ -1,0 +1,13 @@
+{
+  "name": "두 개의 항로 — 최척전",
+  "short_name": "두 개의 항로",
+  "description": "「최척전」의 옥영이 되어 바다를 두 번 건너는 고전문학 학습 게임",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#efe2c3",
+  "theme_color": "#efe2c3",
+  "lang": "ko",
+  "icons": []
+}

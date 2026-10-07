@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>두 개의 항로 — 최척전</title>
+  <meta name="description" content="학생이 옥영이 되어 정유재란으로 흩어진 가족을 찾아 조선·일본·중국·안남의 바다를 두 번 건너는, 조위한 「최척전」 바탕의 고등학생용 고전문학 학습 게임">
+  <meta name="author" content="박준일(온양여자고등학교 국어 교사)">
+  <meta name="theme-color" content="#efe2c3">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="두 개의 항로">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="두 개의 항로 — 최척전">
+  <meta property="og:description" content="흩어진 가족을 찾아, 바다를 두 번 건너다. 「최척전」의 옥영이 되어 보는 학습 게임">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23efe2c3'/%3E%3Cpath d='M5 20h22l-4 6H9z' fill='%236e4726'/%3E%3Cpath d='M15 5v14h10z' fill='%23b3342a'/%3E%3C/svg%3E">
+  <script>
+    // 웹 주소로 열었을 때만 앱 설치 정보를 붙인다(파일로 열면 브라우저가 읽지 못해 오류를 낸다)
+    if (/^https?:$/.test(location.protocol)) { var l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.appendChild(l); }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/poem.css">
+  <link rel="stylesheet" href="css/sea.css">
+  <link rel="stylesheet" href="css/notebook.css">
+  <link rel="stylesheet" href="css/result.css">
+</head>
+<body>
+  <div id="app"><p style="padding:24px">불러오는 중…</p></div>
+  <noscript><p style="padding:24px">이 게임은 자바스크립트가 필요해요.</p></noscript>
+
+  <!-- 엔진 -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/save.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/ui.js"></script>
+  <script src="js/core/hud.js"></script>
+  <script src="js/core/oldmap.js"></script>
+  <script src="js/game/steps.js"></script>
+  <script src="js/game/tiles.js"></script>
+  <script src="js/game/world.js"></script>
+  <script src="js/game/app.js"></script>
+  <!-- 데이터(선생님이 고쳐도 되는 파일) -->
+  <script src="js/data/flow.js"></script>
+  <script src="js/data/people.js"></script>
+  <script src="js/data/sprites.js"></script>
+  <script src="js/data/bgm.js"></script>
+  <script src="js/data/texts.js"></script>
+  <script src="js/data/poem.js"></script>
+  <script src="js/data/history.js"></script>
+  <script src="js/data/original.js"></script>
+  <script src="js/data/kimyc.js"></script>
+  <script src="js/data/notes.js"></script>
+  <script src="js/data/credits.js"></script>
+  <!-- 거점 -->
+  <script src="js/data/places/prologue.js"></script>
+  <script src="js/data/places/namwon.js"></script>
+  <script src="js/data/places/nanggoya.js"></script>
+  <script src="js/data/places/annam.js"></script>
+  <script src="js/data/places/interlude.js"></script>
+  <script src="js/data/places/hangzhou.js"></script>
+  <script src="js/data/places/sea.js"></script>
+  <script src="js/data/places/namwon_final.js"></script>
+  <!-- 시작 -->
+  <script src="js/main.js"></script>
+</body>
+</html>
