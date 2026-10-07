@@ -542,3 +542,67 @@ html.teacher .teacher-only { display: inline-flex !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* rules — 게임 규칙 단계(js/game/steps.js의 dilemma·gauge·know·frag·dream·card, T6)
+   원작 대조·역사 카드(.rcard), 표기 체계 칩(.rchip: 원문·풀이·게임 설정·이본 노트·해석), 잠긴 지혜의 길(.opt.locked),
+   장육불 꿈·떠올리는 글(.rdream). 한지 판 위에 얹는 그림책풍(먹빛 테두리 + 황토 안쪽 선 + 등불빛) */
+.card .seal-mark.corner { position: absolute; top: .6rem; right: .75rem; }
+.rcard { margin-top: .7rem; padding: .85rem 1.2rem .8rem; border: 2px solid var(--line); border-left-width: 6px; border-radius: 1rem; box-shadow: var(--frame), 0 3px 0 rgba(47, 40, 64, .35); animation: up .3s ease-out; }
+.rcard h3 { font-size: 1.12em; }
+.rcard .kind { letter-spacing: .1em; }
+.rchip { display: inline-block; flex: none; font-size: .68em; font-weight: 700; line-height: 1.55; padding: 0 .55em; margin-right: .5em; border-radius: .35rem; color: #fff8ec; background: var(--mk, var(--ink-2)); letter-spacing: .04em; vertical-align: .14em; white-space: nowrap; box-shadow: 0 1.5px 0 rgba(47, 40, 64, .35); }
+.rc-ask { font-weight: 700; color: var(--fiction); }
+.rc-sum { color: var(--ink); }
+.rquote { margin: .55rem 0 .25rem; padding: .5rem .85rem .55rem; border-radius: .75rem; background: rgba(255, 250, 240, .78); border: 1.5px dashed rgba(47, 40, 64, .28); }
+.rq-row { display: flex; align-items: baseline; gap: .15rem; }
+.rq-row p { margin: .12em 0; }
+.rquote .han { font-family: var(--serif); font-size: 1.14em; letter-spacing: .08em; color: var(--ink); }
+.rquote .ko { color: var(--ink-2); }
+.rc-note { display: flex; align-items: baseline; gap: .15rem; margin-top: .45rem; font-size: .93em; color: var(--ink-2); }
+.rc-note p { margin: 0; }
+.rc-cmp { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: .65rem 0 0; padding-top: .55rem; border-top: 1.5px dashed rgba(185, 138, 69, .55); font-size: .92em; }
+.rc-cmp dt { font-weight: 700; color: var(--ink-3); }
+.rc-cmp dd { margin: 0; font-weight: 700; color: var(--ink); }
+.rcard.orig .rc-cmp dd:last-of-type { color: var(--seal); }
+.rc-saved { margin: .5rem 0 0; font-size: .74em; color: var(--ink-3); text-align: right; }
+.rc-saved::before { content: ''; display: inline-block; width: .42em; height: .42em; margin-right: .45em; background: var(--lantern); transform: rotate(45deg); vertical-align: .12em; }
+/* 선택지: 지혜의 길 표시와 잠긴 모습 */
+.opt .opath { position: absolute; top: -.62rem; right: .8rem; font-size: .66rem; font-weight: 700; line-height: 1.5; padding: 0 .6em; border-radius: 999px; color: var(--lantern-hi); background: var(--night-2); border: 1.5px solid var(--line); }
+.opt.locked { border-style: dashed; box-shadow: none; background: repeating-linear-gradient(135deg, rgba(47, 40, 64, .05) 0 7px, transparent 7px 14px), linear-gradient(180deg, #f5eedf, #e9dec4); }
+.opt.locked .ot { color: var(--ink-3); }
+.opt.locked::before { background: var(--ink-3); }
+.opt.locked .opath { color: var(--hanji-2, #e8d9b6); background: var(--ink-3); }
+.opt .od.lock { display: flex; align-items: center; gap: .2em; }
+.opt .od.lock i { display: inline-flex; width: 1.05em; height: 1.05em; flex: none; }
+.opt .od.lock i svg { width: 100%; height: 100%; }
+/* 장육불 꿈(금빛) · 떠올리는 글(옅은 한지) */
+.rdream { position: relative; margin: .6rem auto .3rem; max-width: 40rem; padding: .9rem 1.4rem 1rem; text-align: center; border-radius: 1.1rem; border: 2px solid var(--line); background: radial-gradient(120% 95% at 50% 0%, #fff6dc, #f6e3b4 58%, #ebcf94); box-shadow: var(--frame), 0 0 0 6px rgba(255, 216, 138, .28), 0 0 42px rgba(242, 165, 65, .4); animation: up .45s ease-out; }
+.rdream h3 { margin: .05em 0 .25em; font-family: var(--brush); font-weight: 400; font-size: 1.9rem; line-height: 1.15; color: var(--lantern-dk); }
+.rdream p { margin: .35em 0; }
+.rdream .rd-zero { font-weight: 700; color: var(--seal); font-size: .9em; letter-spacing: .02em; }
+.rdream .rquote { display: inline-block; text-align: left; background: rgba(255, 252, 244, .85); border-color: rgba(201, 120, 31, .45); }
+.rdream .rd-after { color: var(--ink-2); font-size: .92em; }
+.rdream.recall { background: linear-gradient(180deg, #f6efe0, #eadfc6); box-shadow: var(--frame), 0 3px 0 rgba(47, 40, 64, .3); }
+.dream-sheet .rdream { margin: 0 0 .4rem; }
+.gettoast.know .gt-ic { color: var(--history); }
+/* 카드·꿈 한 장 모습(사건 화면 가운데): 거점 첫 장(.cardmode)보다 조금 넓게, 화면 높이만큼 */
+.event.rcardmode .ev-box { width: min(44rem, 92%); background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.event.rcardmode .ev-scroll { max-height: none; padding: .4rem .3rem .2rem; }
+.event.rcardmode .ev-main > .rcard, .event.rcardmode .ev-main > .rdream { margin: 0; box-shadow: var(--frame), var(--lift); animation: none; }
+.event.rcardmode .ev-box { animation: up .3s ease-out; }
+/* 휴대폰 가로(낮은 화면): 카드를 촘촘하게 */
+@media (max-height: 500px) {
+  .rcard { padding: .55rem 1rem .5rem; }
+  .rcard h3 { margin-bottom: .15em; }
+  .rquote { margin: .35rem 0 .15rem; padding: .3rem .7rem .35rem; }
+  .rc-cmp { margin-top: .4rem; padding-top: .35rem; }
+  .rc-saved { margin-top: .2rem; }
+  .rdream { padding: .5rem 1rem .55rem; }
+  .rdream h3 { font-size: 1.45rem; }
+  .rdream p { margin: .2em 0; }
+  .event.rcardmode .ev-tray { padding-top: .35rem; }
+  .event.rcardmode .ev-tray .btn { min-height: 2.6rem; }
+}
+.event.rcardmode .ev-main > .rcard.note { background: var(--hanji); }
+.rcard::after, .rdream::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--paper-img) 0 0 / 360px; mix-blend-mode: multiply; opacity: .13; pointer-events: none; }
+.event.rcardmode .ev-tray { padding: .5rem .3rem 0; }
