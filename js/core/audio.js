@@ -1,6 +1,8 @@
 'use strict';
 // 소리: 배경음은 파일 목록(js/data/bgm.js의 BGM.tracks)에 있으면 그 파일을 먼저 틀고,
-//  파일이 없거나 읽지 못하면 브라우저 합성음으로 튼다. 효과음은 모두 합성한다.
+//  파일이 없거나 읽지 못하면 브라우저 합성음(BGM.tracks.이름.synth)으로 튼다. 효과음은 모두 합성한다.
+// 퉁소 층(G.audio.tongso): 안남 장면의 퉁소 소리. 또렷함(clarity)에 따라 크기·저역 필터·메아리가 바뀐다.
+//  실제 연주 파일(BGM.tongso)이 없거나 못 읽으면 합성 퉁소음을 같은 방법으로 튼다(아래 '퉁소 층' 참고).
 // 합성 엔진(가야금 Karplus-Strong·대금·해금·장구·징·잔향)은 같은 만든이의 「영웅의 길」에서 그대로 가져왔다.
 //  - 곡(TRACKS)은 영웅의 길에서 이 게임의 분위기에 맞는 몇 곡만 남기고 이름을 바꿨다(소리 작업에서 더 짓는다).
 //  - 새 곡 더하기: G.audio.TRACKS.이름 = { mode, tonic, unit, bar, lead:{inst, mel}, … } (아래 표기 참고)
@@ -456,13 +458,16 @@
       d.busy = false;
     });
   }
+  // 장면 id → 합성 곡 이름(파일이 없거나 못 읽을 때 대신 틀 곡). 같은 이름의 합성 곡이 있으면 그것, 아니면 BGM.tracks.이름.synth
+  const synthOf = (name) => (TRACKS[name] ? name : (bgmFile(name) && TRACKS[bgmFile(name).synth] ? bgmFile(name).synth : null));
   function startTrack(name) {
     stopTrack(true);
     if (bgmFile(name) && !failed[name] && !A.synthOnly) return startFile(name);
-    if (!TRACKS[name]) return;
-    const tr = trackOf(name);
+    const sn = synthOf(name);
+    if (!sn) return;
+    const tr = trackOf(sn);
     const bus = ctx.createGain(); bus.gain.value = 0.0001; bus.connect(musicBus);
-    bus.gain.exponentialRampToValueAtTime(TRACKS[name].gain || 1, ctx.currentTime + 1.2);
+    bus.gain.exponentialRampToValueAtTime(TRACKS[sn].gain || 1, ctx.currentTime + 1.2);
     cur = { name, bus, notes: tr.notes, length: tr.length, idx: 0, loopStart: ctx.currentTime + 0.15 };
     const me = cur;
     const tick = () => {
@@ -495,7 +500,7 @@
   // 지금 들려야 할 곡을 맞춘다(배경음을 끄면 예약도 멈춘다)
   function sync() {
     if (!ctx) return;
-    const want = S().music && A.track && (TRACKS[A.track] || bgmFile(A.track)) ? A.track : null;
+    const want = S().music && A.track && (synthOf(A.track) || (bgmFile(A.track) && !failed[A.track])) ? A.track : null;
     if (!want) { if (cur) stopTrack(false); return; }
     if (!cur || cur.name !== want) startTrack(want);
   }
@@ -524,6 +529,8 @@
   };
   // 점검용: 지금 파일 배경음을 틀면 그 상태, 합성음이거나 멈췄으면 null
   A.nowFile = () => (cur && cur.d ? { name: cur.name, src: cur.d.el.currentSrc, paused: cur.d.el.paused, t: cur.d.el.currentTime, graph: !!cur.d.bus } : null);
+  // 점검용: 지금 합성 곡을 틀면 { name: 장면 id, synth: 합성 곡 이름 }
+  A.nowSynth = () => (cur && !cur.file ? { name: cur.name, synth: synthOf(cur.name) } : null);
   A.synthOnly = false; // 점검용: true면 파일 없이 합성음만
 
   // ───────── 효과음(가야금·장구·종이 소리)
@@ -559,12 +566,191 @@
     grow: () => { [72, 76, 79, 84].forEach((m, i) => pl(m, i * 0.06, 0.6, 0.5)); },                                                  // 게이지가 오름
     drop: () => { pl(64, 0, 0.5, 0.4, '>'); pl(60, 0.14, 0.45, 0.6, '>'); },                                                      // 게이지가 내림
     dream: () => { hit(ctx.currentTime, 'jing', 0.6, sfxBus); [79, 84, 88, 91, 96].forEach((m, i) => pl(m, 0.15 + i * 0.09, 0.5, 0.9, '~')); }, // 꿈·신이한 일
+    wave: () => swell(2.6, 0.16, [320, 1100, 260], 'lowpass', 0.8),                                    // 물결: 밀려왔다 빠지는 파도
+    wind: () => swell(3.2, 0.09, [500, 1500, 700], 'bandpass', 2.2),                                   // 바람: 휘익 지나가는 바닷바람
+    fire: () => { swell(1.8, 0.07, [260, 200, 160], 'lowpass', 0.7); for (let i = 0; i < 9; i++) hiss(0.015 + Math.random() * 0.03, 0.05 + Math.random() * 0.1, 2400 + Math.random() * 2400, 1200, 'bandpass', Math.random() * 1.6, 2); }, // 모닥불: 낮게 타는 소리와 탁탁 튀는 소리
   };
+  SFX.gaugeUp = SFX.grow; SFX.gaugeDown = SFX.drop; // 게이지 오름·내림(같은 소리의 다른 이름)
+  // 천천히 커졌다 작아지는 걸러진 잡음(f = [시작, 가운데, 끝] 주파수) — 물결·바람·불
+  function swell(dur, vol, f, type, q) {
+    const t = ctx.currentTime;
+    const n = noise(), b = filt(type, f[0], q), g = ctx.createGain();
+    n.loop = true;
+    b.frequency.setValueAtTime(f[0], t); b.frequency.exponentialRampToValueAtTime(f[1], t + dur * 0.45); b.frequency.exponentialRampToValueAtTime(f[2], t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    n.connect(b); b.connect(g); send(g, sfxBus, 0.2); n.start(t, Math.random() * 1.5); n.stop(t + dur + 0.05);
+  }
   for (const k of Object.keys(SFX)) A[k] = () => { if (!sfxOn()) return; try { SFX[k](); } catch (e) { /* 무시 */ } };
   // 다른 파일이 효과음을 더한다: fn(ctx, kit) — kit = { tone, hiss, pl, hit, gayageum, daegeum, haegeum, sfxBus }
   A.addSfx = function (name, fn) {
     A[name] = () => { if (!sfxOn()) return; try { fn(ctx, { tone, hiss, pl, hit: (t, k, v) => hit(t, k, v, sfxBus), gayageum, daegeum, haegeum, sfxBus }); } catch (e) { /* 무시 */ } };
   };
+
+  // ───────── 퉁소 층(안남 밤 포구)
+  //  G.audio.tongso.play({ clarity: 0~1, pan: -1~1 })  울리기(이미 울리면 set과 같다). 소리를 껐으면 아무 일도 없이 false
+  //  G.audio.tongso.set({ clarity, pan })               또렷함·방향을 부드럽게 바꾼다(약 0.25초 시간 상수)
+  //  G.audio.tongso.stop()                              서서히 멎는다
+  //  .playing(지금 울리는가) · .level()(지금 소리 크기 0~1, 물결 굵기용) · .clarity · .pan(마지막으로 받은 값, 소리를 꺼도 남는다)
+  //  .source('file'|'synth'|null) · .instrument(파일 악기 이름 '퉁소'·'단소'…, 합성음이면 null)
+  //  또렷함 c: 크기 0.05+0.95·c^1.6, 저역 필터 500Hz·24^c(500Hz~12kHz), 메아리·잔향은 멀수록(c가 작을수록) 크다.
+  //  파일: 웹(http/https)에서는 mp3를 fetch로 받아 풀고, file://에서는 같은 소리를 base64로 담은 js(BGM.tongso.js)를 불러 푼다.
+  //  둘 다 안 되면(파일이 없거나 못 읽음) 합성 퉁소음(계면조 가락, 숨소리·청 울림)을 같은 길로 튼다.
+  const TONGSO_VOL = 0.9;
+  const TG = { clarity: 0.5, pan: 0, source: null };
+  let tg = null;                                        // 지금 울리는 퉁소 길(노드 묶음)
+  let tgBuf = null, tgLoad = null, tgBad = false, tgLv = 0, tgArr = null;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const soundOn = () => { try { return !!S().sound; } catch (e) { return false; } };
+  const tgSpec = () => (window.BGM && window.BGM.tongso && !A.tongsoSynthOnly ? window.BGM.tongso : null);
+  function b64ToArray(b64) { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; }
+  function tgLoadBuffer() {
+    if (tgBuf) return Promise.resolve(tgBuf);
+    const spec = tgSpec();
+    if (tgBad || !spec || !ctx) return Promise.resolve(null);
+    if (tgLoad) return tgLoad;
+    const viaScript = () => new Promise((res, rej) => {
+      const got = () => (window.TONGSO_DATA && window.TONGSO_DATA.b64 ? res(b64ToArray(window.TONGSO_DATA.b64)) : rej(new Error('퉁소 자료가 비었음')));
+      if (window.TONGSO_DATA && window.TONGSO_DATA.b64) return got();
+      if (!spec.js) return rej(new Error('퉁소 js 없음'));
+      const el = document.createElement('script');
+      el.src = spec.js; el.onload = got; el.onerror = () => rej(new Error('퉁소 js를 못 읽음'));
+      document.head.appendChild(el);
+    });
+    const viaFetch = () => fetch(spec.src).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.arrayBuffer(); });
+    const decode = (ab) => new Promise((res, rej) => { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    const get = viaGraph && spec.src ? viaFetch().catch(viaScript) : viaScript();
+    tgLoad = get.then(decode).then((b) => { tgLoad = null; return (tgBuf = b); }, () => { tgLoad = null; tgBad = true; return null; });
+    return tgLoad;
+  }
+  function tgChain() {
+    const input = ctx.createGain();
+    const lp = filt('lowpass', 2000, 0.7);
+    const vol = ctx.createGain(); vol.gain.value = 0.3;     // 또렷함에 따른 크기
+    const amp = ctx.createGain(); amp.gain.value = 0.0001;  // 들어오고 나가는 크기
+    const an = ctx.createAnalyser(); an.fftSize = 1024;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    const out = gainNode(TONGSO_VOL); out.connect(comp);
+    const dest = pan || out; if (pan) pan.connect(out);
+    input.connect(lp); lp.connect(vol); vol.connect(amp); amp.connect(an); amp.connect(dest);
+    // 멀리서 울리는 메아리(물 위로 되돌아오는 소리)
+    const echo = gainNode(0), dl = ctx.createDelay(1), fb = gainNode(0.32), elp = filt('lowpass', 2200);
+    dl.delayTime.value = 0.34;
+    amp.connect(echo); echo.connect(dl); dl.connect(elp); elp.connect(fb); fb.connect(dl); elp.connect(dest);
+    const rev = gainNode(0); amp.connect(rev); rev.connect(revIn);
+    return { input, lp, vol, amp, an, pan, out, echo, rev, src: null, sched: null, timer: null, watch: null };
+  }
+  function tgApply(t, fast) {
+    const c = TG.clarity, now = ctx.currentTime, tc = fast ? 0.01 : 0.25;
+    const ramp = (p, v) => { p.cancelScheduledValues(now); p.setValueAtTime(p.value, now); p.setTargetAtTime(v, now, tc); };
+    ramp(t.vol.gain, 0.05 + 0.95 * Math.pow(c, 1.6));
+    ramp(t.lp.frequency, 500 * Math.pow(24, c));
+    ramp(t.echo.gain, 0.42 * (1 - c));
+    ramp(t.rev.gain, 0.12 + 0.5 * (1 - c));
+    if (t.pan) ramp(t.pan.pan, TG.pan);
+  }
+  // 합성 퉁소음: 대금 소리에 낮은 숨소리와 청(얇은 막)이 떠는 소리를 더한다
+  function tongsoVoice(t, midi, dur, vel, orn, out, prev) {
+    daegeum(t, midi, dur, vel, orn, out, prev, 0);
+    const f = mtof(midi);
+    const n = noise(), bp = filt('bandpass', f * 2.2, 1.2), ng = ctx.createGain(); // 굵은 숨소리
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.05 * vel, t + 0.12);
+    ng.gain.setValueAtTime(0.05 * vel, t + Math.max(0.13, dur - 0.05)); ng.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.15);
+    n.connect(bp); bp.connect(ng); ng.connect(out); n.start(t, Math.random() * 1.5); n.stop(t + dur + 0.2);
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(prev ? mtof(prev) : f, t); o.frequency.linearRampToValueAtTime(f, t + 0.07);
+    const cb = filt('bandpass', 2600, 2.5), cg = ctx.createGain(); // 청 울림
+    cg.gain.setValueAtTime(0.0001, t); cg.gain.exponentialRampToValueAtTime(0.018 * vel, t + 0.1);
+    cg.gain.setValueAtTime(0.018 * vel, t + Math.max(0.11, dur - 0.05)); cg.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.12);
+    o.connect(cb); cb.connect(cg); cg.connect(out); o.start(t); o.stop(t + dur + 0.15);
+  }
+  // 합성 퉁소 가락(계면조, 느린 진양조 느낌의 자유 가락). 한 바퀴 뒤 2초 쉰다
+  const TONGSO_SYN = { mode: 'gyemyeon', tonic: 64, unit: 60 / 70,
+    mel: '1:6 5v:3 1:3 | 2:9~ 1:3> | 3:6 2:3 1:3 | 5v:12~ | 1:3 2:3 3:3 4:3 | 5:9~ 4:3> | 3:3 2:3 1:3 2:3 | 1:12~' };
+  function tgSynth(t) {
+    TG.source = 'synth';
+    const P = parse(TONGSO_SYN.mel, TONGSO_SYN.mode, TONGSO_SYN.tonic), u = TONGSO_SYN.unit;
+    let pe = -1, pm = null;
+    const notes = P.notes.map((n) => { const r = { ...n, prev: Math.abs(n.pos - pe) < 0.01 ? pm : null }; pe = n.pos + n.dur; pm = n.midi; return r; });
+    const len = P.len * u + 2;
+    let idx = 0, start = ctx.currentTime + 0.1;
+    const tick = () => {
+      if (tg !== t) return;
+      const ahead = ctx.currentTime + 0.3;
+      for (let guard = 0; guard < 100; guard++) {
+        const n = notes[idx], at = start + n.pos * u;
+        if (at > ahead) break;
+        if (at >= ctx.currentTime - 0.05) { try { tongsoVoice(at, n.midi, n.dur * u * 0.97, 0.9, n.orn, t.input, n.prev); } catch (e) { /* 무시 */ } }
+        idx++;
+        if (idx >= notes.length) { idx = 0; start += len; }
+      }
+    };
+    tick();
+    t.sched = setInterval(tick, 80);
+  }
+  // 파일 퉁소: 한 가락을 끝까지 불고 1.4초 쉬었다가 다시 분다
+  function tgFile(t, buf) {
+    TG.source = 'file';
+    const once = () => {
+      if (tg !== t) return;
+      const s = ctx.createBufferSource(); s.buffer = buf; s.connect(t.input);
+      s.onended = () => { if (tg === t) t.timer = setTimeout(once, 1400); };
+      s.start(); t.src = s;
+    };
+    once();
+  }
+  function tgStart() {
+    const t = tgChain(), now = ctx.currentTime;
+    tg = t; TG.source = null;
+    tgApply(t, true);
+    t.amp.gain.setValueAtTime(0.0001, now); t.amp.gain.exponentialRampToValueAtTime(1, now + 0.6);
+    t.watch = setInterval(() => { if (tg === t && !soundOn()) tgStop(true); }, 250); // 그사이 소리를 끄면 멎는다
+    const go = (buf) => { if (tg !== t) return; if (buf) tgFile(t, buf); else tgSynth(t); };
+    if (tgBuf) go(tgBuf); else if (tgSpec() && !tgBad) tgLoadBuffer().then(go); else go(null);
+  }
+  function tgStop(fast) {
+    const t = tg;
+    if (!t) return;
+    tg = null; TG.source = null; tgLv = 0;
+    clearInterval(t.sched); clearTimeout(t.timer); clearInterval(t.watch);
+    const now = ctx.currentTime, g = t.amp.gain;
+    g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.exponentialRampToValueAtTime(0.0001, now + (fast ? 0.3 : 1.2));
+    setTimeout(() => { try { if (t.src) { t.src.onended = null; t.src.stop(); } } catch (e) { /* 이미 멎음 */ } try { t.out.disconnect(); t.rev.disconnect(); } catch (e) { /* 무시 */ } }, (fast ? 0.3 : 1.2) * 1000 + 3000);
+  }
+  function take(o) {
+    if (!o) return;
+    if (Number.isFinite(+o.clarity) && o.clarity !== null) TG.clarity = clamp(+o.clarity, 0, 1);
+    if (Number.isFinite(+o.pan) && o.pan !== null) TG.pan = clamp(+o.pan, -1, 1);
+  }
+  A.tongso = {
+    play(o) {
+      take(o);
+      if (!soundOn() || !init() || ctx.state === 'closed') return false;
+      try { if (tg) tgApply(tg); else tgStart(); } catch (e) { return false; }
+      return true;
+    },
+    set(o) { take(o); if (tg && ctx) { try { tgApply(tg); } catch (e) { /* 무시 */ } } },
+    stop(fast) { if (tg && ctx) { try { tgStop(!!fast); } catch (e) { tg = null; } } },
+    get playing() { return !!tg; },
+    get clarity() { return TG.clarity; },
+    get pan() { return TG.pan; },
+    get source() { return tg ? TG.source : null; },
+    get instrument() { const s = tgSpec(); return s && !tgBad ? s.instrument || '퉁소' : null; },
+    // 지금 소리 크기 0~1(물결 굵기·자막용). 올라갈 때는 바로, 내려갈 때는 천천히 따라간다. 소리가 안 나면 0
+    level() {
+      if (!tg || !ctx || ctx.state !== 'running') return (tgLv = 0);
+      const an = tg.an;
+      if (!tgArr || tgArr.length !== an.fftSize) tgArr = new Float32Array(an.fftSize);
+      an.getFloatTimeDomainData(tgArr);
+      let s = 0; for (let i = 0; i < tgArr.length; i++) s += tgArr[i] * tgArr[i];
+      const v = Math.min(1, Math.sqrt(s / tgArr.length) * 4);
+      tgLv = v > tgLv ? v : tgLv * 0.85 + v * 0.15;
+      return tgLv;
+    },
+    // 미리 풀어 두기(안남에 들어갈 때 불러 두면 첫 소리가 늦지 않다). 소리를 껐으면 하지 않는다
+    preload() { if (soundOn() && init()) tgLoadBuffer(); },
+    // 점검용: 파일 캐시를 비운다(BGM.tongso를 바꾼 뒤)
+    _reset() { if (tg) tgStop(true); tgBuf = null; tgLoad = null; tgBad = false; try { delete window.TONGSO_DATA; } catch (e) { window.TONGSO_DATA = undefined; } },
+  };
+  A.tongsoSynthOnly = false; // 점검용: true면 파일 없이 합성 퉁소음만
 
   // ───────── 미리 듣기·점검용: 곡을 오프라인으로 렌더해 AudioBuffer로 돌려준다
   A.render = async function (name, seconds = 20, rate = 44100) {
