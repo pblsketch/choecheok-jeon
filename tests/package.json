@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "smoke": "node smoke.mjs",
-    "audio": "node audio.mjs"
+    "audio": "node audio.mjs",
+    "rules": "node rules.mjs"
   },
   "devDependencies": { "playwright": "^1.63.0" }
 }

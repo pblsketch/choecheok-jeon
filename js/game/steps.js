@@ -2,7 +2,8 @@
 // 단계 실행기: 단계 하나를 화면에 펼치고, 끝나면 resolve 한다.
 //  ctx = { main, tray(content), trayEl(), refresh(), setScene(id), place, placeId, mode:'event'|'dlg', preset }
 //   - main: 글·카드가 쌓이는 자리 / tray: 화면 아래 엄지 닿는 곳(단추·선택지) / setScene: 사건 화면 전체 삽화 바꾸기
-//  단계 종류는 G.steps.register('종류', async (step, ctx) => { … })로 등록한다. 여기서는 say·choice만 둔다.
+//  단계 종류는 G.steps.register('종류', async (step, ctx) => { … })로 등록한다. 여기서는 say·choice와
+//  게임 규칙 단계 dilemma·gauge·know·frag·dream·card(효과는 js/game/rules.js의 G.rules)를 둔다.
 //  등록되지 않은 종류는 오류 없이 '준비 중' 판을 보여 주고 넘어간다.
 (function () {
   const { h, T, boldNodes } = G.util;
@@ -195,5 +196,205 @@
     const reply = (pick.reply || []).concat(step.after || []);
     if (reply.length) await steps.lines(reply, ctx);
     else await nextButton(ctx, '다음 ▶');
+  });
+
+  // ═════════ 게임 규칙 단계(spec §4·§6): dilemma · gauge · know · frag · dream · card ═════════
+  //  효과(게이지·조각·신표·지식·횟수)는 모두 G.rules.applyStep으로 단계 열쇠마다 한 번만 반영한다.
+  //  새로고침으로 단계를 다시 하면 엔진이 그 단계를 시작할 때 값(G.save.snapKeys)으로 되돌린 뒤 다시 펼친다.
+  //  쓰는 글(장육불 꿈, 떠올리는 글, '원작에는 없는 장면' 틀, 잠긴 실마리, 표기 칩 이름·색)은 js/data/texts.js
+  const TX = () => window.TEXTS || {};
+  const placeOf = (ctx) => (ctx && ctx.placeId) || S().place || null;
+  const keyOf = (ctx, step) => G.app.key.step(placeOf(ctx), step.id);
+  const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  if (G.hud && G.hud.ICON && !G.hud.ICON.know) {
+    G.hud.ICON.know = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10c5-2 11-2 16 2 5-4 11-4 16-2v26c-5-2-11-2-16 2-5-4-11-4-16-2z" fill="currentColor" fill-opacity=".14"/><path d="M24 12v26"/><path d="M13 18c2.5-.6 5-.4 7 .6M13 24c2.5-.6 5-.4 7 .6M28 18.6c2-1 4.5-1.2 7-.6"/></svg>';
+  }
+
+  // 표기 체계 칩(원문·풀이·게임 설정·이본 노트·해석). 이름·색: TEXTS.MARKS, notes.js의 NOTES.marks가 있으면 그것이 먼저
+  steps.mark = function (k) {
+    const M = Object.assign({}, TX().MARKS || {}, (window.NOTES && NOTES.marks) || {});
+    const m = M[k] || { name: k };
+    return h('span.rchip', { style: m.color ? '--mk:' + m.color : null }, m.name || k);
+  };
+  const mark = steps.mark;
+  // 원문 한 구절은 늘 풀이와 함께: { 원문, 풀이 }
+  steps.quote = function (q) {
+    if (!q || (!q.원문 && !q.풀이)) return null;
+    return h('div.rquote',
+      q.원문 ? h('div.rq-row', mark('원문'), h('p.han', q.원문)) : null,
+      q.풀이 ? h('div.rq-row', mark('풀이'), h('p.ko', boldNodes(q.풀이))) : null);
+  };
+
+  // 원작 대조 카드(딜레마를 지난 뒤). 깊이 읽기면 quoteLong(있으면), 처음 배우기면 extraGloss(풀이 덧붙임)
+  //  card: { title, summary, quote:{원문,풀이}, quoteLong?, extraGloss?, variant?(이본 노트), interp?(해석), src? }
+  steps.compareCard = function (step, choiceId) {
+    const st = S();
+    const C = TX().CARD || {};
+    const c = step.card || {};
+    const deep = st.mode === 'deep';
+    const orig = step.orig != null;
+    const optOf = (id) => (step.options || []).find((o) => o.id === id);
+    const mine = optOf(choiceId);
+    const theirs = optOf(orig ? step.orig : step.origNearest);
+    const q = (deep && c.quoteLong) || c.quote;
+    const cmp = h('dl.rc-cmp',
+      mine ? [h('dt', C.mine || '내 선택'), h('dd', T(mine.label || mine.t || ''))] : null,
+      theirs ? [h('dt', orig ? (C.original || '원작의 옥영') : (C.nearest || '원작에 가까운 쪽')), h('dd', T(theirs.label || theirs.t || ''))] : null);
+    return h('div.card.rcard.' + (orig ? 'orig' : 'fiction'),
+      orig ? h('span.seal-mark.corner', '原作') : null,
+      h('span.kind', orig ? (C.origKind || '원작 대조') : (C.fictionKind || '게임 창작')),
+      c.title ? h('h3', T(c.title)) : null,
+      orig ? null : h('p.rc-ask', mark('게임 설정'), boldNodes(C.notInOriginal || '')),
+      c.summary ? h('p.rc-sum', boldNodes(c.summary)) : null,
+      steps.quote(q),
+      !deep && c.extraGloss ? h('div.rc-note', mark('풀이'), h('p', boldNodes(c.extraGloss))) : null,
+      c.variant ? h('div.rc-note', mark('이본 노트'), h('p', boldNodes(c.variant))) : null,
+      c.interp ? h('div.rc-note', mark('해석'), h('p', boldNodes(c.interp))) : null,
+      mine || theirs ? cmp : null,
+      c.src ? h('p.src', c.src) : null,
+      h('p.rc-saved', C.saved || ''));
+  };
+  // 역사 카드·그 밖의 카드(카드 단계): { kind?, title, body|summary, quote?, src? }
+  steps.infoCard = function (c, kind) {
+    c = c || {};
+    const C = TX().CARD || {};
+    const k = c.kind || kind || 'note';
+    return h('div.card.rcard.' + k,
+      h('span.kind', c.kindLabel || (k === 'history' ? C.historyKind || '역사 카드' : (ui.KIND || {})[k] || '')),
+      c.title ? h('h3', T(c.title)) : null,
+      ...String(c.body || c.summary || '').split('\n').filter((x) => x !== '').map((line) => h('p', boldNodes(line))),
+      steps.quote(c.quote),
+      c.src ? h('p.src', c.src) : null,
+      h('p.rc-saved', C.saved || ''));
+  };
+
+  // 장육불 꿈·떠올리는 글(쓰러짐 c: { kind:'dream'|'fixedDream'|'recall', lines }) — 화면 요소
+  steps.dreamView = function (c, o = {}) {
+    const X = TX();
+    const D = X.DREAM || {};
+    const kind = (c && c.kind) || 'dream';
+    const lines = kind === 'recall' ? ((X.RECALL || {}).lines || [])
+      : [].concat((c && c.lines) || o.lines || [], (c && c.lines) || o.lines ? [] : D.lines || []);
+    return h('div.rdream.' + kind,
+      o.zero === false ? null : h('p.rd-zero', X.SAENG_ZERO || ''),
+      kind === 'recall' ? null : h('h3', D.title || ''),
+      ...lines.map((l) => h('p', boldNodes(typeof l === 'string' ? l : l.t || ''))),
+      kind === 'recall' ? null : steps.quote(o.quote || D.quote),
+      kind === 'recall' || !D.after ? null : h('p.rd-after', boldNodes(D.after)));
+  };
+  // 단계 화면 안에서 쓰러짐을 펼친다
+  steps.collapse = async function (c, ctx) {
+    if (!c) return;
+    const D = TX().DREAM || {};
+    if (c.kind !== 'recall' && D.scene && ctx.setScene) ctx.setScene(D.scene);
+    await steps.cardMoment(ctx, steps.dreamView(c), '다시 일어서기 ▶');
+  };
+  // 단계 밖(말 걸기 효과 등)에서 쓰러졌을 때: 판으로 띄운다
+  steps.collapseSheet = (c) => ui.sheet([steps.dreamView(c)], [{ label: '다시 일어서기', value: true, cls: 'primary' }], { cls: 'dream-sheet', dismiss: false });
+  // 카드·꿈은 사건 화면 가운데에 한 장으로 크게(거점 첫 장과 같은 .cardmode 모습). 다음을 누르면 원래 모습으로
+  steps.cardMoment = async function (ctx, el, label) {
+    const on = ctx.mode === 'event' && ctx.el;
+    ctx.main.innerHTML = '';
+    if (on) ctx.el.classList.add('cardmode', 'rcardmode');
+    ctx.main.appendChild(el);
+    G.audio.page();
+    if (ctx.main.parentNode) ctx.main.parentNode.scrollTop = 0;
+    await nextButton(ctx, label || '다음 ▶');
+    if (on) ctx.el.classList.remove('cardmode', 'rcardmode');
+  };
+
+  // ───────── dilemma: 딜레마(선택지 2~3개, 갈래마다 게이지 변동, 끝나면 원작 대조 카드) ─────────
+  //  { id, type:'dilemma', dilemma:'d-…', scene, prompt:[줄…], who?, q?,
+  //    options:[{ id, type:'yeon'|'saeng'|'wisdom'|'none', label, desc?, need?:'지식 id', lockHint?, when?, gauge?, fx?:{frag,token,know,set}, reply?:[줄…] }],
+  //    orig:'선택지 id'|null, origNearest?:'선택지 id', card:{…}, next? }
+  //  지혜의 길은 need 지식이 있고 그 거점에서 아직 안 썼을 때만 열린다. 잠기면 실마리 한 줄과 함께 잠긴 모습으로 보인다.
+  steps.register('dilemma', async function (step, ctx) {
+    if (!step.options || !step.options.length) return steps.notReady(step, ctx);
+    const st = S();
+    const place = placeOf(ctx);
+    const key = keyOf(ctx, step);
+    if (step.scene) { if (ctx.setScene) ctx.setScene(step.scene); else ctx.main.appendChild(steps.scene(step.scene, '.short')); }
+    for (const l of step.prompt || step.pre || []) { const el = steps.line(l, ctx); if (el) ctx.main.appendChild(el); }
+    if (step.q) { const el = steps.line(step.who ? { who: step.who, t: step.q } : { t: step.q }, ctx); if (el) ctx.main.appendChild(el); }
+    const last = ctx.main.lastElementChild;
+    if (last) last.scrollIntoView({ block: 'nearest' });
+    const prev = (st.applied || {})[key];
+    const presetIdx = ctx.preset && ctx.preset[step.id] != null ? ctx.preset[step.id] : null;
+    const preset = prev && prev.choice ? step.options.find((o) => o.id === prev.choice) : presetIdx != null ? step.options[presetIdx] : null;
+    const states = step.options.map((o) => G.rules.optionState(step, o, st, place));
+    const list = h('div.options.n' + Math.min(3, step.options.length));
+    const PATH = TX().PATH || {};
+    const pick = await new Promise((res) => {
+      let first = true;
+      step.options.forEach((o, i) => {
+        const s = states[i];
+        const b = h('button.opt.t-' + (o.type || 'none') + (s.open ? '' : '.locked'), { type: 'button', 'aria-disabled': s.open ? null : 'true' },
+          o.type === 'wisdom' && PATH.wisdom ? h('span.opath', PATH.wisdom) : null,
+          h('span.ot', boldNodes(o.label || o.t || '')),
+          o.desc ? h('span.od', boldNodes(o.desc)) : null,
+          s.open ? null : h('span.od.lock', h('i', { html: LOCK_SVG }), (TX().LOCK || {}).mark ? h('b', TX().LOCK.mark + ' · ') : null, s.hint || ''));
+        if (!s.open || preset) b.disabled = true;
+        b.addEventListener('click', () => { if (b.disabled) return; G.audio.pick(); res(o); });
+        list.appendChild(b);
+        if (s.open && first && !preset) { first = false; setTimeout(() => b.isConnected && b.focus({ preventScroll: true }), 30); }
+      });
+      ctx.tray(h('div.choice-tray', step.hint ? h('div.tray-hint', boldNodes(step.hint)) : null, list));
+      if (preset) setTimeout(() => { G.audio.pick(); res(preset); }, 450);
+    });
+    list.querySelectorAll('.opt').forEach((b, i) => { b.disabled = true; b.classList.add(step.options[i] === pick ? 'picked' : 'dim'); });
+    ctx.main.appendChild(h('div.para.picked-line.show', '▸ ', boldNodes(pick.label || pick.t || '')));
+    await G.util.wait(260);
+    ctx.tray(null);
+    const r = G.rules.applyStep(step, { place, key, decision: pick.id, force: !!(prev && prev.choice) });
+    if (r && r.collapse) await steps.collapse(r.collapse, ctx);
+    if (pick.reply && pick.reply.length) await steps.lines(pick.reply, ctx, '▶');
+    await steps.cardMoment(ctx, steps.compareCard(step, pick.id), step.next || '다음 ▶');
+  });
+
+  // ───────── gauge: 게이지 변동(고정 사건이면 fixed:true — 원작 궤적에도 똑같이 반영) ─────────
+  //  { id, type:'gauge', fixed?:true, gauge:{ yeon?, saeng? }, scene?, lines?:[줄…], when? }
+  steps.register('gauge', async function (step, ctx) {
+    if (step.scene && ctx.setScene) ctx.setScene(step.scene);
+    const r = G.rules.applyStep(step, { place: placeOf(ctx), key: keyOf(ctx, step) });
+    if (step.lines && step.lines.length) await steps.lines(step.lines, ctx, step.next || '다음 ▶');
+    if (r && r.collapse) await steps.collapse(r.collapse, ctx);
+  });
+
+  // ───────── know: 지식 얻기(NPC 탐색 등) ─────────
+  //  { id, type:'know', know:'k-japanese', lines?:[줄…] } — 지혜의 길을 여는 조건이 된다
+  steps.register('know', async function (step, ctx) {
+    G.rules.applyStep(step, { place: placeOf(ctx), key: keyOf(ctx, step) });
+    if (step.lines && step.lines.length) await steps.lines(step.lines, ctx, step.next || '다음 ▶');
+  });
+
+  // ───────── frag: 시구 조각 얻기 ─────────
+  //  { id, type:'frag', n:1~4, text:'시구', lines?:[줄…] }
+  steps.register('frag', async function (step, ctx) {
+    if (step.scene && ctx.setScene) ctx.setScene(step.scene);
+    G.rules.applyStep(step, { place: placeOf(ctx), key: keyOf(ctx, step) });
+    if (step.lines && step.lines.length) await steps.lines(step.lines, ctx, step.next || '다음 ▶');
+  });
+
+  // ───────── dream: 장육불 꿈 장면 ─────────
+  //  { id, type:'dream', fixed?:true, gauge?:{ yeon:1 }, lines?:[줄…], quote?:{원문,풀이}, scene? }
+  //  fixed:true(낭고야 고정 꿈): 원작 궤적에도 반영. 고정 꿈이 쓰러짐을 이미 겸했으면 다시 보이지 않는다.
+  //  장육불 횟수는 세지 않는다(쓰러짐으로 본 것만 센다).
+  steps.register('dream', async function (step, ctx) {
+    const r = G.rules.applyStep(step, { place: placeOf(ctx), key: keyOf(ctx, step) });
+    if (r && r.skipped && !r.again) return;
+    const D = TX().DREAM || {};
+    if (ctx.setScene && (step.scene || D.scene)) ctx.setScene(step.scene || D.scene);
+    await steps.cardMoment(ctx, steps.dreamView({ kind: 'dream', lines: step.lines || null }, { zero: false, quote: step.quote }), step.next || '다음 ▶');
+  });
+
+  // ───────── card: 카드 띄우기(역사 카드면 지식을 얻는다) + 이야기 수첩에 넣기 ─────────
+  //  { id, type:'card', history?:'h-…'(역사 카드 id: 지식이 된다), know?:'id', lines?:[줄…], card?:{ kind, title, body, quote, src } }
+  //  history가 있으면 js/data/history.js의 같은 id 카드가 먼저이고, 없으면 step.card를 쓴다.
+  steps.register('card', async function (step, ctx) {
+    const place = placeOf(ctx);
+    if (step.lines && step.lines.length) await steps.lines(step.lines, ctx, '▶');
+    G.rules.applyStep(step, { place, key: keyOf(ctx, step) });
+    const data = step.history ? G.rules.cardOf({ kind: 'history', id: step.history, place, step: step.id }) : step.card;
+    await steps.cardMoment(ctx, steps.infoCard(data, step.history ? 'history' : 'note'), step.next || '다음 ▶');
   });
 })();
