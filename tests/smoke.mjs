@@ -47,6 +47,31 @@ async function walk(page, key, ms) {
   return { a, b };
 }
 
+// 맵 네 구석 끝에 사람을 세우고, 옥영을 그 곁에 데려가 카메라가 맞춘 뒤 사람(이름표 자리 포함)이 HUD와 겹치는지 본다
+async function hudClear(page) {
+  await page.evaluate(() => {
+    PLACES.__hud = { maps: { hud_edges: { name: '구석 점검', grid: G.world.mk(40, 24, '.', [['border', 'h']]), npcs: {
+      tl: { sp: 'sp_merchant_ming', name: '왼쪽 위', x: 1, y: 1, talk: [['…']] }, tr: { sp: 'sp_merchant_ming', name: '오른쪽 위', x: 38, y: 1, talk: [['…']] },
+      bl: { sp: 'sp_merchant_ming', name: '왼쪽 아래', x: 1, y: 22, talk: [['…']] }, br: { sp: 'sp_merchant_ming', name: '오른쪽 아래', x: 38, y: 22, talk: [['…']] },
+      tc: { sp: 'sp_merchant_ming', name: '가운데 위', x: 20, y: 1, talk: [['…']] } } } } };
+  });
+  await page.evaluate(() => G.world.test.enter('hud_edges', { name: '구석 점검', mission: '최척을 다시 만나라.' }));
+  await page.waitForTimeout(300);
+  const bad = [];
+  for (const [id, tx, ty] of [['tl', 2, 2], ['tr', 37, 2], ['bl', 2, 21], ['br', 37, 21], ['tc', 20, 2]]) {
+    await page.evaluate(([tx, ty]) => G.world.test.look(tx, ty), [tx, ty]);
+    await page.waitForTimeout(700);
+    const hit = await page.evaluate((id) => {
+      const n = G.world.test.screenOf(id);
+      const over = (a, b) => !(a.r <= b.left || b.right <= a.l || a.b <= b.top || b.bottom <= a.t);
+      return ['.hud-tl', '.mission', '.hud-tr', '.pad .pbtn', '.joy-rest'].filter((s) => { const e = document.querySelector(s); return e && e.offsetParent !== null && over(n, e.getBoundingClientRect()); });
+    }, id);
+    if (hit.length) bad.push(id + '↔' + hit.join(','));
+  }
+  if (bad.length) console.log('    겹침: ' + bad.join(' / '));
+  return bad.length === 0;
+}
+
 // ───────── 1) 휴대폰 가로 ─────────
 {
   console.log('휴대폰 가로 844×390');
@@ -160,6 +185,8 @@ async function walk(page, key, ms) {
     ok(st.id === id && (id !== 'demo_harbor_night' || st.night), `테마 견본 맵 ${id}${st.night ? '(밤)' : ''}`);
   }
   await shot('07b_theme_island');
+  // HUD 안전 여백: 맵 네 구석 끝에 선 사람과 이름표가 HUD(초상·미션·아이콘·조이스틱·행동 단추) 밑에 숨지 않는다
+  ok(await hudClear(page), 'HUD 밑에 숨는 사람·이름표가 없다(휴대폰 가로)');
   // 시구 조각 알림
   await page.evaluate(() => G.hud.setFrag(1, '시험 조각'));
   await page.waitForTimeout(200);
@@ -235,6 +262,9 @@ async function walk(page, key, ms) {
   w = await walk(page, 'ArrowLeft', 500);
   ok(w.b.x < w.a.x - 20, `← 키로 걷는다 (${Math.round(w.a.x)} → ${Math.round(w.b.x)})`);
   ok((await page.textContent('.panel .gauge.yeon .gnum')) === '5', '선생님용: 게이지에 숫자');
+  ok(await hudClear(page), 'HUD 밑에 숨는 사람·이름표가 없다(PC)');
+  await page.evaluate(() => G.world.test.enter());
+  await page.waitForTimeout(200);
   await shot('02_map');
   // 사건 모드 + 선생님용 장면 건너뛰기
   await page.evaluate(() => { window.__d = false; G.app.runSteps({ id: '__t', steps: [{ id: 'x', type: 'say', lines: ['첫 줄', '둘째 줄', '셋째 줄'] }, { id: 'y', type: 'route' }] }, null).then(() => (window.__d = true)); });

@@ -2,8 +2,15 @@
    가로 화면 기준, 화면 높이·너비 비율로 글자와 부품 크기를 맞춘다.
    부품 두 벌: ① 한지 판(.sheet·대화창·선택지·카드) — 한지 결 + 먹빛 테두리 + 안쪽 황토 색연필 선
               ② 쪽빛 판(HUD·띠·아이콘) — 반투명 쪽빛 + 등불빛 실선. 강조는 등불 주황 하나만 쓴다. */
-@font-face { font-family: 'HangroMyeongjo'; src: url('../assets/fonts/myeongjo.woff2') format('woff2'); font-weight: 400; font-display: swap; }
-@font-face { font-family: 'HangroMyeongjo'; src: url('../assets/fonts/myeongjo-bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+/* 글꼴: 본문·단추·HUD는 고운바탕(HangroBatang), 고운바탕에 없는 한자·기호는 Noto Serif KR 부분 글꼴(HangroHanja)이 채운다.
+   제목·거점 이름은 나눔손글씨 붓(HangroBrush). 모두 게임에 쓰인 글자만 남긴 부분 글꼴 — tools/build_fonts.py
+   예전 이름 HangroMyeongjo도 같은 글꼴을 가리킨다(다른 css가 그 이름을 써도 그대로 보이게). */
+@font-face { font-family: 'HangroBatang'; src: url('../assets/fonts/batang.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'HangroBatang'; src: url('../assets/fonts/batang-bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'HangroHanja'; src: url('../assets/fonts/hanja.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'HangroHanja'; src: url('../assets/fonts/hanja-bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'HangroMyeongjo'; src: url('../assets/fonts/batang.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'HangroMyeongjo'; src: url('../assets/fonts/batang-bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'HangroBrush'; src: url('../assets/fonts/brush.woff2') format('woff2'); font-display: swap; }
 
 :root {
@@ -43,7 +50,7 @@
   --shadow: 0 4px 16px rgba(20, 14, 40, .22);
   --radius: .9rem;
   --fs: 1;
-  --serif: 'HangroMyeongjo', 'Nanum Myeongjo', 'Noto Serif KR', 'AppleMyungjo', 'Batang', serif;
+  --serif: 'HangroBatang', 'HangroHanja', 'Gowun Batang', 'Noto Serif KR', 'AppleMyungjo', 'Batang', serif;
   --sans: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
   --brush: 'HangroBrush', var(--serif);
   --paper-img: url('../assets/ui/paper.webp');
@@ -54,6 +61,8 @@
   /* 쪽빛 판 */
   --plaque: linear-gradient(180deg, rgba(46, 60, 108, .9), rgba(26, 35, 68, .9));
   --plaque-line: rgba(255, 216, 138, .42);
+  /* 삽화가 아직 없을 때 대신 깔리는 그림책풍 밤바다(코드로 그린 그림) */
+  --night-sea: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E %3Cdefs%3E %3ClinearGradient id='s' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2317213f'/%3E%3Cstop offset='.55' stop-color='%232b3d6e'/%3E%3Cstop offset='1' stop-color='%233a5287'/%3E%3C/linearGradient%3E %3CradialGradient id='m'%3E%3Cstop offset='0' stop-color='%23fff1c8' stop-opacity='.9'/%3E%3Cstop offset='.35' stop-color='%23ffd88a' stop-opacity='.35'/%3E%3Cstop offset='1' stop-color='%23ffd88a' stop-opacity='0'/%3E%3C/radialGradient%3E %3ClinearGradient id='w' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2322325e'/%3E%3Cstop offset='1' stop-color='%23141c38'/%3E%3C/linearGradient%3E %3C/defs%3E %3Crect width='1600' height='900' fill='url(%23s)'/%3E %3Ccircle cx='1170' cy='250' r='300' fill='url(%23m)'/%3E %3Ccircle cx='1170' cy='250' r='82' fill='%23fbe8bb'/%3E %3Ccircle cx='1150' cy='232' r='14' fill='%23f1d79f' opacity='.6'/%3E%3Ccircle cx='1196' cy='272' r='9' fill='%23f1d79f' opacity='.5'/%3E %3Cpath d='M0 540 C120 470 210 500 300 470 C400 430 470 500 560 485 C650 470 700 420 800 445 C900 470 960 520 1060 500 C1160 480 1240 520 1340 505 C1440 490 1520 470 1600 480 V900 H0Z' fill='%23263866' opacity='.9'/%3E %3Cpath d='M0 590 C180 560 330 600 520 585 C720 570 860 600 1060 590 C1260 580 1420 600 1600 588 V900 H0Z' fill='url(%23w)'/%3E %3Cg fill='%23ffe3a0' opacity='.55'%3E%3Crect x='1120' y='610' width='100' height='4' rx='2'/%3E%3Crect x='1100' y='640' width='140' height='4' rx='2'/%3E%3Crect x='1130' y='672' width='80' height='4' rx='2'/%3E%3Crect x='1090' y='706' width='160' height='4' rx='2' opacity='.6'/%3E%3Crect x='1140' y='744' width='60' height='4' rx='2' opacity='.5'/%3E%3C/g%3E %3Cg fill='none' stroke='%236f86b8' stroke-width='4' stroke-linecap='round' opacity='.45'%3E%3Cpath d='M120 680 q30 -18 60 0 t60 0'/%3E%3Cpath d='M420 760 q30 -18 60 0 t60 0'/%3E%3Cpath d='M760 700 q30 -18 60 0 t60 0'/%3E%3Cpath d='M300 830 q30 -18 60 0 t60 0'/%3E%3Cpath d='M1380 790 q30 -18 60 0 t60 0'/%3E%3Cpath d='M930 820 q30 -18 60 0 t60 0'/%3E%3C/g%3E %3Cg transform='translate(560 600)'%3E%3Cpath d='M-60 0 H60 L44 22 H-44Z' fill='%233b2a22'/%3E%3Cpath d='M-4 -86 V-2 H48Z' fill='%23e9dcbc' opacity='.85'/%3E%3Cpath d='M-8 -70 C-34 -50 -44 -26 -44 -4 H-8Z' fill='%23d9a15a' opacity='.8'/%3E%3Ccircle cx='52' cy='-10' r='6' fill='%23ffcf74'/%3E%3C/g%3E %3Cg fill='%23ffffff' opacity='.7'%3E%3Ccircle cx='240' cy='140' r='2.5'/%3E%3Ccircle cx='420' cy='90' r='2'/%3E%3Ccircle cx='700' cy='170' r='2'/%3E%3Ccircle cx='880' cy='80' r='2.5'/%3E%3Ccircle cx='1450' cy='120' r='2'/%3E%3Ccircle cx='1500' cy='300' r='1.8'/%3E%3Ccircle cx='120' cy='300' r='1.8'/%3E%3C/g%3E %3C/svg%3E");
   color-scheme: light;
 }
 
@@ -164,8 +173,9 @@ html.teacher .teacher-only { display: inline-flex !important; }
 .play { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--night); }
 .mapwrap { position: absolute; inset: 0; overflow: hidden; background: #14161c; }
 .mapstage { position: absolute; inset: 0; }
-.stage-blank { position: absolute; inset: 0; background: radial-gradient(90% 70% at 50% 40%, var(--night-2), var(--night) 75%); display: flex; align-items: center; justify-content: center; }
-.stage-blank p { font-family: var(--brush); font-size: 3rem; color: rgba(244, 234, 211, .14); margin: 0; }
+.stage-blank { position: absolute; inset: 0; background: var(--night-sea) center / cover no-repeat, var(--night); display: flex; align-items: center; justify-content: center; }
+.stage-blank::after { content: ''; position: absolute; inset: 0; background: var(--paper-img) 0 0 / 360px; mix-blend-mode: multiply; opacity: .16; pointer-events: none; }
+.stage-blank p { position: relative; z-index: 1; font-family: var(--brush); font-size: 4rem; color: rgba(252, 244, 222, .22); margin: 0 0 18vh; }
 .hud { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
 .hud > * { pointer-events: auto; }
 .play.evmode .hud { display: none; }
@@ -273,9 +283,9 @@ html.teacher .teacher-only { display: inline-flex !important; }
 .event.cardmode { background: transparent; }
 .event.cardmode .ev-art { background: rgba(14, 18, 40, .62); backdrop-filter: blur(2px); }
 .event.cardmode .ev-art::after { display: none; }
-.blank-paper { position: absolute; inset: 0; background: radial-gradient(90% 80% at 50% 35%, var(--night-2), var(--night) 80%); display: flex; align-items: flex-start; justify-content: center; }
-.blank-paper::before { content: ''; position: absolute; inset: 3.4rem 4% 4%; border: 1.5px dashed rgba(255, 216, 138, .22); border-radius: 1rem; }
-.blank-paper .cap { position: relative; margin-top: 4.4rem; padding: .2em .9em; color: rgba(244, 234, 211, .6); font-size: .92rem; }
+.blank-paper { position: absolute; inset: 0; background: var(--night-sea) center / cover no-repeat, var(--night); display: flex; align-items: flex-start; justify-content: center; }
+.blank-paper::before { content: ''; position: absolute; inset: 0; background: var(--paper-img) 0 0 / 360px; mix-blend-mode: multiply; opacity: .16; }
+.blank-paper .cap { position: relative; margin-top: 3.6rem; max-width: min(36rem, 80%); padding: .3em 1.2em; border-radius: 999px; background: rgba(20, 27, 54, .6); border: 1px solid var(--plaque-line); color: rgba(244, 234, 211, .9); font-size: .88rem; text-align: center; }
 .ev-box { position: relative; z-index: 2; width: min(60rem, calc(100% - 2 * max(.8rem, env(safe-area-inset-left)))); margin: 0 auto max(.6rem, env(safe-area-inset-bottom)); max-height: calc(100% - 3.4rem); display: flex; flex-direction: column; background: var(--paper-tex), var(--hanji); border: 2.5px solid var(--line); border-radius: 1.15rem; box-shadow: var(--frame), var(--lift); overflow: hidden; animation: up .3s ease-out; }
 .ev-scroll { flex: 1 1 auto; min-height: 0; max-height: 34vh; overflow: auto; padding: .8rem 1.3rem .35rem; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(47, 40, 64, .35) transparent; }
 .ev-tray { flex: none; padding: .45rem 1rem .7rem; }
@@ -325,7 +335,7 @@ html.teacher .teacher-only { display: inline-flex !important; }
 .narr { font-size: 1.06em; line-height: 1.85; }
 .say { display: grid; grid-template-columns: 3.3rem 1fr; gap: .75rem; align-items: start; }
 .say .who img, .say .who .pxface, .face-blank { width: 3.3rem; height: 3.3rem; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--line); box-shadow: 0 0 0 2px var(--pc, var(--ochre)); background: var(--hanji-2); }
-.say .who .pxface { image-rendering: pixelated; background: radial-gradient(circle at 50% 40%, #fff6dc, #e2cf9e); }
+.say .who .pxface { image-rendering: pixelated; background: var(--paper-tex), radial-gradient(circle at 50% 35%, #fff6dc, #e6d2a0); padding: 3px; }
 .face-blank { display: inline-flex; align-items: center; justify-content: center; color: #fffaf0; font-weight: 700; font-size: 1.3rem; }
 .say .bubble { position: relative; padding: .1rem 0 0; font-size: 1.04em; line-height: 1.75; }
 .say .bubble .nm { display: table; margin-bottom: .2rem; padding: .05em .75em; border-radius: .5rem; background: var(--night); color: var(--lantern-hi); font-size: .78em; font-weight: 700; line-height: 1.6; box-shadow: inset 0 -2px 0 var(--pc, var(--ochre)); }

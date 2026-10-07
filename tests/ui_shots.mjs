@@ -125,6 +125,18 @@ for (const vp of VIEWS) {
   await shot('22_token_toast');
   await wait(2800);
   await page.evaluate(() => G.app._skip && G.app._skip());
+  await wait(2200);
+  // 삽화 파일이 아직 없는 사건 화면(코드로 그린 밤바다 + 그림 설명)
+  await page.evaluate(() => {
+    PLACES.__cap = { scenes: { sc_ui_nofile: { caption: '정유년 가을, 불길에 휩싸인 남원성' } } };
+    window.__ev2 = G.app.runSteps({ id: '__uiev2', steps: [
+      { id: 'a', type: 'say', scene: 'sc_ui_nofile', lines: [{ who: 'choecheok', t: '이 옷을 입으시오. 남자 옷을 입으면 눈에 덜 띌 것이오.' }, '옥영은 떨리는 손으로 남편이 건넨 옷을 받았다.'] },
+    ] }, null);
+  });
+  await page.waitForSelector('.event.on .say');
+  await wait(600);
+  await shot('23_event_noart');
+  await page.evaluate(() => G.app._skip && G.app._skip());
   await wait(400);
 
   // 고지도: 2막 뱃길 고르기

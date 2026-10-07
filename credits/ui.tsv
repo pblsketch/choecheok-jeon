@@ -1,5 +1,5 @@
 파일	출처	이용 조건	고친 내용
 assets/ui/title.webp	Codex CLI 이미지 생성(gpt-6-astra 내장 image_gen, 자체 생성) — 프롬프트 tools/prompts/ui_title.txt, 화풍 참조 design/style-samples/style_picturebook.png	자체 생성물(상업 이용 가능)	1600px로 줄이고 webp(품질 80)로 바꿈
-assets/ui/oldmap.webp	Codex CLI 이미지 생성(gpt-6-astra 내장 image_gen, 자체 생성) — 프롬프트 tools/prompts/ui_oldmap.txt	자체 생성물(상업 이용 가능)	webp(품질 80)로 바꿈. 지명·뱃길은 그림에 없고 화면 글자로 얹음
+assets/ui/oldmap.webp	Codex CLI 이미지 생성(gpt-6-astra 내장 image_gen, 자체 생성) — 프롬프트 tools/prompts/ui_oldmap.txt	자체 생성물(상업 이용 가능)	webp(품질 80)로 바꿈. 지명·뱃길은 그림에 없고 화면 글자로 얹음. 2026-10-07 조선 반도를 크게·지리를 더 정확히 다시 생성
 assets/ui/hud_okyoung.webp	Codex CLI 이미지 생성(gpt-6-astra 내장 image_gen, 자체 생성) — 프롬프트 tools/prompts/ui_portrait.txt, 화풍 참조 design/style-samples/style_picturebook.png	자체 생성물(상업 이용 가능)	얼굴 둘레만 잘라 256px webp로 바꿈
 assets/ui/paper.webp	Codex CLI 이미지 생성(gpt-6-astra 내장 image_gen, 자체 생성) — 프롬프트 tools/prompts/ui_paper.txt	자체 생성물(상업 이용 가능)	512px로 줄이고 반 칸 밀어 겹쳐 이음새를 없앤 뒤 webp로 바꿈

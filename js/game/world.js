@@ -162,13 +162,14 @@
   };
   // 대화창 얼굴: 도트 인물의 윗몸을 크게
   W.spriteFace = function (sp) {
-    const c = document.createElement('canvas'); c.width = 40; c.height = 40; c.className = 'pxface';
+    // 머리와 어깨만 26×26으로 잘라 정수배로 키운다(초상 그림이 생기기 전의 대신 얼굴)
+    const c = document.createElement('canvas'); c.width = 26; c.height = 26; c.className = 'pxface';
     const draw = () => {
       const m = SP()[sp], im = img(sp); if (!m || !im || !m.anims) return false;
       const g2 = c.getContext('2d'); g2.imageSmoothingEnabled = false;
       const a = m.anims.walk_down || Object.values(m.anims)[0]; const i = a.start;
       const sx = (i % m.cols) * m.fw, sy = Math.floor(i / m.cols) * m.fh;
-      g2.drawImage(im, sx + m.px - 20, sy + m.py - 50, 40, 40, 0, 0, 40, 40);
+      g2.drawImage(im, sx + m.px - 13, sy + m.py - 50, 26, 26, 0, 0, 26, 26);
       return true;
     };
     if (!draw()) W.preload([sp]).then(draw);
@@ -298,11 +299,12 @@
     const Wd = Math.max(1, Math.round(cw * dpr)), Hd = Math.max(1, Math.round(ch * dpr));
     // 정수 배율: 세로로 12칸 안팎이 보이게
     scale = Math.max(1, Math.round(Math.min(Wd / 400, Hd / 360)));
-    if (cv.width === Wd && cv.height === Hd && buf.width === Math.ceil(Wd / scale)) return;
+    if (cv.width === Wd && cv.height === Hd && buf.width === Math.ceil(Wd / scale)) { measureSafe(); return; }
     cv.width = Wd; cv.height = Hd;
     vw = Math.ceil(Wd / scale); vh = Math.ceil(Hd / scale);
     buf.width = vw; buf.height = vh; dark.width = vw; dark.height = vh;
     g.imageSmoothingEnabled = false; g0.imageSmoothingEnabled = false;
+    measureSafe();
     snapCam();
   }
 
@@ -462,6 +464,8 @@
   // ───────── 갱신 ─────────
   function update(dt) {
     time += dt;
+    safe.t -= dt;
+    if (safe.t <= 0) { safe.t = 0.5; measureSafe(); }
     updateFx(dt);
     updateAmbient(dt);
     if (W.paused()) { keys.clear(); inp.jx = inp.jy = 0; idleNpcs(dt); P.moving = false; return; }
@@ -527,8 +531,33 @@
     const k = Math.min(1, dt * 9);
     cam.x += (camClampX(tx) - cam.x) * k; cam.y += (camClampY(ty) - cam.y) * k;
   }
+  // HUD 안전 여백(맵 픽셀): 위쪽 HUD(초상·미션·아이콘)와 아래쪽 조작부(조이스틱·행동 단추)가 차지하는 높이.
+  //  카메라는 맵 위·아래 끝에서 이만큼 더 물러설 수 있어서, 맵 가장자리의 사람·자리·이름표가 HUD 밑에 숨지 않는다.
+  //  (물러선 자리는 맵 가장자리를 거울처럼 비춰 어둡게 채운다) · 목표 표시도 이 안쪽에서만 그리고, 밖이면 가장자리 화살표.
+  const safe = { top: 0, bottom: 0, t: 0 };
+  W.safe = safe;
+  function measureSafe() {
+    if (!root || !root.isConnected) return;
+    const rb = root.getBoundingClientRect();
+    const k = dpr / scale;
+    const shown = (e) => e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
+    let top = 0, bottom = 0;
+    for (const sel of ['.hud-tl', '.mission', '.hud-tr']) {
+      const e = document.querySelector('.play ' + sel);
+      if (shown(e)) top = Math.max(top, e.getBoundingClientRect().bottom - rb.top);
+    }
+    for (const e of [padEl && padEl.querySelector('.pbtn'), root.querySelector('.joy-rest')]) {
+      if (shown(e)) bottom = Math.max(bottom, rb.bottom - e.getBoundingClientRect().top);
+    }
+    // 사건 화면·대화창으로 HUD가 잠깐 숨으면 앞의 값을 그대로 둔다(카메라가 들썩이지 않게)
+    if (top) safe.top = Math.ceil(top * k) + 4;
+    if (bottom) safe.bottom = Math.ceil(bottom * k) + 2;
+  }
   const camClampX = (x) => (M.w <= vw ? (M.w - vw) / 2 : clamp(x, 0, M.w - vw));
-  const camClampY = (y) => (M.h <= vh ? (M.h - vh) / 2 : clamp(y, 0, M.h - vh));
+  const camClampY = (y) => {
+    const lo = -safe.top, hi = M.h - vh + safe.bottom;
+    return hi <= lo ? (lo + hi) / 2 : clamp(y, lo, hi);
+  };
   function snapCam() { if (!P || !M) return; cam.x = camClampX(P.x - vw / 2); cam.y = camClampY(P.y - 20 - vh / 2); }
 
   // ───────── 말 걸기·살피기 ─────────
@@ -695,9 +724,12 @@
     }
   }
   function headY(e) { const m = e.sp ? SP()[e.sp] : null; return e.y - (m ? m.py - 6 : 42) + 4; }
+  // 이름표 높이(맵 픽셀). 머리 위 표시·이름표가 위쪽 HUD에 닿으면 발밑으로 내려 그린다
+  const labelH = () => (24.5 * dpr) / scale;
+  const flipBelow = (headWy, cy, withLabel) => headWy - cy - 16 - (withLabel ? labelH() : 0) <= safe.top;
   function targetPos(id) {
-    if (M.npcs[id]) { const e = M.npcs[id]; return [e.x, headY(e), e.name]; }
-    const s = M.spots[id]; if (s) return [s.rx + s.rw / 2, s.ry + s.rh / 2 - (s.mh || 20), s.name || ''];
+    if (M.npcs[id]) { const e = M.npcs[id]; return [e.x, headY(e), e.name, e.y]; }
+    const s = M.spots[id]; if (s) return [s.rx + s.rw / 2, s.ry + s.rh / 2 - (s.mh || 20), s.name || '', s.ry + s.rh];
     return null;
   }
 
@@ -861,6 +893,20 @@
     const gx = Math.max(0, cx), gy = Math.max(0, cy);
     const gw = Math.min(M.w - gx, vw - (gx - cx)), gh = Math.min(M.h - gy, vh - (gy - cy));
     if (gw > 0 && gh > 0) g.drawImage(M.ground.canvas, gx, gy, gw, gh, gx - cx, gy - cy, gw, gh);
+    // 맵 위·아래 바깥: 가장자리 땅을 거울처럼 비춰 어둡게(HUD 안전 여백만큼 물러섰을 때)
+    if (gw > 0) {
+      const edge = (h, srcY, dstY, fromTop) => {
+        h = Math.min(h, M.h); if (h <= 0) return;
+        g.save(); g.translate(0, dstY + h); g.scale(1, -1);
+        g.drawImage(M.ground.canvas, gx, srcY, gw, h, gx - cx, 0, gw, h);
+        g.restore();
+        const gr = g.createLinearGradient(0, dstY, 0, dstY + h);
+        gr.addColorStop(fromTop ? 0 : 1, 'rgba(14,16,34,.82)'); gr.addColorStop(fromTop ? 1 : 0, 'rgba(14,16,34,.45)');
+        g.fillStyle = gr; g.fillRect(0, dstY, vw, h);
+      };
+      if (cy < 0) edge(-cy, 0, 0, true);
+      if (cy + vh > M.h) edge(cy + vh - M.h, M.h - Math.min(M.h, cy + vh - M.h), M.h - cy, false);
+    }
     // 물결·반짝임·물거품
     G.tiles.animate(g, M.ground, cx, cy, vw, vh, time);
     for (const p of M.props) if (p.flat) drawProp(p, cx, cy);
@@ -889,15 +935,18 @@
     const labels = [];
     if (goal && goal.targets && !W.busy) for (const id of goal.targets) {
       const tp = targetPos(id); if (!tp) continue;
-      const [x, y, nm] = tp;
-      const inView = x - cx > 8 && x - cx < vw - 8 && y - cy > 8 && y - cy < vh - 8;
-      if (inView) { marker(x - cx, y - cy, 'goal'); if (goal.labels !== false) labels.push([x - cx, y - cy - 16, goal.labelOf ? goal.labelOf(id) : nm]); }
-      else edgeArrow(x - cx, y - cy);
+      const [x, y, nm, fy] = tp;
+      const inView = x - cx > 8 && x - cx < vw - 8 && fy - cy > safe.top + 4 && y - cy < vh - safe.bottom - 8;
+      if (inView) {
+        const withLabel = goal.labels !== false, text = goal.labelOf ? goal.labelOf(id) : nm;
+        if (!flipBelow(y, cy, withLabel)) { marker(x - cx, y - cy, 'goal'); if (withLabel) labels.push([x - cx, y - cy - 16, text]); }
+        else { marker(x - cx, fy - cy + 16, 'goal'); if (withLabel) labels.push([x - cx, fy - cy + 18 + labelH(), text]); }
+      } else edgeArrow(x - cx, y - cy);
     }
     if (!W.busy) for (const id in M.npcs) {
       const e = M.npcs[id];
       if (!e.talk || (goal && goal.targets && goal.targets.includes(id))) continue;
-      if (Math.hypot(e.x - P.x, e.y - P.y) < 70) marker(e.x - cx, headY(e) - cy, 'talk');
+      if (Math.hypot(e.x - P.x, e.y - P.y) < 70) marker(e.x - cx, (flipBelow(headY(e), cy, false) ? e.y + 16 : headY(e)) - cy, 'talk');
     }
     g0.drawImage(buf, 0, 0, vw, vh, 0, 0, vw * scale, vh * scale);
     // 이름표(또렷하게 원래 해상도로): 쪽빛 판에 상아색 글, 둘레에 등불빛 실선
@@ -920,7 +969,7 @@
   }
   function edgeArrow(x, y) {
     const m = 14;
-    const ex = clamp(x, m, vw - m), ey = clamp(y, m, vh - m);
+    const ex = clamp(x, m, vw - m), ey = clamp(y, safe.top + m, vh - safe.bottom - m);
     const a = Math.atan2(y - ey, x - ex);
     g.save(); g.translate(Math.round(ex), Math.round(ey)); g.rotate(a);
     const b = Math.sin(time * 6) * 2;
@@ -1084,6 +1133,16 @@
     labels(on) { labelsOn = on; },
     enter: (mapId, info) => W.enterTest(mapId, info),
     // 화면 사진용: 옥영을 칸 (tx, ty)로 옮기고 카메라를 맞춘다
+    // 사람(이름표 포함)의 화면 자리(CSS px, 맵 화면 기준): HUD에 가리는지 점검할 때
+    screenOf(id) {
+      const e = M.npcs[id]; if (!e || !root) return null;
+      const k = scale / dpr, rb = root.getBoundingClientRect();
+      // 몸 + 머리 위 표시·이름표(위쪽 HUD에 닿으면 발밑으로 내려 그리는 규칙을 그대로 따른다)
+      const hy = headY(e), below = flipBelow(hy, Math.round(cam.y), true);
+      const top = below ? hy - 4 : hy - 18 - labelH(), bot = below ? e.y + 18 + labelH() : e.y, x0 = e.x - 20, x1 = e.x + 20;
+      return { l: rb.left + (x0 - cam.x) * k, r: rb.left + (x1 - cam.x) * k, t: rb.top + (top - cam.y) * k, b: rb.top + (bot - cam.y) * k };
+    },
+    safe: () => ({ top: safe.top, bottom: safe.bottom }),
     look(tx, ty, dir) { const [x, y] = freeSpot(...feet(tx, ty), 6); P.x = x; P.y = y; if (dir) P.dir = dir; snapCam(); },
   };
 })();

@@ -37,33 +37,33 @@ window.FLOW = {
 //  routes.act2: 2막 항로 고르기(항주 → 조선). 바다 거점에서 G.oldmap.show({ from:'hangzhou', pick:true, paths: OLDMAP.routes.act2 })처럼 쓴다
 window.OLDMAP = {
   regions: [
-    { id: 'joseon', name: '조선', label: [0.565, 0.075] },
-    { id: 'japan', name: '일본', label: [0.79, 0.12] },
-    { id: 'china', name: '중국', label: [0.2, 0.26] },
-    { id: 'annam', name: '안남', label: [0.105, 0.9] },
+    { id: 'joseon', name: '조선', label: [0.573, 0.107] },
+    { id: 'japan', name: '일본', label: [0.814, 0.166] },
+    { id: 'china', name: '중국', label: [0.195, 0.244] },
+    { id: 'annam', name: '안남', label: [0.068, 0.884] },
   ],
   nodes: {
-    namwon: { name: '남원', x: 0.55, y: 0.171, label: 'top' },
-    suncheon: { name: '순천', x: 0.566, y: 0.202, label: 'right' },
-    nanggoya: { name: '낭고야', x: 0.609, y: 0.249, label: 'right' },
-    hangzhou: { name: '항주', x: 0.384, y: 0.322, label: 'left' },
-    sea: { name: '바다', x: 0.485, y: 0.293, label: 'bottom' },
-    annam: { name: '안남', x: 0.193, y: 0.781, label: 'left' },
+    namwon: { name: '남원', x: 0.573, y: 0.239, label: 'top' },
+    suncheon: { name: '순천', x: 0.583, y: 0.266, label: 'left' },
+    nanggoya: { name: '낭고야', x: 0.641, y: 0.298, label: 'right' },
+    hangzhou: { name: '항주', x: 0.426, y: 0.332, label: 'left' },
+    sea: { name: '바다', x: 0.521, y: 0.415, label: 'right' },
+    annam: { name: '안남', x: 0.179, y: 0.801, label: 'left' },
   },
   paths: [
-    { from: 'namwon', to: 'nanggoya', via: [[0.561, 0.212], [0.588, 0.236]] },
-    { from: 'nanggoya', to: 'annam', via: [[0.586, 0.322], [0.495, 0.459], [0.456, 0.625], [0.339, 0.713], [0.247, 0.771]] },
-    { from: 'annam', to: 'hangzhou', via: [[0.247, 0.742], [0.293, 0.64], [0.365, 0.547], [0.381, 0.527], [0.423, 0.41]] },
-    { from: 'hangzhou', to: 'sea', via: [[0.436, 0.308]] },
-    { from: 'sea', to: 'namwon', via: [[0.534, 0.234]] },
-    { from: 'sea', to: 'suncheon', via: [[0.54, 0.24]] },
+    { from: 'namwon', to: 'nanggoya', via: [[0.586, 0.275], [0.618, 0.288]] },
+    { from: 'nanggoya', to: 'annam', via: [[0.625, 0.332], [0.573, 0.410], [0.495, 0.508], [0.475, 0.625], [0.391, 0.723], [0.273, 0.771]] },
+    { from: 'annam', to: 'hangzhou', via: [[0.215, 0.752], [0.273, 0.664], [0.384, 0.532], [0.439, 0.459], [0.472, 0.391], [0.456, 0.340]] },
+    { from: 'hangzhou', to: 'sea', via: [[0.479, 0.386]] },
+    { from: 'sea', to: 'namwon', via: [[0.553, 0.293]] },
+    { from: 'sea', to: 'suncheon', via: [[0.560, 0.312]] },
     { from: 'suncheon', to: 'namwon' },
   ],
   routes: {
-    // 연안길: 중국 해안을 따라 북상한 뒤 산둥 끝에서 서해를 건너 조선 서해안으로 / 바다길: 동중국해를 바로 가로질러 조선 남해안으로
+    // 연안길: 중국 해안을 따라 북상한 뒤 산둥 끝에서 서해를 건너 조선 서해안으로 / 바다길: 동중국해를 곧장 가로질러 조선 남해안으로
     act2: [
-      { id: 'coast', from: 'hangzhou', to: 'namwon', label: '연안길', labelAt: 0.45, via: [[0.417, 0.264], [0.43, 0.212], [0.459, 0.176], [0.514, 0.148]], desc: '중국 해안을 따라 북쪽으로 올라가 서해를 건넌다' },
-      { id: 'open', from: 'hangzhou', to: 'suncheon', label: '바다길', labelAt: 0.8, via: [[0.456, 0.33], [0.508, 0.29], [0.547, 0.232]], desc: '동중국해를 바로 가로질러 조선 남해안에 닿는다' },
+      { id: 'coast', from: 'hangzhou', to: 'namwon', label: '연안길', labelAt: 0.42, via: [[0.456, 0.293], [0.459, 0.215], [0.501, 0.161], [0.547, 0.186]], desc: '중국 해안을 따라 북쪽으로 올라가 서해를 건넌다' },
+      { id: 'open', from: 'hangzhou', to: 'suncheon', label: '바다길', labelAt: 0.5, via: [[0.469, 0.337], [0.521, 0.322], [0.560, 0.293]], desc: '동중국해를 바로 가로질러 조선 남해안에 닿는다' },
     ],
   },
 };
