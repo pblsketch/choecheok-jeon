@@ -45,7 +45,11 @@ for name, url in URLS.items():
         urllib.request.urlretrieve(url, p)
 
 # 붓글씨로 보이는 엔진 글(가로 안내, 준비 중 화면, 끝 화면, 고지도 나라 이름)
-BRUSH_EXTRA = '두 개의 항로최척전가로로 돌려 주세요준비 중이야기의 끝조선일본중국안남시험 맵0123456789—·「」'
+#  + 내용 화면의 붓글씨 제목: 장육불 꿈(texts.js DREAM.title) · 퉁소가 떠오르는 순간(poem.js) · 시구 맞추기 제목(poem.js)
+#    · 결과 화면 제목(notes.js result.title) · 수첩·1차시 끝·결말·「김영철전」·재회처럼 제목으로 쓰일 글자
+BRUSH_EXTRA = ('두 개의 항로최척전가로로 돌려 주세요준비 중이야기의 끝조선일본중국안남시험 맵0123456789—·「」'
+               '장육불 꿈남원, 그 봄밤의 가락그 밤의 시로 답하자'
+               '나의 수첩1차시는 여기까지원작의 결말김영철전재회')
 
 
 def read(path):
@@ -75,7 +79,10 @@ def brush_chars():
         src = read(flow)
         text += ''.join(re.findall(r"(?:title|subtitle|name): '([^']+)'", src))
     for f in glob.glob(os.path.join(ROOT, 'js', 'data', 'places', '*.js')):
-        text += ''.join(re.findall(r"^\s*name: '([^']+)'", read(f), re.M))
+        src = read(f)
+        text += ''.join(re.findall(r"^\s*name: '([^']+)'", src, re.M))
+        # 한 줄에 다른 칸과 함께 적은 맵 이름(맵 위 지역 띠): { name: '이름 없는 섬', theme: … } · island({ name: '…', night: … })
+        text += ''.join(re.findall(r"name: '([^']+)',\s*(?:theme|night|spawn|grid):", src))
     return ''.join(sorted(set(text)))
 
 

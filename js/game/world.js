@@ -605,7 +605,7 @@
     root.classList.add('talking');
     return {
       main, dlg: back, mode: 'dlg', place: W.place, placeId: W.placeId,
-      tray(content) { tray.innerHTML = ''; if (content) tray.appendChild(content); tray.classList.toggle('hide', !content); },
+      tray(content) { G.ui.fillTray(tray, content); },
       trayEl: () => tray,
       refresh() { if (G.hud) G.hud.refresh(); },
       close() { closeDlg(this); },

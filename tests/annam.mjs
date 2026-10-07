@@ -143,12 +143,19 @@ async function placeOwned(page) {
   ok(d.quotes.length >= 3 && d.quotes.every(Boolean), `원작 대조 카드 ${d.quotes.length}장: 원문은 늘 풀이와 함께`);
   ok(d.recall.join() === 'true,false,false,true', '모래밭의 2행 되살리기: 연 3 이하이고 2행이 없을 때만(안남에 닿을 때의 연 기준)');
   ok(d.poem.lines === '王子吹簫月欲低碧天如海露凄凄會須共御靑鸞去蓬島煙霞路不迷' && d.poem.trapsAB === 10 && d.poem.c === '瑤臺繚緲曉雲紅', '정답 시 원문·함정 A/B 열 줄·C(瑤臺繚緲曉雲紅)');
-  // 이어 하기 글자: 안남 단계 되풀이(더듬기 2번 → 생 −2, 조각 4, 연 5에서는 2행 되살리기 없음)
+  // 이어 하기 글자: 1막 전체(서막 → 남원 → 낭고야 → 안남)를 되풀이한 1막 끝 상태
+  //  고른 것이 없으면 연은 낭고야 고정 꿈(+1)만 바뀌어 6으로 안남에 닿는다 → 2행 되살리기 없음, 더듬기 2번 → 생 −2, 조각 4
+  //  연이 3 이하로 닿으면(양식·침묵·남음: 연 0) 모래밭에서 2행이 되살아난다(게임과 같은 규칙)
   const r = await page.evaluate(() => {
-    const st = G.code.replay({ mode: 'basic', choices: {}, know: { 'h-annam-trade': true }, puzzle: { groped: 2, fixes: 3, traps: ['A', 'B'] } });
-    return { saeng: st.saeng, yeon: st.yeon, f4: !!st.frags[4], f2: !!st.frags[2], know: !!st.know['h-annam-trade'], pz: st.puzzle };
+    const look = (st) => ({ saeng: st.saeng, yeon: st.yeon, f4: !!st.frags[4], f2: !!st.frags[2], know: !!st.know['h-annam-trade'], pz: st.puzzle, ny: (st.trail.find((t) => t.place === 'nanggoya') || {}).yeon, an: st.trail.find((t) => t.place === 'annam') });
+    const a = look(G.code.replay({ mode: 'basic', choices: {}, know: { 'h-annam-trade': true }, puzzle: { groped: 2, fixes: 3, traps: ['A', 'B'] } }));
+    const b = look(G.code.replay({ mode: 'basic', choices: { 'd-namwon-flee': 'food', 'd-nanggoya-news': 'silent', 'd-nanggoya-ship': 'stay' }, know: {}, puzzle: { groped: 1, fixes: 0, traps: [] } }));
+    return { a, b };
   });
-  ok(r.saeng === 3 && r.yeon === 5 && r.f4 && !r.f2 && r.know && r.pz.groped === 2 && r.pz.fixes === 3, `되풀이: 더듬기 두 번 → 생 ${r.saeng}, 조각 4, 연 5에선 2행 없음, 교역선 지식`);
+  const ra = r.a, rb = r.b;
+  ok(ra.ny === 6 && ra.yeon === 6 && ra.saeng === 3 && ra.f4 && !ra.f2 && ra.know && ra.pz.groped === 2 && ra.pz.fixes === 3 && ra.an && ra.an.saeng === 3,
+    `되풀이(고른 것 없음): 낭고야 끝 연 ${ra.ny} → 안남에선 게이지가 더듬기로만 바뀐다(연 ${ra.yeon}, 생 ${ra.saeng}), 조각 4, 연 6이라 2행 없음, 교역선 지식`);
+  ok(rb.ny === 0 && rb.f2 && rb.f4 && rb.saeng === 9, `되풀이(낭고야 끝 연 ${rb.ny}): 모래밭에서 2행이 되살아나고 조각 4, 더듬기 한 번 → 생 ${rb.saeng}`);
   errs.forEach((e) => problems.push('[자료] ' + e));
   ok(errs.length === 0, '오류 없음' + (errs.length ? ': ' + errs.join(' | ') : ''));
   await ctx.close();

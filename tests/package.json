@@ -5,7 +5,8 @@
   "scripts": {
     "smoke": "node smoke.mjs",
     "audio": "node audio.mjs",
-    "rules": "node rules.mjs"
+    "rules": "node rules.mjs",
+    "verify": "node smoke.mjs && node rules.mjs && node audio.mjs && node sprites.mjs && node act1.mjs && node annam.mjs && node act2.mjs && node endgame.mjs"
   },
   "devDependencies": { "playwright": "^1.63.0" }
 }

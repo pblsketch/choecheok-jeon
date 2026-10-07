@@ -233,7 +233,7 @@
     const el = evEl;
     const ctx = {
       main, mode: 'event', place: o.place || null, placeId: o.place ? o.place.id : null, el,
-      tray(content) { tray.innerHTML = ''; if (content) tray.appendChild(content); tray.classList.toggle('hide', !content); },
+      tray(content) { G.ui.fillTray(tray, content); },
       trayEl: () => tray,
       refresh() { G.hud.refresh(); },
       // 전체 삽화 바꾸기: 그림 파일이 목록에 있으면 그림, 없으면 빈 종이 판(+ 그림 설명)

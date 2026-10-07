@@ -38,6 +38,11 @@
 .nb-item.orig .nb-no { background: var(--seal); }
 .nb-item.fiction .nb-no { background: var(--fiction); }
 .nb-item.history .nb-no { background: var(--history); }
+/* 이야기 속 카드: 옥영이 모르는 소식(편지) · 이본 노트 — 카드 모습(sea.css의 .rcard.letter·.rcard.variant)과 같은 빛깔 */
+.nb-item.letter { border-left-color: var(--ochre); }
+.nb-item.letter .nb-no { background: var(--ochre); }
+.nb-item.variant { border-left-color: var(--history); }
+.nb-item.variant .nb-no { background: var(--history); }
 .nb-item.locked .nb-no { background: rgba(47, 40, 64, .22); }
 .nb-it { min-width: 0; }
 .nb-it small { display: block; font-size: .7em; color: var(--ink-3); font-weight: 700; letter-spacing: .04em; line-height: 1.3; }
