@@ -37,7 +37,7 @@
       grid: W.mk(14, 11, '.', [['rect', 2, 7, 10, 1, ':'], ['rect', 6, 2, 1, 6, ':'], ['rect', 10, 2, 3, 3, '~'], ['dots', ',', [[2, 2], [3, 3], [11, 8]]], ['border', 'h']]),
       props: [['pr_test_box', 3, 4, { w: 1, h: 1 }]],
       spots: { sign: { x: 2, y: 8, w: 1, h: 1, name: '푯말', act: '살피기', look: ['시험 맵이에요. 방향키나 조이스틱으로 걸어 보세요.'] } },
-      npcs: { tester: { sp: 'sp_merchant_ming', name: '시험 상인', x: 9, y: 6, dir: 'left', talk: [['어서 오시오. 시험 삼아 말을 걸어 보시오.']] } },
+      npcs: { tester: { sp: 'sp_merchant_ming', name: '시험 상인', x: 9, y: 6, dir: 'left', talk: [['어서 오시오. 시험 삼아 말을 걸어 보시오.']] }, nosprite: { sp: 'sp__none', name: '그림 없는 사람', x: 12, y: 8, dir: 'down' } },
     },
   };
   W.mapDef = function (id) {

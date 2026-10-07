@@ -87,7 +87,7 @@ async function walk(page, key, ms) {
   const mid = await page.evaluate(() => G.world.test.state());
   await page.mouse.up();
   ok(mid.y < before.y - 10, `조이스틱으로 위로 걷는다 (${Math.round(before.y)} → ${Math.round(mid.y)})`);
-  const spriteFallback = await page.evaluate(() => G.world.test.npcs().every((n) => n.spriteMissing));
+  const spriteFallback = await page.evaluate(() => { const ns = G.world.test.npcs(); return ns.some((n) => n.spriteMissing) && ns.every((n) => n.spriteMissing === !SPRITES[n.sp]); });
   ok(spriteFallback, '스프라이트가 없는 사람도 오류 없이 그린다(단색 사람 모양)');
   // 말 걸기: 시험 상인에게 데려가서 E
   await page.evaluate(() => { const n = G.world.test.npcs()[0]; G.world.test.teleport(n.id); });
