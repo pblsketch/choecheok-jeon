@@ -1,3 +1,13 @@
 # 도구 상태
 .omc
 .claude
+# dryforge 작업 문서(로컬 전용)
+.dryforge/
+# 로컬 전용
+tests/node_modules
+tests/shots/
+__pycache__/
+*.log
+# 생성용 원본 이미지·내려받은 원음(용량이 커서 저장소에는 올리지 않음)
+assets/raw/
+assets/raw_audio/
