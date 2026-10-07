@@ -1,6 +1,9 @@
 // 화면 틀 점검: cd tests && npm install && node smoke.mjs
 //  - 휴대폰 가로(844×390, 터치) · PC(1366×860) · 휴대폰 세로(390×844) · 파일로 열기(file://)
-//  - 타이틀이 뜨는가 / 세로면 "가로로 돌려 주세요" / 시험 맵에서 옥영이 걷는가(키보드·조이스틱)
+//  - 타이틀이 뜨는가(그림) / 세로면 "가로로 돌려 주세요" / 시험 맵에서 옥영이 걷는가(키보드·조이스틱)
+//  - 탐색 화면: 맵이 화면 전체 + 구석 HUD(초상·게이지 / 미션 / 수첩·지도·설정 / 조이스틱 / 행동 단추)가 서로 겹치지 않는가
+//  - 테마 견본 맵 다섯(마을·포구·밤 항구·정원·섬)이 오류 없이 그려지는가 / 신표·시구 조각 알림
+//  - 고지도: 그림 위 거점이 실제 지리 차례(서쪽 안남·항주 → 조선 → 일본)인가, 2막 뱃길 고르기
 //  - 사건 모드(게이지 띠·선택지·등록 안 된 단계의 '준비 중') / 빈 거점 '준비 중' → 고지도로 다음 거점
 //  - 콘솔 오류·페이지 오류·실패한 요청이 하나도 없어야 한다
 // 게임 폴더는 테스트가 스스로 서빙한다(serve.mjs). 이미 설치된 크롬을 쓴다.
@@ -56,9 +59,10 @@ async function walk(page, key, ms) {
   ok(await visible(page, 'text=이어폰을 끼면 더 잘 들려요'), '"이어폰을 끼면 더 잘 들려요" 안내');
   for (const t of ['이어 하기 글자 넣기', '이야기 수첩', '만든 사람·출처']) ok(await visible(page, `button:has-text("${t}")`), `"${t}" 단추`);
   await shot('01_title');
-  // 수첩: 아직 등록 안 됨 → 준비 중
+  ok(await page.evaluate(() => { const im = document.querySelector('.title-art img'); return !!im && im.complete && im.naturalWidth > 0; }), '타이틀 그림이 뜬다');
+  // 수첩: 아직 등록 안 됨 → 신표·시구 조각만 보이는 얇은 수첩
   await page.click('button:has-text("이야기 수첩")');
-  ok(await visible(page, '.sheet:has-text("준비 중")'), '이야기 수첩(미등록) → 준비 중 판');
+  ok(await visible(page, '.sheet .pocket-view'), '이야기 수첩(미등록) → 신표·시구 조각 판');
   await page.click('.sheet .actions .btn.primary');
   // 설정
   await page.click('.title-tools [aria-label="설정"]');
@@ -70,9 +74,21 @@ async function walk(page, key, ms) {
   await page.evaluate(() => G.world.test.enter());
   await page.waitForSelector('canvas.wcv');
   await page.waitForTimeout(300);
-  const lay = await page.evaluate(() => { const m = document.querySelector('.mapwrap').getBoundingClientRect(), p = document.querySelector('.panel').getBoundingClientRect(), t = document.querySelector('.pad').getBoundingClientRect(); return { mw: m.width, pw: p.width, mapRight: m.right, panelLeft: p.left, padRight: t.right }; });
-  ok(Math.abs(lay.mw / (lay.mw + lay.pw) - 2 / 3) < 0.03, `맵 자리가 왼쪽 2/3 (${Math.round(lay.mw)} : ${Math.round(lay.pw)})`);
-  ok(lay.padRight <= lay.mapRight + 0.5, '말 걸기 단추가 게이지 패널과 겹치지 않는다');
+  const lay = await page.evaluate(() => {
+    const r = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width, h: b.height }; };
+    return { vw: innerWidth, vh: innerHeight, map: r('.mapwrap'), tl: r('.hud-tl'), mi: r('.mission'), tr: r('.hud-tr'), pad: r('.pad .pbtn'), joy: r('.joy-zone'), face: r('.hud-face img') };
+  });
+  const apart = (a, b) => a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t;
+  ok(lay.map.w >= lay.vw - 1 && lay.map.h >= lay.vh - 1, `맵이 화면 전체를 채운다 (${Math.round(lay.map.w)}×${Math.round(lay.map.h)})`);
+  ok(lay.tl.l < lay.vw * 0.1 && lay.tl.t < lay.vh * 0.1, '왼쪽 위: 초상·게이지');
+  ok(Math.abs((lay.mi.l + lay.mi.r) / 2 - lay.vw / 2) < 4 && lay.mi.t < lay.vh * 0.1, '가운데 위: 한 문장 미션');
+  ok(lay.tr.r > lay.vw * 0.9 && lay.tr.t < lay.vh * 0.1, '오른쪽 위: 수첩·지도·설정');
+  ok(lay.pad.r > lay.vw * 0.85 && lay.pad.b > lay.vh * 0.8, '오른쪽 아래: 행동 단추');
+  ok(lay.joy.l === 0 && lay.joy.b >= lay.vh - 1, '왼쪽 아래: 조이스틱 자리');
+  ok(apart(lay.tl, lay.mi) && apart(lay.mi, lay.tr) && apart(lay.tl, lay.tr) && apart(lay.pad, lay.tr) && apart(lay.pad, lay.mi), 'HUD 부품이 서로 겹치지 않는다');
+  ok(await page.evaluate(() => { const im = document.querySelector('.hud-face img'); return im.complete && im.naturalWidth > 0; }), '옥영의 작은 초상이 뜬다');
+  ok(await visible(page, '.joy-rest'), '터치 화면: 쉬고 있는 조이스틱이 보인다');
+  ok((await page.textContent('.mission .mi-text')).includes('최척을 다시 만나라'), '미션 "최척을 다시 만나라."');
   let w = await walk(page, 'ArrowRight', 600);
   ok(w.b.x > w.a.x + 20, `방향키로 오른쪽으로 걷는다 (${Math.round(w.a.x)} → ${Math.round(w.b.x)})`);
   w = await walk(page, 'KeyS', 400);
@@ -123,6 +139,7 @@ async function walk(page, key, ms) {
   await shot('05_event_choice');
   await page.click('.ev-tray .opt >> nth=0');
   await page.waitForTimeout(300);
+  ok(await visible(page, '.gettoast.token:has-text("신표")'), '신표를 얻으면 화면 가운데에 크게 알린다');
   await shot('06_event_gauge');
   const g1 = await page.evaluate(() => ({ y: G.save.state.yeon, s: G.save.state.saeng, t: G.save.state.tokens.length, num: document.querySelector('.gstrip .gnum').textContent }));
   ok(g1.y === 7 && g1.s === 4 && g1.t === 1, `선택 뒤 게이지가 바뀐다(연 ${g1.y}, 생 ${g1.s}, 신표 ${g1.t})`);
@@ -134,6 +151,37 @@ async function walk(page, key, ms) {
   await page.click('.ev-tray .btn.primary');
   await page.waitForFunction(() => window.__ranDone === true);
   ok(!(await visible(page, '.event.on')), '단계가 끝나면 사건 화면이 닫힌다');
+
+  // 테마 견본 맵 다섯: 오류 없이 그려지고 테마가 맞는가
+  for (const id of ['demo_village', 'demo_port', 'demo_harbor_night', 'demo_garden', 'demo_island']) {
+    await page.evaluate((id) => G.world.test.enter(id, { name: '견본', mission: '최척을 다시 만나라.' }), id);
+    await page.waitForTimeout(250);
+    const st = await page.evaluate(() => ({ id: G.world.test.map().id, night: G.world.test.map().night }));
+    ok(st.id === id && (id !== 'demo_harbor_night' || st.night), `테마 견본 맵 ${id}${st.night ? '(밤)' : ''}`);
+  }
+  await shot('07b_theme_island');
+  // 시구 조각 알림
+  await page.evaluate(() => G.hud.setFrag(1, '시험 조각'));
+  await page.waitForTimeout(200);
+  ok(await visible(page, '.gettoast.frag:has-text("시험 조각")'), '시구 조각을 얻으면 크게 알린다');
+  await page.waitForFunction(() => !document.querySelector('.gettoast'), null, { timeout: 8000 });
+  // 오른쪽 위 '지도': 고지도를 겹쳐 본다
+  await page.click('.hud-tr [aria-label="지도"]');
+  await page.waitForSelector('.om-peek .oldmap');
+  ok(await page.evaluate(() => G.world.test.state().paused), '지도를 겹쳐 보는 동안 맵이 멈춘다');
+  await page.click('.om-peek .om-close');
+  ok(!(await visible(page, '.om-peek')), '지도 닫기');
+  // 고지도: 실제 지리 차례와 2막 뱃길 고르기
+  const geo = await page.evaluate(() => { const n = OLDMAP.nodes; return n.annam.x < n.hangzhou.x && n.hangzhou.x < n.namwon.x && n.namwon.x < n.nanggoya.x && n.annam.y > n.hangzhou.y && n.hangzhou.y > n.namwon.y; });
+  ok(geo, '고지도 거점이 실제 지리 차례(서쪽 안남·항주 → 조선 → 일본, 안남이 가장 남쪽)');
+  await page.evaluate(() => { G.oldmap.fast = true; window.__route = null; G.oldmap.show({ from: 'hangzhou', pick: true, paths: OLDMAP.routes.act2, title: '뱃길' }).then((r) => (window.__route = r)); });
+  await page.waitForSelector('.om-tray .opt');
+  ok(await page.evaluate(() => { const im = document.querySelector('.om-img'); return im.complete && im.naturalWidth > 0; }), '고지도 그림이 뜬다');
+  ok((await page.locator('.om-tray .opt').count()) === 2 && (await page.textContent('.om-tray')).includes('연안길') && (await page.textContent('.om-tray')).includes('바다길'), '2막 뱃길: 연안길 / 바다길');
+  await page.click('.om-tray .opt:has-text("바다길")');
+  await page.waitForFunction(() => window.__route === 'open');
+  ok(await page.evaluate(() => G.oldmap.state().at === 'suncheon'), '바다길을 고르면 배가 순천에 닿는다');
+  await page.evaluate(() => { G.oldmap.fast = false; });
 
   // 이야기 시작 → 방식 고르기 → 빈 거점(준비 중) → 다음 거점 → 고지도
   await page.evaluate(() => { G.save.reset(); G.app.title(); });
@@ -221,7 +269,7 @@ async function walk(page, key, ms) {
   ok((await page.textContent('.place-card')).includes('가족이 있는 곳으로 돌아가라'), '2막 거점: 미션 "가족이 있는 곳으로 돌아가라."');
   await page.click('.ev-tray .btn.primary');
   await page.waitForFunction(() => G.world.goal() && G.world.goal().targets[0] === 'mong');
-  ok((await page.textContent('.pl-goal')).includes('몽선에게 말을 걸자'), '패널에 지금 할 일');
+  ok((await page.textContent('.mission .pl-goal')).includes('몽선에게 말을 걸자'), '미션 아래에 지금 할 일');
   ok(await page.evaluate(() => G.world.test.state().sp === 'sp_okyoung_f'), '거점이 정한 옥영의 모습(sp_okyoung_f)');
   await shot('04_demo_map');
   await page.evaluate(() => G.world.test.complete());
