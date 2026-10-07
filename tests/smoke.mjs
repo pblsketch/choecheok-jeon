@@ -211,7 +211,8 @@ async function hudClear(page) {
   await page.evaluate(() => { G.oldmap.fast = false; });
 
   // 이야기 시작 → 방식 고르기 → 빈 거점(준비 중) → 다음 거점 → 고지도
-  await page.evaluate(() => { G.save.reset(); G.app.title(); });
+  // 엔진 점검: 내용이 채워진 거점을 비워 '준비 중' 흐름만 본다(내용은 act1/act2 점검이 맡음)
+  await page.evaluate(() => { for (const id of ['prologue','namwon','nanggoya','annam','interlude','hangzhou','sea','namwon_final']) PLACES[id] = null; G.save.reset(); G.app.title(); });
   await page.click('button:has-text("이야기 시작")');
   ok(await visible(page, '.sheet button:has-text("처음 배우기")') && await visible(page, '.sheet button:has-text("깊이 읽기")'), '방식 고르기: 처음 배우기 / 깊이 읽기');
   await page.click('.sheet button:has-text("처음 배우기")');
@@ -280,6 +281,7 @@ async function hudClear(page) {
   // 맵이 있는 거점: 사람(cast) · 목표(beats) · 단계(steps)가 이어지는가
   await page.evaluate(() => {
     G.save.state.teacher = false; G.app.applySettings();
+    for (const id of ['prologue','namwon','nanggoya','annam','interlude','hangzhou','sea','namwon_final']) PLACES[id] = null;
     PLACES.__demo = {
       name: '점검 거점', act: 2, map: 'demo_yard', avatar: 'sp_okyoung_f', intro: '점검용 거점이에요.',
       maps: { demo_yard: { name: '점검 마당', spawn: [3, 3, 'down'], grid: G.world.mk(10, 8, '.', [['border', 'h'], ['rect', 6, 5, 2, 2, ':']]), spots: { gate: { x: 6, y: 5, w: 2, h: 2, name: '문' } } } },
