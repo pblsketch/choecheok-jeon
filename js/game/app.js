@@ -1,8 +1,9 @@
 'use strict';
 // 화면 흐름: 타이틀 → (방식 고르기) → 거점 차례대로(js/data/flow.js의 order) → 끝.
 //  화면 모드 두 가지
-//   - 탐색 모드: 왼쪽 2/3 맵(탑다운 맵 또는 고지도) + 오른쪽 1/3 게이지 패널
-//   - 사건 모드: 전체 삽화 한 폭 + 짧은 글 + 아래쪽 선택지. 패널은 위쪽 얇은 게이지 띠로 접힌다
+//   - 탐색 모드: 맵(탑다운 맵 또는 고지도)이 화면 전체를 채우고 구석에 HUD(js/core/hud.js)
+//       왼쪽 위 초상+게이지 · 가운데 위 미션 · 오른쪽 위 수첩·지도·설정 · 왼쪽 아래 조이스틱 · 오른쪽 아래 행동 단추
+//   - 사건 모드: 전체 삽화 한 폭 + 짧은 글 + 아래쪽 선택지. HUD는 위쪽 얇은 게이지 띠로 접힌다
 //  세로 화면이면 "가로로 돌려 주세요" 안내만 보이고 게임은 멈춘다.
 (function () {
   const { h, $$, T, boldNodes } = G.util;
@@ -19,8 +20,13 @@
   app.openHook = function (name, ...args) {
     const f = app.hooks[name];
     if (typeof f === 'function') return f(...args);
+    if (name === 'notebook') return pocketNotebook();
     return ui.notReady(HOOK_NAME[name] || name);
   };
+  // 수첩이 아직 등록되지 않았을 때: 챙긴 신표·얻은 시구 조각만 보여 주는 얇은 수첩
+  function pocketNotebook() {
+    return ui.sheet([h('h3', '이야기 수첩'), G.hud.pocketView(), h('p.small.muted', '수첩의 다른 쪽(인물·원문·역사)은 아직 준비 중이에요.')], undefined, { cls: 'notebook-mini' });
+  }
 
   // 저장 열쇠 이름
   app.key = {
@@ -30,14 +36,18 @@
   };
   app.isDone = (p, stepId) => !!S().done[stepId ? app.key.step(p, stepId) : app.key.place(p)];
 
+  // 아이콘: 둥근 끝 선으로 그린 손그림 느낌(색은 글자색을 따른다)
+  const SV = (body) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>';
   const ICON = {
-    gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
-    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5c3-1 6-1 8 1 2-2 5-2 8-1v14c-3-1-6-1-8 1-2-2-5-2-8-1z"/><path d="M12 6v14"/></svg>',
-    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
-    skip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 5l8 7-8 7z"/><path d="M13 5l6 7-6 7"/></svg>',
-    ear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>',
-    musicOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
-    musicOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>',
+    gear: SV('<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.6"/>'),
+    book: SV('<path d="M3.5 5.2c2.9-1.2 5.9-1.2 8.5.8 2.6-2 5.6-2 8.5-.8v13.6c-2.9-1.1-5.9-1.1-8.5.9-2.6-2-5.6-2-8.5-.9z"/><path d="M12 6v13.7"/><path d="M6.3 9c1.3-.3 2.6-.2 3.7.3M6.3 12c1.3-.3 2.6-.2 3.7.3M14 9.3c1.1-.5 2.4-.6 3.7-.3"/>'),
+    map: SV('<path d="M3 6.2 8.6 4l6.8 2.3L21 4.2v13.6l-5.6 2.2-6.8-2.3L3 19.8z"/><path d="M8.6 4v13.7M15.4 6.3V20"/><path d="M11 11.5c.8-.9 1.6-.9 2.2 0" stroke-dasharray="1 1.6"/>'),
+    home: SV('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>'),
+    skip: SV('<path d="M5 5l8 7-8 7z"/><path d="M13 5l6 7-6 7"/>'),
+    ear: SV('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>'),
+    musicOn: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
+    musicOff: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/>'),
+    close: SV('<path d="M6 6l12 12M18 6 6 18"/>'),
   };
   app.ICON = ICON;
   const iconBtn = (name, label, fn, cls = '') => h('button.icon-btn' + cls, { type: 'button', 'aria-label': label, title: label, html: ICON[name], on: { click: (e) => { e.currentTarget.blur(); G.audio.tap(); fn(); } } });
@@ -101,40 +111,27 @@
     r.className = 'scr-title';
     const btn = (label, cls, fn) => h('button.btn' + (cls ? '.' + cls : ''), { type: 'button', on: { click: () => { G.audio.unlock(); G.audio.tap(); fn(); } } }, label);
     const menu = h('div.menu',
-      started ? btn('이어 하기', 'primary', () => app.continue()) : btn('이야기 시작', 'primary', () => app.newGame()),
-      btn('이어 하기 글자 넣기', '', () => app.openHook('codeEntry')),
-      started ? btn('처음부터', '', () => app.resetAll()) : null,
+      started ? btn('이어 하기', 'primary.big', () => app.continue()) : btn('이야기 시작', 'primary.big', () => app.newGame()),
       h('div.menu-row',
-        btn('이야기 수첩', 'small', () => app.openHook('notebook')),
-        btn('만든 사람·출처', 'small', () => app.openHook('credits'))));
+        btn('이어 하기 글자 넣기', 'dark', () => app.openHook('codeEntry')),
+        started ? btn('처음부터', 'dark', () => app.resetAll()) : null),
+      h('div.menu-row',
+        btn('이야기 수첩', 'dark.small', () => app.openHook('notebook')),
+        btn('만든 사람·출처', 'dark.small', () => app.openHook('credits'))));
     r.appendChild(h('div.title-screen',
-      h('div.title-art', { 'aria-hidden': 'true' }, titleArt()),
+      h('div.title-art', { 'aria-hidden': 'true' }, h('img', { src: app.TITLE_ART, alt: '', decoding: 'async' })),
       h('div.title-main',
         h('div.logo', h('div.pre', F.pre || ''), h('h1', F.title || ''), h('div.sub', F.subtitle || ''), F.tagline ? h('div.tagline', F.tagline) : null),
-        h('div.hint', h('span.ic', { html: ICON.ear }), F.hint || '')),
-      h('div.title-side', menu,
-        st.teacher ? h('div.credit.teacher', '선생님용이 켜져 있어요') : null,
-        h('div.credit.maker', '만든이 박준일(온양여자고등학교 국어 교사)')),
+        h('div.title-side', menu)),
+      h('div.title-foot',
+        h('div.hint', h('span.ic', { html: ICON.ear }), F.hint || ''),
+        h('div.credits-line',
+          st.teacher ? h('div.credit.teacher', '선생님용이 켜져 있어요') : null,
+          h('div.credit.maker', '만든이 박준일(온양여자고등학교 국어 교사)'))),
       h('div.title-tools', musicToggle(), iconBtn('gear', '설정', () => app.settings()))));
   };
-  // 타이틀 그림: 파일 없이 SVG로 그린 바다와 두 뱃길
-  function titleArt() {
-    const svg = `<svg viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="tsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe2c3"/><stop offset=".62" stop-color="#e3d5b0"/><stop offset="1" stop-color="#b9c7bf"/></linearGradient></defs>
-      <rect width="800" height="450" fill="url(#tsky)"/>
-      <circle cx="610" cy="120" r="54" fill="#b3342a" opacity=".85"/>
-      <path d="M0 300 Q120 250 230 285 T470 270 T800 260 V450 H0Z" fill="#9fb3ad" opacity=".55"/>
-      <path d="M0 340 Q140 300 260 330 T520 320 T800 310 V450 H0Z" fill="#7f9a94" opacity=".55"/>
-      <g fill="none" stroke="#5a4a3a" stroke-width="2" opacity=".45">
-        <path d="M40 380 q20 -10 40 0 t40 0"/><path d="M300 400 q20 -10 40 0 t40 0"/><path d="M560 372 q20 -10 40 0 t40 0"/><path d="M660 420 q20 -10 40 0 t40 0"/>
-      </g>
-      <path d="M60 250 C220 140 460 150 740 230" fill="none" stroke="#b3342a" stroke-width="3" stroke-dasharray="10 8" opacity=".75"/>
-      <path d="M740 300 C520 380 260 370 70 300" fill="none" stroke="#2a2119" stroke-width="3" stroke-dasharray="10 8" opacity=".55"/>
-      <g transform="translate(420 168)"><path d="M-22 0 H22 L15 10 H-15Z" fill="#6e4726"/><path d="M-2 -30 V-1 H18Z" fill="#fffaf0" stroke="#2a2119" stroke-width="1.5"/></g>
-      <g transform="translate(330 352) scale(-1 1)"><path d="M-22 0 H22 L15 10 H-15Z" fill="#6e4726"/><path d="M-2 -30 V-1 H18Z" fill="#fffaf0" stroke="#2a2119" stroke-width="1.5"/></g>
-    </svg>`;
-    return h('div.ta', { html: svg });
-  }
+  // 타이틀 그림(현대 그림책풍: 밤바다 뱃머리의 옥영). 다른 그림으로 바꾸려면 이 값을 고친다
+  app.TITLE_ART = 'assets/ui/title.webp';
   function musicToggle() {
     const b = h('button.icon-btn.music-toggle', { type: 'button' });
     const draw = () => { const on = S().music; b.innerHTML = ICON[on ? 'musicOn' : 'musicOff']; b.setAttribute('aria-label', on ? '배경음 끄기' : '배경음 켜기'); b.title = on ? '배경음 끄기' : '배경음 켜기'; b.classList.toggle('off', !on); };
@@ -188,16 +185,21 @@
       r.className = 'scr-play';
       const els = G.hud.build();
       const stage = h('div.mapstage');
-      playEl = h('div.play', h('div.mapwrap', stage, els.mission), els.panel, els.strip);
+      playEl = h('div.play', h('div.mapwrap', stage), h('div.hud', els.panel, els.mission, els.tools), els.strip);
       r.appendChild(playEl);
       G.hud.tools(
-        [iconBtn('book', '이야기 수첩', () => app.openHook('notebook')), iconBtn('gear', '설정', () => app.settings()), iconBtn('home', '타이틀로', () => app.title()),
-          h('button.btn.small.teacher-only.skip-goal', { type: 'button', on: { click: () => { G.audio.tap(); if (!(G.world && G.world.skipGoal())) ui.toast('건너뛸 목표가 없어요'); } } }, '목표 건너뛰기')],
+        [h('button.btn.small.teacher-only.skip-goal', { type: 'button', on: { click: () => { G.audio.tap(); if (!(G.world && G.world.skipGoal())) ui.toast('건너뛸 목표가 없어요'); } } }, h('span.ic', { html: ICON.skip }), '목표 건너뛰기'),
+          iconBtn('book', '이야기 수첩', () => app.openHook('notebook')), iconBtn('map', '지도', () => app.openMap()), iconBtn('gear', '설정', () => app.settings())],
         [iconBtn('gear', '설정', () => app.settings()), h('button.btn.small.teacher-only.skip-scene', { type: 'button', on: { click: () => { G.audio.tap(); if (app._skip) app._skip(); } } }, h('span.ic', { html: ICON.skip }), '장면 건너뛰기')]);
     }
     G.hud.setPlace(info || {});
     G.hud.refresh(true);
     return playEl;
+  };
+  // 오른쪽 위 '지도': 고지도를 겹쳐 띄워 지금 있는 곳을 본다(탑다운 맵은 그대로 멈춰 있다)
+  app.openMap = function () {
+    const info = G.hud.info || {};
+    return G.oldmap.peek({ at: info.node || app.placeInfo(S().place || '').node, title: '고지도', note: info.name ? '지금 있는 곳: **' + info.name + '**' : '' });
   };
   app.mapArea = function () {
     if (!playEl || !playEl.isConnected) app.explore(G.hud.info || {});
@@ -414,7 +416,7 @@
     const st = S();
     const M = FL().modes || {};
     const seg = (label, key, opts) => h('div.seg', h('div.seg-l', label),
-      h('div.row-gap', opts.map(([v, t]) => {
+      h('div.seg-opts', { role: 'group', 'aria-label': label }, opts.map(([v, t]) => {
         const b = h('button.btn.small' + (st[key] === v ? '.primary' : ''), { type: 'button', 'aria-pressed': st[key] === v ? 'true' : 'false' }, t);
         b.addEventListener('click', () => {
           G.audio.tap(); st[key] = v; G.save.write(); app.applySettings();
@@ -432,8 +434,9 @@
         seg('배경음', 'music', [[true, '켜기'], [false, '끄기']]),
         seg('방식', 'mode', [['basic', (M.basic || {}).name || '처음 배우기'], ['deep', (M.deep || {}).name || '깊이 읽기']]),
         seg('선생님용', 'teacher', [[false, '끄기'], [true, '켜기']])),
-      h('p.small.muted', '선생님용을 켜면 게이지에 숫자가 보이고, 장면·목표를 건너뛸 수 있어요. 주소 끝에 ?teacher=1을 붙여도 켜져요.'),
-      h('p.small.muted', '진행 상황은 이 브라우저에만 저장돼요(서버로 보내지 않아요).'),
+      h('div.set-notes',
+        h('p.small.muted', '선생님용을 켜면 게이지에 숫자가 보이고, 장면·목표를 건너뛸 수 있어요. 주소 끝에 ?teacher=1을 붙여도 켜져요.'),
+        h('p.small.muted', '진행 상황은 이 브라우저에만 저장돼요(서버로 보내지 않아요).')),
     ], inGame ? [{ label: '타이틀로', value: 'title' }, { label: '닫기', value: true, cls: 'primary' }] : [{ label: '닫기', value: true, cls: 'primary' }], { cls: 'settings-sheet' });
     if (res === 'title') app.title();
     else if (!inGame && root().classList.contains('scr-title')) app.title(); // 선생님용 표시 등을 다시 그린다
