@@ -3,11 +3,19 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "content": "node content.mjs",
     "smoke": "node smoke.mjs",
     "audio": "node audio.mjs",
     "rules": "node rules.mjs",
     "art": "node art.mjs",
-    "verify": "node smoke.mjs && node rules.mjs && node audio.mjs && node sprites.mjs && node art.mjs && node act1.mjs && node annam.mjs && node act2.mjs && node endgame.mjs"
+    "maps": "node maps.mjs",
+    "file": "node file.mjs",
+    "code": "node code.mjs",
+    "resume": "node resume.mjs",
+    "original": "node original.mjs",
+    "hard": "node hard.mjs",
+    "e2e": "node e2e.mjs",
+    "verify": "node content.mjs && node sprites.mjs && node art.mjs && node rules.mjs && node smoke.mjs && node audio.mjs && node act1.mjs && node annam.mjs && node act2.mjs && node endgame.mjs && node maps.mjs && node file.mjs && node code.mjs && node resume.mjs && node original.mjs && node hard.mjs && node e2e.mjs"
   },
   "devDependencies": { "playwright": "^1.63.0" }
 }
