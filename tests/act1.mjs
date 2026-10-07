@@ -6,7 +6,10 @@
 //   C 처음 배우기: 돈우에게 두 번 말을 걸어 돈우 카드를 읽고, 신표 → 지혜의 길 → 배에 오름
 //   D 깊이 읽기: 돈우 카드 없이 → 지혜의 길이 잠긴다(실마리 한 줄) · 생 1로 맞춘 뒤 직접 묻기 → 쓰러짐 · 대조 카드에 긴 원문
 //  - 딜레마마다 게이지·조각·신표·지식이 맞게 바뀌는가 / 고정 장육불 꿈은 한 번만 / 딜레마 뒤 대조 카드(창작은 '원작에는 없는 장면')
-//  - 낭고야 다음 거점은 안남 / 실제로 논 상태의 이어 하기 글자가 왕복한다(encode → decode → 같은 값, 다시 encode → 같은 글자)
+//  - 낭고야 다음 거점은 안남
+//  - A·B·C는 안남까지 끝까지 논다(퉁소 알아듣기 → 시구 맞추기 → 재회 → 1차시 끝). 이어 하기 글자는 1막 끝(1차시는 여기까지)의 상태를 담으므로
+//    그 화면의 글자로 왕복한다(encode → decode → 같은 값, 다시 encode → 같은 글자): 연·생·선택·지식·조각 1~4·신표·장육불·꿈·거점 기록·시구 맞추기 기록·수첩 카드
+//  - 1막 끝 이야기 수첩: 지나온 원작 장면 카드(옥영이 지은 시·최척의 말 …)가 원작 대조 탭에 열리고, 2막 카드는 잠겨 있다(선생님용은 모두 열림)
 //  - 장면마다 화면 사진: tests/shots/t7/(휴대폰 가로 844×390, PC 1366×860) · 콘솔 오류 0
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -88,7 +91,7 @@ async function play(name, plan) {
   const out = { dil: {}, cards: {}, dream: [], collapse: {}, goals: [], cardsText: {}, shots: [] };
   let n = 0;
   const shot = async (label) => {
-    if (!plan.shoot || seen.has('shot:' + label)) return;
+    if (!plan.shoot || out.reachedAnnam || seen.has('shot:' + label)) return;
     seen.add('shot:' + label);
     // 알림(신표·조각·지식)이 걷힌 뒤에 찍는다(시험은 사람보다 빨리 넘겨 알림이 쌓인다)
     await page.waitForFunction(() => !document.querySelector('.gettoast'), null, { timeout: 9000 }).catch(() => {});
@@ -122,7 +125,17 @@ async function play(name, plan) {
         lineCard: !!q('.ev-main .says .card'),
       };
     });
-    if (s.place === 'annam' && s.done.includes('p:nanggoya')) { out.reachedAnnam = true; break; }
+    if (s.place === 'annam' && s.done.includes('p:nanggoya') && !out.reachedAnnam) {
+      out.reachedAnnam = true;
+      out.final = await state(page); // 낭고야 끝(안남에 닿은 때)
+      if (!plan.annam) break;
+    }
+    if (out.reachedAnnam) {
+      // 안남: 1차시 끝 화면이 뜨면 멈춘다 · 시구 맞추기는 plan.annam(page)대로 푼다(나머지는 아래 공통 진행)
+      if (await page.evaluate(() => !!document.querySelector('.act1end[data-code]'))) { out.end = await state(page); out.endCode = await page.getAttribute('.act1end', 'data-code'); break; }
+      if (await page.evaluate(() => !!document.querySelector('.pz') && !document.querySelector('.pz.done'))) { await plan.annam(page, out); continue; }
+      if (await page.evaluate(() => !!document.querySelector('.pz.done .pz-next'))) { await page.click('.pz.done .pz-next').catch(() => {}); await page.waitForTimeout(200); continue; }
+    }
     const stepId = s.snap ? s.snap.split(':').slice(2).join(':') : null;
     const placeId = s.snap ? s.snap.split(':')[1] : null;
     const step = stepId ? await page.evaluate(([p, id]) => { const x = (PLACES[p].steps || []).find((y) => y.id === id); return x ? { type: x.type, dilemma: x.dilemma || null, options: (x.options || []).map((o) => o.id) } : null; }, [placeId, stepId]) : null;
@@ -163,7 +176,7 @@ async function play(name, plan) {
       const key = s.map + ':' + s.goal.text;
       if (!seen.has('goal:' + key)) {
         seen.add('goal:' + key);
-        out.goals.push({ map: s.map, text: s.goal.text, targets: s.goal.targets });
+        if (!out.reachedAnnam) out.goals.push({ map: s.map, text: s.goal.text, targets: s.goal.targets });
         await page.waitForTimeout(500);
         await shot('map_' + s.map + '_' + s.goal.targets.join('-'));
         if (plan.onGoal) await plan.onGoal(s.goal, s.map, page, out, (l) => shot(l));
@@ -174,15 +187,17 @@ async function play(name, plan) {
     }
     await page.waitForTimeout(120);
   }
-  out.final = await state(page);
+  if (!out.final) out.final = await state(page);
   out.secs = Math.round((Date.now() - t0) / 1000);
-  // 이어 하기 글자 왕복(실제로 논 상태)
-  out.code = await page.evaluate(() => {
-    const st = G.save.state;
-    const code = G.code.encode(st);
-    const dec = G.code.decode(code);
-    return { code, again: dec.error ? null : G.code.encode(dec), dec: JSON.parse(JSON.stringify(dec)) };
-  });
+  // 이어 하기 글자 왕복(1막 끝 화면에 보인 글자 = 실제로 논 1막 끝 상태)
+  if (out.end) {
+    out.code = await page.evaluate((shown) => {
+      const st = G.save.state;
+      const code = G.code.encode(st);
+      const dec = G.code.decode(shown);
+      return { code, shown, again: dec.error ? null : G.code.encode(dec), dec: JSON.parse(JSON.stringify(dec)) };
+    }, out.endCode);
+  }
   if (plan.after) await plan.after(page, out, (l) => shot(l));
   errs.forEach((e) => problems.push(`[${name}] ${e}`));
   ok(errs.length === 0, `${name}: 콘솔 오류·실패한 요청 없음` + (errs.length ? ': ' + errs.slice(0, 4).join(' | ') : ''));
@@ -204,24 +219,84 @@ function common(name, out) {
   ok(c && /orig/.test(c.cls) && c.text.includes('原作') && c.text.includes('사간'), `${name}: d-nanggoya-ship 뒤 대조 카드(원작 — 돈우가 \'사간\'을 배에 태운다)`);
   ok(eq(out.goals.map((x) => x.map).filter((v, i, a) => a.indexOf(v) === i), ['home', 'yeongok', 'house', 'pier']), `${name}: 맵 차례 남원 옛집 → 연곡 → 돈우의 집 → 포구`);
 }
+// 1막 끝(1차시는 여기까지)에 보인 이어 하기 글자로 되살린 상태가 실제로 논 상태와 같은가
 function roundTrip(name, out) {
-  const st = out.final, d = out.code.dec;
-  const act1Know = ['h-namwon-war', 'h-namwon-ming', 'h-nanggoya-captives', 'h-nanggoya-donwoo', 'h-annam-trade', 'k-japanese'];
-  const kn = (x) => act1Know.filter((k) => (x.know || {})[k]);
-  const tr = (x) => (x.trail || []).filter((t) => ['start', 'namwon', 'nanggoya'].includes(t.place)).map((t) => [t.place, t.yeon, t.saeng]);
-  ok(out.code.code && out.code.code.length === 6 && out.code.again === out.code.code, `${name}: 이어 하기 글자 ${out.code.code} → 되살려 다시 담으면 같은 글자`);
+  ok(!!out.end, `${name}: 안남까지 끝까지 놀아 1차시 끝 화면(이어 하기 글자)에 닿는다`);
+  if (!out.end) return;
+  const st = out.end, d = out.code.dec;
+  const kn = (x) => Object.keys(x.know || {}).filter((k) => x.know[k]).sort();
+  const tr = (x) => (x.trail || []).map((t) => [t.place, t.yeon, t.saeng]);
+  const cards = (x) => (x.cards || []).map((c) => c.id).sort();
+  const pz = (x) => ({ traps: ((x.puzzle || {}).traps || []).slice().sort(), fixes: Math.min(8, (x.puzzle || {}).fixes || 0), groped: Math.min(10, (x.puzzle || {}).groped || 0) });
+  ok(st.act1Done && out.code.shown === out.code.code && out.code.again === out.code.shown, `${name}: 1막 끝 글자 ${out.code.shown} = 지금 상태의 글자, 되살려 다시 담아도 같은 글자`);
   ok(d.yeon === st.yeon && d.saeng === st.saeng, `${name}: 되살린 연·생이 실제로 논 값과 같다 (${st.yeon}/${st.saeng} ↔ ${d.yeon}/${d.saeng})`);
-  ok(eq(d.choices, st.choices) && eq(kn(d), kn(st)), `${name}: 되살린 선택·지식이 같다`);
-  ok(eq(d.frags, st.frags) && eq(tok(d), tok(st)), `${name}: 되살린 시구 조각·신표가 같다`);
-  ok(d.jangyuk === st.jangyuk && d.dreamSeen === st.dreamSeen, `${name}: 되살린 장육불 횟수·꿈 기록이 같다 (${st.jangyuk})`);
-  ok(eq(tr(d), tr(st)), `${name}: 되살린 거점 기록(출발·남원·낭고야)이 같다`);
+  ok(eq(d.choices, st.choices) && eq(kn(d), kn(st)) && d.mode === st.mode, `${name}: 되살린 방식·선택·지식이 같다 (${kn(st).join(' ') || '지식 없음'})`);
+  ok(eq(d.frags, st.frags) && eq(tok(d), tok(st)), `${name}: 되살린 시구 조각(${fragKeys(st)})·신표(${tok(st).join(' ') || '없음'})가 같다`);
+  ok(d.jangyuk === st.jangyuk && d.dreamSeen === st.dreamSeen && eq(d.wisdomUsed, st.wisdomUsed), `${name}: 되살린 장육불 횟수(${st.jangyuk})·꿈 기록·지혜의 길 기록이 같다`);
+  ok(eq(tr(d), tr(st)), `${name}: 되살린 거점 기록(출발·남원·낭고야·안남)이 같다 — ${tr(st).map((t) => t.join(' ')).join(' / ')}`);
+  ok(eq(pz(d), pz(st)), `${name}: 되살린 시구 맞추기 기록이 같다 (함정 ${pz(st).traps.join('') || '없음'} · 고침 ${pz(st).fixes} · 더듬기 ${pz(st).groped})`);
+  ok(eq(cards(d), cards(st)), `${name}: 되살린 수첩 카드가 같다 (${cards(st).length}장)`);
+}
+// 안남의 시구 맞추기 풀기: o.trap이면 함정 하나를 먼저 놓았다가 고치고, 가진 조각을 놓고, 없는 행은 더듬어 찾는다
+function solvePoem(o = {}) {
+  return async (page, out) => {
+    await page.waitForSelector('.pz .pz-strip');
+    await page.waitForTimeout(300);
+    let s = await page.evaluate(() => G.poem.test.state());
+    if (o.trap && !out.trapped) {
+      out.trapped = true;
+      const t = s.pool.find((id) => !/^L/.test(id));
+      const row = [1, 2, 3, 4].find((n) => !s.rows[n].strip);
+      if (t && row) {
+        await page.click(`.pz-pool .pz-strip[data-id="${t}"]`);
+        await page.click(`.pz-row[data-row="${row}"] .pz-slot`);
+        await page.waitForTimeout(200);
+        await page.click(`.pz-row[data-row="${row}"] .pz-slot`); // 빼기(고침)
+        await page.waitForTimeout(200);
+      }
+    }
+    s = await page.evaluate(() => G.poem.test.state());
+    for (const id of s.pool) if (/^L\d$/.test(id)) { await page.click(`.pz-pool .pz-strip[data-id="${id}"]`); await page.click(`.pz-row[data-row="${id[1]}"] .pz-slot`); await page.waitForTimeout(120); }
+    s = await page.evaluate(() => G.poem.test.state());
+    for (const n of [1, 2, 3, 4]) {
+      if (s.rows[n].strip) continue;
+      await page.click(`.pz-row[data-row="${n}"] .pz-grope`);
+      await page.waitForSelector('.pz-sheet .pz-cand, .pz-ex', { timeout: 5000 });
+      if (await page.locator('.pz-ex').count()) { await page.click('.pz-ex .btn.primary'); await page.waitForFunction((n) => G.poem.test.state().rows[n].strip, n, { timeout: 5000 }).catch(() => {}); }
+      else await page.click(`.pz-cand[data-id="L${n}"]`);
+      await page.waitForTimeout(250);
+    }
+    await page.waitForSelector('.pz.done', { timeout: 8000 }).catch(() => {});
+  };
+}
+// 1막 끝 이야기 수첩: 지나온 원작 장면 카드는 열리고, 2막 카드는 잠긴다(선생님용은 모두 열림)
+async function notebookAtEnd(name, page) {
+  const look = () => page.evaluate(() => [...document.querySelectorAll('.nb-item')].map((b) => ({ cls: b.className, t: b.textContent })));
+  await page.evaluate(() => { G.app.openHook('notebook', 'orig'); }); // 수첩이 닫힐 때까지 기다리는 약속(Promise)을 돌려받지 않는다
+  await page.waitForSelector('.notebook-sheet .nb-item');
+  const a = await look();
+  const open = (t) => a.some((x) => /story/.test(x.cls) && !/locked/.test(x.cls) && x.t.includes(t));
+  const locked = a.filter((x) => /story/.test(x.cls) && /항주|바다/.test(x.t) && /locked/.test(x.cls)).length;
+  ok(open('옥영이 지은 시') && open('최척이 답한 시') && open('최척의 말') && open('안남 포구의 재회') && open('돈우의 작별') && locked >= 4,
+    `${name}: 1막 끝 수첩 — 지나온 원작 장면 카드가 원작 대조 탭에 열리고, 2막 카드(${locked}장)는 잠겨 있다`);
+  await page.click('.nb-item.story:not(.locked)');
+  ok(await page.evaluate(() => { const c = document.querySelector('.nb-detail .rcard.orig'); return !!c && getComputedStyle(c, '::before').content.includes('原作'); }), `${name}: 원작 장면 카드는 붉은 낙관(原作)과 함께 펼쳐진다`);
+  await page.click('.notebook-sheet .actions .btn.primary');
+  await page.evaluate(() => { G.save.state.teacher = true; G.app.applySettings(); G.app.openHook('notebook', 'orig'); });
+  await page.waitForSelector('.notebook-sheet .nb-item');
+  const b = await look();
+  ok(!b.some((x) => /locked/.test(x.cls)) && b.some((x) => /letter/.test(x.cls) && x.t.includes('옥영이 모르는 소식')) && b.some((x) => /variant/.test(x.cls) && x.t.includes('이본 노트')),
+    `${name}: 선생님용 수첩은 모두 열리고, 편지(옥영이 모르는 소식)·이본 노트가 제 이름으로 보인다`);
+  await page.click('.notebook-sheet .actions .btn.primary');
+  await page.evaluate(() => { G.save.state.teacher = false; G.app.applySettings(); });
 }
 
 // ───────── A ─────────
 {
   const out = await play('A', {
-    vp: 'phone', mode: 'basic', shoot: true,
+    vp: 'phone', mode: 'basic', shoot: true, annam: solvePoem({ trap: true }),
     choices: { 'd-namwon-flee': 'sinpyo', 'd-nanggoya-news': 'ask', 'd-nanggoya-ship': 'board' },
+    after: (page) => notebookAtEnd('A', page),
     async onGoal(goal, map, page, o, shot) {
       if (goal.targets.includes('hut')) {
         const a = await talkTo(page, 'escapee');
@@ -261,7 +336,7 @@ function roundTrip(name, out) {
 
 // ───────── B ─────────
 {
-  const out = await play('B', { vp: 'desktop', mode: 'basic', shoot: true, choices: { 'd-namwon-flee': 'food', 'd-nanggoya-news': 'silent', 'd-nanggoya-ship': 'stay' } });
+  const out = await play('B', { vp: 'desktop', mode: 'basic', shoot: true, annam: solvePoem({ trap: true }), choices: { 'd-namwon-flee': 'food', 'd-nanggoya-news': 'silent', 'd-nanggoya-ship': 'stay' } });
   common('B', out);
   const fa = out.cards['d-namwon-flee'].after;
   ok(eq(g(fa), { y: 3, s: 7 }) && fragKeys(fa) === '1' && !tok(fa).includes('sinpyo'), `B: 양식 → 연 −2·생 +2, 신표·조각 2 없음 (${fa.yeon}/${fa.saeng})`);
@@ -276,7 +351,7 @@ function roundTrip(name, out) {
 // ───────── C ─────────
 {
   const out = await play('C', {
-    vp: 'desktop', mode: 'basic', shoot: true,
+    vp: 'desktop', mode: 'basic', shoot: true, annam: solvePoem(),
     choices: { 'd-namwon-flee': 'sinpyo', 'd-nanggoya-news': 'wisdom', 'd-nanggoya-ship': 'board' },
     async onGoal(goal, map, page, o, shot) {
       if (goal.targets.includes('porter')) {

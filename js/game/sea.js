@@ -29,34 +29,6 @@
     return (t && (t.name || t.id)) || '신표';
   };
 
-  // ───────── 2막 거점의 글 칸: 막 나온 줄이 가려지지 않게 ─────────
-  //  '다음' 단추 하나만 뜨면 글 칸 오른쪽이 단추 자리만큼 좁아져(style.css) 글이 다시 줄바꿈되고,
-  //  방금 scrollIntoView로 맞춘 마지막 줄 끝이 칸 밖으로 밀려난다. 2막 거점(이 작업의 거점)에서는 단추가 뜬 뒤 다시 맞춘다.
-  const MINE = ['interlude', 'hangzhou', 'sea', 'namwon_final'];
-  function keepLast(ev) {
-    if (!MINE.includes(S().place) || !ev.isConnected || ev.classList.contains('cardmode')) return;
-    const sc = ev.querySelector('.ev-scroll');
-    const says = sc && [...sc.querySelectorAll('.says')].pop();
-    const last = (says && says.lastElementChild) || (sc && sc.querySelector('.ev-main > :last-child'));
-    if (!last) return;
-    const a = sc.getBoundingClientRect(), b = last.getBoundingClientRect();
-    const pad = parseFloat(getComputedStyle(sc).paddingBottom) || 0;
-    if (b.bottom > a.bottom - pad) sc.scrollTop += b.bottom - (a.bottom - pad);
-  }
-  function watchEvent(ev) {
-    if (ev.__seaWatch) return;
-    ev.__seaWatch = true;
-    const tray = ev.querySelector('.ev-tray');
-    if (!tray) return;
-    const mo = new MutationObserver(() => { if (!ev.isConnected) { mo.disconnect(); return; } requestAnimationFrame(() => requestAnimationFrame(() => keepLast(ev))); });
-    mo.observe(tray, { attributes: true, attributeFilter: ['class'], childList: true });
-  }
-  if (typeof MutationObserver !== 'undefined' && document.getElementById('app')) {
-    new MutationObserver((recs) => {
-      for (const r of recs) for (const n of r.addedNodes) if (n.nodeType === 1 && n.classList.contains('event')) watchEvent(n);
-    }).observe(document.getElementById('app'), { childList: true, subtree: true });
-  }
-
   // 단계가 끝나기 전에 장면이 넘어가면(선생님용 '장면 건너뛰기') 덧붙인 화면을 거둔다:
   //  다음 단계가 ctx.main을 비우는 순간 표지 요소가 사라지는 것을 보고 정리한다
   function onLeave(ctx, fn) {

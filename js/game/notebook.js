@@ -1,6 +1,8 @@
 'use strict';
 // 이야기 수첩(spec §6-3)과 만든 사람·출처 화면
 //  - 수첩: 모은 것(신표·시구 조각·이어 하기 글자) · 원작 대조 카드 · 역사 카드 · 게임 설정 카드 · 표기 안내 · (선생님용) 선생님 안내
+//    '원작 대조' 탭에는 딜레마 카드와 함께, 이야기 중에 띄운 카드 단계(type:'card', history 없이 card:{ kind:'orig'|'letter'|'variant'… })도
+//    플레이 차례(거점 차례 → 거점 안 단계 차례)로 모인다. 원작 카드는 붉은 낙관, 편지·이본 노트는 거점 파일에 적힌 이름(kindLabel)으로.
 //    언제든 연다(타이틀·탐색 화면 오른쪽 위·HUD 초상). 선생님용이면 모든 카드가 열리고 역사 카드 아래 ⚠ 검수 거리가 보인다.
 //    퉁소 소리를 다른 악기로 대신했으면(G.audio.tongso.instrument가 '퉁소'가 아니면) "퉁소 대신 ○○ 연주"라고 밝힌다.
 //  - 만든 사람·출처: js/data/credits.js(CREDITS)를 읽어 보여 준다. 비어 있어도 만든이·원문 출처 줄은 늘 보인다.
@@ -38,6 +40,35 @@
   NB.historyCards = () => histList().map((c) => ({ id: c.id, kind: 'history', place: c.place || null, step: null }));
   // 학생이 모은 카드(수첩 장부)
   const mine = (id) => (S().cards || []).find((c) => c.id === id) || null;
+  // 이야기 속 카드(역사 카드가 아닌 카드 단계: 원작 장면·옥영이 모르는 소식·이본 노트 …). 거점 차례 → 단계 차례
+  //  같은 카드가 처음 배우기·깊이 읽기로 나뉘어 있으면(card.id가 같다) 한 자리로: 모았으면 실제로 본 쪽, 아니면 지금 방식에 맞는 쪽
+  NB.storyCards = function () {
+    const P = window.PLACES || {};
+    const st = S();
+    const out = [], at = {};
+    for (const pid of order()) {
+      const p = P[pid];
+      for (const s of (p && p.steps) || []) {
+        if (!s || s.type !== 'card' || s.history || !s.card) continue;
+        const id = s.card.id || s.id;
+        const e = { id, kind: s.card.kind || 'note', place: pid, step: s.id, label: s.card.kindLabel || '', story: true };
+        if (at[id] == null) { at[id] = out.length; out.push(e); continue; }
+        if (s.when && G.rules.ok(s.when, st) && !(out[at[id]].fit)) out[at[id]] = Object.assign(e, { fit: true });
+      }
+    }
+    return out.map((e) => { const m = mine(e.id); return m && m.place && m.step ? Object.assign({}, e, { place: m.place, step: m.step }) : e; });
+  };
+  // '원작 대조' 탭: 딜레마 카드와 이야기 속 카드를 플레이 차례로(거점 자료에 아직 없는 딜레마 자리는 그 거점 끝에)
+  NB.origCards = function () {
+    const P = window.PLACES || {};
+    const pos = (e) => {
+      const steps = ((P[e.place] || {}).steps) || [];
+      const i = steps.findIndex((s) => s && (s.id === e.step || (e.kind !== 'history' && !e.story && s.dilemma === e.id)));
+      return [order().indexOf(e.place), i < 0 ? 9999 : i];
+    };
+    const all = NB.dilemmaCards().concat(NB.storyCards()).map((e, n) => ({ e, p: pos(e), n }));
+    return all.sort((a, b) => a.p[0] - b.p[0] || a.p[1] - b.p[1] || a.n - b.n).map((x) => x.e);
+  };
   const dilemmaName = (id) => ((N().dilemmas || []).find((d) => d.id === id) || {}).name || '';
 
   // 딜레마 단계 찾기
@@ -60,6 +91,12 @@
       }
       return el;
     }
+    if (entry.story) {
+      const data = G.rules.cardOf({ kind: entry.kind, id: entry.id, place: entry.place, step: entry.step });
+      const el = G.steps.infoCard(data, entry.kind);
+      dropSaved(el);
+      return el;
+    }
     const step = stepOf(entry);
     if (!step) {
       return h('div.card.rcard.' + entry.kind, h('span.kind', entry.kind === 'orig' ? '원작 대조' : '게임 창작'),
@@ -68,6 +105,11 @@
     const el = G.steps.compareCard(step, (st.choices || {})[step.dilemma]);
     dropSaved(el);
     return el;
+  }
+  function storyTitle(e) {
+    const p = (window.PLACES || {})[e.place];
+    const s = p && (p.steps || []).find((x) => x && x.id === e.step);
+    return (s && s.card && s.card.title) || e.id;
   }
   function dropSaved(el) { const s = el && el.querySelector('.rc-saved'); if (s) s.remove(); }
 
@@ -87,7 +129,7 @@
   // 모은 것: 신표·시구 조각 + 이어 하기 글자 + 카드 수
   function pocketPane() {
     const st = S();
-    const D = NB.dilemmaCards(), Hs = NB.historyCards();
+    const D = NB.dilemmaCards().concat(NB.storyCards()), Hs = NB.historyCards();
     const nOrig = D.filter((c) => mine(c.id)).length, nHist = Hs.filter((c) => mine(c.id)).length;
     const sound = NB.soundNote();
     return pane(NT().pocketLead,
@@ -116,11 +158,12 @@
     };
     items.forEach((it, i) => {
       const e = it.e;
-      const title = e.kind === 'history' ? ((histList().find((x) => x.id === e.id) || {}).title || e.id) : (dilemmaName(e.id) || e.id);
-      const b = h('button.nb-item.' + e.kind + (it.open ? '' : '.locked'), { type: 'button', role: 'listitem', 'aria-disabled': it.open ? null : 'true' },
+      const title = e.kind === 'history' ? ((histList().find((x) => x.id === e.id) || {}).title || e.id) : e.story ? storyTitle(e) : (dilemmaName(e.id) || e.id);
+      const tag = e.story ? (e.label || (e.kind === 'orig' ? '원작' : (ui.KIND || {})[e.kind] || '')) : e.kind === 'orig' ? '원작' : e.kind === 'fiction' ? '게임 창작' : '';
+      const b = h('button.nb-item.' + e.kind + (e.story ? '.story' : '') + (it.open ? '' : '.locked'), { type: 'button', role: 'listitem', 'aria-disabled': it.open ? null : 'true' },
         h('span.nb-no', String(i + 1)),
         h('span.nb-it',
-          h('small', placeName(e.place) + (e.kind === 'orig' ? ' · 원작' : e.kind === 'fiction' ? ' · 게임 창작' : '')),
+          h('small', placeName(e.place) + (tag ? ' · ' + tag : '')),
           h('b', it.open ? T(title) : lockedText)));
       if (it.open) b.addEventListener('click', () => { G.audio.tap(); show(it, b); });
       listEl.appendChild(b);
@@ -166,7 +209,7 @@
   // ───────── 수첩 열기 ─────────
   NB.open = function (tab) {
     const st = S();
-    const tabs = [['pocket', pocketPane], ['orig', () => cardsPane(NT().origLead, NB.dilemmaCards(), NT().locked || '')],
+    const tabs = [['pocket', pocketPane], ['orig', () => cardsPane(NT().origLead, NB.origCards(), NT().locked || '')],
       ['history', () => cardsPane(NT().historyLead, NB.historyCards(), NT().lockedHistory || '')],
       ['fiction', fictionPane], ['marks', marksPane]];
     if (st.teacher) tabs.push(['teacher', NB.teacherPane]);

@@ -39,9 +39,15 @@ async function open(name, vp, url = BASE) {
   return { ctx, page, errs, shot };
 }
 const visible = (page, sel) => page.locator(sel).first().isVisible().catch(() => false);
+//  맵이 멈춘 동안(판·사건 화면·대화창)에는 키를 받지 않으므로 멈춤이 풀린 뒤 누른다. 짐이 많은 기계에서는 프레임이 드물게 와
+//  정한 시간 안에 덜 걸을 수 있어, 거의 움직이지 않았으면 조금 더 누르고 있는다(최대 정한 시간의 4배)
 async function walk(page, key, ms) {
+  await page.waitForFunction(() => G.world.test.state().x != null && !G.world.test.state().paused, null, { timeout: 8000 }).catch(() => {});
   const a = await page.evaluate(() => G.world.test.state());
-  await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key);
+  await page.keyboard.down(key);
+  await page.waitForTimeout(ms);
+  await page.waitForFunction(([a, ms]) => { const b = G.world.test.state(); return Math.abs(b.x - a.x) + Math.abs(b.y - a.y) > 24; }, [a, ms], { timeout: ms * 3 }).catch(() => {});
+  await page.keyboard.up(key);
   await page.waitForTimeout(80);
   const b = await page.evaluate(() => G.world.test.state());
   return { a, b };
@@ -203,6 +209,7 @@ async function hudClear(page) {
   ok(geo, '고지도 거점이 실제 지리 차례(서쪽 안남·항주 → 조선 → 일본, 안남이 가장 남쪽)');
   await page.evaluate(() => { G.oldmap.fast = true; window.__route = null; G.oldmap.show({ from: 'hangzhou', pick: true, paths: OLDMAP.routes.act2, title: '뱃길' }).then((r) => (window.__route = r)); });
   await page.waitForSelector('.om-tray .opt');
+  await page.waitForFunction(() => { const im = document.querySelector('.om-img'); return im && im.complete && im.naturalWidth > 0; }, null, { timeout: 10000 }).catch(() => {});
   ok(await page.evaluate(() => { const im = document.querySelector('.om-img'); return im.complete && im.naturalWidth > 0; }), '고지도 그림이 뜬다');
   ok((await page.locator('.om-tray .opt').count()) === 2 && (await page.textContent('.om-tray')).includes('연안길') && (await page.textContent('.om-tray')).includes('바다길'), '2막 뱃길: 연안길 / 바다길');
   await page.click('.om-tray .opt:has-text("바다길")');
@@ -310,7 +317,7 @@ async function hudClear(page) {
   await page.waitForFunction(() => G.world.goal() && G.world.goal().targets[0] === 'gate');
   ok(await page.evaluate(() => G.save.state.yeon === 6 && !!G.save.state.done['s:__demo:s1'] && !!G.save.state.done['b:__demo:b1']), '목표 → 단계 → 단계 fx(게이지) → 저장');
   // 문까지 직접 걸어가 밟기(→ 오른쪽, ↓ 아래)
-  for (let i = 0; i < 30 && !(await page.evaluate(() => !!document.querySelector('.event.on'))); i++) {
+  for (const t0 = Date.now(); Date.now() - t0 < 20000 && !(await page.evaluate(() => !!document.querySelector('.event.on'))); ) {
     const s = await page.evaluate(() => G.world.test.state());
     const t = (await page.evaluate(() => G.world.test.targets()))[0];
     const key = Math.abs(t.x - s.x) > 6 ? (t.x > s.x ? 'ArrowRight' : 'ArrowLeft') : (t.y > s.y ? 'ArrowDown' : 'ArrowUp');

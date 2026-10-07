@@ -292,8 +292,10 @@ html.teacher .teacher-only { display: inline-flex !important; }
 .ev-tray.hide { display: none; }
 /* '다음' 단추 하나만 있을 때: 글 오른쪽 아래에 겹쳐 두어 빈 줄이 생기지 않게 */
 .event:not(.cardmode) .ev-tray:has(> .actions:only-child), .dlg-tray:has(> .actions:only-child) { position: absolute; right: .9rem; bottom: .75rem; padding: 0; }
-.event:not(.cardmode) .ev-box:has(> .ev-tray:not(.hide) > .actions:only-child) .ev-scroll,
-.dlg-box:has(> .dlg-tray:not(.hide) > .actions:only-child) .dlg-scroll { padding-right: 10rem; min-height: 4.6rem; padding-bottom: .8rem; }
+/*  글 칸 오른쪽은 단추 자리만큼 비운다. .solo는 js/core/ui.js(fillTray)가 붙이고, 줄과 줄 사이 트레이가 잠깐 비어도 남겨 둔다
+    (글 폭이 줄마다 바뀌어 다시 줄바꿈되면 막 나온 줄이 칸 밖으로 밀려나므로) */
+.event:not(.cardmode) .ev-box.solo > .ev-scroll,
+.dlg-box.solo > .dlg-scroll { padding-right: 10rem; min-height: 4.6rem; padding-bottom: .8rem; }
 .ev-box, .dlg-box { position: relative; }
 .ev-tray .actions, .dlg-tray .actions, .om-tray .actions { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
 .ev-tray .btn, .om-tray .btn { min-height: 3rem; min-width: 7.5rem; }
@@ -600,6 +602,7 @@ html.teacher .teacher-only { display: inline-flex !important; }
   .rdream { padding: .5rem 1rem .55rem; }
   .rdream h3 { font-size: 1.45rem; }
   .rdream p { margin: .2em 0; }
+  .event.rcardmode .ev-box { width: min(50rem, 95%); } /* 휴대폰 가로: 카드를 넓게 펴서 긴 카드도 스크롤 없이 한 장에 */
   .event.rcardmode .ev-tray { padding-top: .35rem; }
   .event.rcardmode .ev-tray .btn { min-height: 2.6rem; }
 }

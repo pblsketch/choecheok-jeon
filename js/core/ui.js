@@ -47,6 +47,37 @@
     });
   };
 
+  // ───────── 화면 아래 트레이(사건 화면·맵 위 대화창 공통) ─────────
+  //  '다음' 단추 하나(.actions)만 뜨면 단추를 글 칸 오른쪽 아래에 겹쳐 두고, 글 칸 오른쪽을 단추 자리만큼 비운다(style.css의 .solo).
+  //   - 줄과 줄 사이에 트레이가 잠깐 비어도 .solo는 그대로 둔다: 글 폭이 줄마다 넓어졌다 좁아졌다 하며 다시 줄바꿈되지 않게
+  //   - 트레이를 바꾼 뒤 막 나온 줄이 글 칸 밖으로 밀려났으면(글 폭이 좁아져 줄이 늘어난 경우) 다시 맞춘다
+  ui.fillTray = function (tray, content) {
+    tray.innerHTML = '';
+    if (content) tray.appendChild(content);
+    tray.classList.toggle('hide', !content);
+    const box = tray.parentNode;
+    if (!box) return;
+    if (content) box.classList.toggle('solo', !!(content.classList && content.classList.contains('actions')));
+    const sc = [...box.children].find((x) => x.classList.contains('ev-scroll') || x.classList.contains('dlg-scroll'));
+    if (!sc) return;
+    requestAnimationFrame(() => requestAnimationFrame(() => ui.keepLast(sc)));
+    setTimeout(() => ui.keepLast(sc), 450); // 부드럽게 굴러가던 스크롤(scrollIntoView smooth)이 끝난 뒤 한 번 더
+  };
+  // 글 칸(sc)의 마지막 줄이 보이게: 줄 묶음(.says)이면 그 마지막 줄, 칸보다 긴 줄이면 그 줄의 머리를 맞춘다
+  ui.keepLast = function (sc) {
+    if (!sc || !sc.isConnected || sc.closest('.cardmode')) return;
+    const main = sc.firstElementChild;
+    let last = main && main.lastElementChild;
+    if (last && last.classList.contains('says')) last = last.lastElementChild || last;
+    if (!last) return;
+    const cs = getComputedStyle(sc);
+    const padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+    const a = sc.getBoundingClientRect(), b = last.getBoundingClientRect();
+    const room = a.height - padT - padB;
+    const delta = b.height > room ? b.top - (a.top + padT) : b.bottom - (a.bottom - padB);
+    if (delta > 0.5) sc.scrollTop += Math.ceil(delta);
+  };
+
   // 아직 만들지 않은 화면·기능
   ui.notReady = function (what) {
     return ui.sheet([h('h3', (what ? what + ' — ' : '') + '준비 중'), h('p', '이 부분은 아직 만드는 중이에요.')]);
