@@ -1,7 +1,0 @@
-{
-  "tool_name": "WebFetch",
-  "tool_input_preview": "{\"url\":\"https://kyudb.snu.ac.kr/contents/content_detail.do?conts_id=H00375\",\"prompt\":\"최척전 내용에서 다음을 본문 표현 그대로 인용해 알려줘: (1) 옥영이 남장을 한 시점과 이유, (2) 돈우의 집이 있는 일본 지명(낭고야 등), (3) 장육불·만복사 꿈과 옥영의 자결 시도, (4) 안남...",
-  "error": "read ECONNRESET",
-  "timestamp": "2026-10-07T04:56:55.814Z",
-  "retry_count": 2
-}
