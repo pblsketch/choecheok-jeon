@@ -1,1 +1,182 @@
-/* poem.css — 자리 파일 */
+/* poem.css — 안남 절정: 퉁소 알아듣기(.tg-*)와 화답 시구 맞추기(.pz-*). js/game/poem.js
+   그림책풍 그대로: 쪽빛 밤바다 위에 한지 두루마리(시 네 행) + 쪽빛 판(기억의 조각 패) + 종이 띠 조각.
+   소리를 꺼도 보이게: 물결 무늬(굵기 = 또렷함)와 자막 '(퉁소 소리)'. 강조는 등불빛 하나. */
+
+/* ───────── 물결 층(퉁소 소리) ───────── */
+.tg-layer { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; --clar: .2; }
+.tg-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.tg-junk { position: absolute; pointer-events: none; filter: drop-shadow(0 6px 10px rgba(6, 8, 24, .45)); }
+.tg-junk svg { display: block; width: 100%; height: auto; }
+/* 사건 화면(퉁소 알아듣기): 물 건너 오른쪽 중국 배. 등불(소리 나는 곳)이 화면 83%·42% 자리에 오게 */
+/* 물 위에 뜬 배: 배 밑(물결이 이는 곳)이 화면 가로 84%·세로 61%에 오게 */
+.tg-layer > .tg-junk { --jw: clamp(150px, 21vw, 340px); width: var(--jw); left: calc(84% - var(--jw) * .4545); top: calc(61% - var(--jw) * .5136); animation: tgbob 6s ease-in-out infinite; }
+@keyframes tgbob { 50% { transform: translateY(3px) rotate(-.4deg); } }
+.tg-cap { position: absolute; left: 50%; top: calc(2.45rem + .7rem); transform: translate(-50%, -4px); display: inline-flex; align-items: center; gap: .55em; padding: .28em 1.1em .3em .8em; border-radius: 999px; background: var(--plaque); border: 1.5px solid var(--plaque-line); color: var(--hanji); font-weight: 700; font-size: .92rem; letter-spacing: .02em; white-space: nowrap; box-shadow: 0 6px 18px rgba(6, 8, 24, .35), 0 0 calc(var(--clar) * 26px) rgba(255, 200, 110, calc(var(--clar) * .7)); backdrop-filter: blur(4px); opacity: 0; transition: opacity .5s, transform .5s, box-shadow .6s; }
+.tg-cap.on { opacity: 1; transform: translate(-50%, 0); }
+.tg-cap.still { opacity: .75; }
+.tg-cap.flash { animation: tgflash .9s ease-out; }
+@keyframes tgflash { 0% { filter: brightness(1.5); } 100% { filter: none; } }
+.tg-wave { display: inline-flex; width: 2.3rem; color: var(--lantern-hi); }
+.tg-wave svg { width: 100%; height: auto; overflow: visible; }
+.tg-wave path { transition: stroke-width .5s; animation: tgwave 1.6s ease-in-out infinite; }
+@keyframes tgwave { 50% { transform: translateY(1px) scaleY(.82); } }
+.tg-inst { position: absolute; left: 50%; top: calc(2.45rem + 3rem); transform: translateX(-50%); padding: .05em .8em; border-radius: 999px; background: rgba(20, 27, 54, .7); color: rgba(244, 234, 211, .85); font-size: .72rem; white-space: nowrap; }
+.event.tongsomode .blank-paper .cap { display: none; }
+/* 알아듣는 순간: 남원의 봄밤이 떠오른다(등불빛 번짐 + 붓글씨 한 줄) */
+.tg-memory { position: absolute; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; pointer-events: none; background: radial-gradient(60% 55% at 50% 40%, rgba(255, 214, 140, .42), rgba(255, 180, 90, .12) 55%, rgba(255, 180, 90, 0) 80%); animation: tgmem 2.3s ease-out both; }
+.tg-memory span { margin-bottom: 22vh; font-family: var(--brush); font-size: clamp(2rem, 9vh, 4.2rem); color: #fff6dc; text-shadow: 0 0 24px rgba(255, 196, 110, .8), 0 2px 0 rgba(30, 20, 40, .45); letter-spacing: .04em; animation: tgmemtext 2.3s ease-out both; }
+.tg-memory.out { opacity: 0; transition: opacity .8s; }
+@keyframes tgmem { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: .55; } }
+@keyframes tgmemtext { 0% { opacity: 0; transform: translateY(10px) scale(.96); filter: blur(4px); } 35% { opacity: 1; transform: none; filter: none; } }
+
+/* ───────── 화답: 시구 맞추기(화면 전체) ───────── */
+.event.poemmode .ev-box { display: none; }
+.event.poemmode .blank-paper .cap { display: none; }
+.event.poemmode .ev-art::after { background: linear-gradient(90deg, rgba(10, 12, 30, .55), rgba(10, 12, 30, .15) 60%, rgba(10, 12, 30, .3)); }
+.pz { position: absolute; inset: 0; z-index: 3; }
+.pz .tg-layer { z-index: 0; }
+.pz-grid { position: absolute; inset: calc(2.45rem + .55rem) max(1rem, env(safe-area-inset-right)) max(.65rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); max-width: 66rem; max-height: 33rem; margin: auto; display: grid; grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: .45rem 1.1rem; }
+
+/* 한지 두루마리: 시 네 행 */
+.pz-scroll { grid-column: 1; grid-row: 1 / 3; min-height: 0; display: flex; flex-direction: column; padding: .55rem 1.1rem .5rem; border-radius: 1.15rem; background: var(--paper-tex), var(--hanji); border: 2.5px solid var(--line); box-shadow: var(--frame), var(--lift); overflow: auto; scrollbar-width: thin; animation: up .35s ease-out; }
+.pz-head { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: .7rem; padding-bottom: .3rem; border-bottom: 2px solid rgba(185, 138, 69, .45); }
+.pz-kicker { grid-row: 1; display: inline-flex; align-items: center; gap: .4em; font-weight: 700; font-size: .8rem; letter-spacing: .14em; color: var(--seal); }
+.pz-kicker::before { content: ''; width: .42rem; height: .42rem; background: var(--lantern); transform: rotate(45deg); }
+.pz-title { grid-row: 1; margin: 0; font-family: var(--brush); font-weight: 400; font-size: 1.75rem; line-height: 1.1; color: var(--ink); }
+.pz-help { grid-column: 1 / 3; margin: .1rem 0 0; font-size: .8rem; color: var(--ink-2); line-height: 1.45; }
+.pz-help b { color: var(--lantern-dk); }
+.pz-rows { list-style: none; margin: 0; padding: .15rem 0 0; flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+.pz-row { position: relative; display: grid; grid-template-columns: 1.85rem minmax(0, 1fr) auto; align-items: center; gap: .6rem; min-height: 2.85rem; padding: .18rem 0; border-bottom: 1.5px dashed rgba(185, 138, 69, .5); }
+.pz-row:last-child { border-bottom: 0; }
+.pz-num { display: inline-flex; align-items: center; justify-content: center; width: 1.65rem; height: 1.65rem; border-radius: .3rem; background: linear-gradient(160deg, #c8493a, var(--seal)); color: #fff6ea; font-family: var(--serif); font-weight: 700; font-size: .95rem; line-height: 1; box-shadow: 0 2px 0 rgba(47, 40, 64, .5), inset 0 0 0 1.5px rgba(255, 240, 220, .35); transform: rotate(-4deg); }
+.pz-slot { position: relative; display: flex; align-items: center; min-height: 2.4rem; padding: .1rem .35rem; border-radius: .55rem; cursor: pointer; outline: none; transition: background .2s, box-shadow .2s; }
+.pz-slot:focus-visible { box-shadow: 0 0 0 3px var(--lantern-hi); }
+.pz-empty { flex: 1; display: flex; align-items: center; height: 2.1rem; }
+.pz-dots { flex: 1; height: 0; border-bottom: 2.5px dotted rgba(138, 126, 134, .55); margin: 0 .2rem; }
+.pz-row.target .pz-slot { background: rgba(255, 216, 138, .18); box-shadow: inset 0 0 0 2px rgba(242, 165, 65, .55); animation: pztarget 1.4s ease-in-out infinite; }
+@keyframes pztarget { 50% { box-shadow: inset 0 0 0 2px rgba(242, 165, 65, .2); } }
+.pz-row.over .pz-slot { background: rgba(255, 216, 138, .38); box-shadow: inset 0 0 0 2.5px var(--lantern), 0 0 16px rgba(242, 165, 65, .45); }
+/* 놓인 조각: 종이 띠. 맞으면 원문이 먹으로 번지며 드러난다 */
+.pz-filled { display: flex; flex-direction: column; align-items: flex-start; max-width: 100%; padding: .22rem .85rem .24rem; border-radius: .3rem; border: 1.5px solid var(--line); background: var(--paper-tex), linear-gradient(180deg, #fffaf0, #f2e4c4); box-shadow: 0 2px 0 rgba(47, 40, 64, .55); transform: rotate(var(--tilt, 0deg)); touch-action: none; }
+.pz-filled .pz-ko { font-weight: 700; font-size: .95rem; line-height: 1.35; color: var(--ink); }
+.pz-filled.ok { border-color: transparent; background: none; box-shadow: none; padding: 0 .2rem; transform: none; }
+.pz-filled.ok .pz-han { font-family: var(--serif); font-weight: 700; font-size: 1.32rem; line-height: 1.2; letter-spacing: .2em; color: var(--ink); text-shadow: 0 0 14px rgba(255, 200, 110, .55); }
+.pz-filled.ok .pz-ko { font-weight: 400; font-size: .84rem; color: var(--ink-2); }
+.pz-row.ok::after { content: ''; position: absolute; left: 2.2rem; right: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, var(--lantern), rgba(242, 165, 65, 0)); }
+.pz-row.flash-ok .pz-han { animation: pzink 1s ease-out both; }
+.pz-row.flash-ok .pz-slot { animation: pzglow 1.2s ease-out; }
+@keyframes pzink { 0% { opacity: 0; filter: blur(5px); letter-spacing: .5em; } 100% { opacity: 1; filter: none; } }
+@keyframes pzglow { 0% { background: rgba(255, 216, 138, .6); box-shadow: 0 0 26px rgba(242, 165, 65, .6); } 100% { background: transparent; box-shadow: none; } }
+.pz-row.flash-off .pz-filled { animation: pzoff .6s ease-out; }
+@keyframes pzoff { 0% { transform: translateX(0) rotate(var(--tilt, 0deg)); } 30% { transform: translateX(-4px) rotate(-1.5deg); } 60% { transform: translateX(3px) rotate(1deg); } 100% { transform: rotate(var(--tilt, 0deg)); } }
+.pz-row.rise .pz-filled { animation: pzrise 1s cubic-bezier(.2, 1.2, .4, 1) both; }
+@keyframes pzrise { 0% { opacity: 0; transform: translateY(18px); filter: blur(3px) drop-shadow(0 0 12px #ffd88a); } 100% { opacity: 1; transform: none; filter: none; } }
+/* 못 가진 행: 기억을 더듬기(생 1) */
+.pz-grope { display: inline-flex; align-items: center; gap: .45em; padding: .26em .75em .26em .85em; border-radius: 999px; border: 1.5px solid var(--line); background: linear-gradient(180deg, #2f3d70, #1f2a52); color: var(--hanji); font-weight: 700; font-size: .78rem; white-space: nowrap; box-shadow: 0 2px 0 var(--line), 0 0 0 0 rgba(242, 165, 65, .5); cursor: pointer; animation: pzgrope 2.4s ease-in-out infinite; }
+.pz-grope b { padding: .02em .45em; border-radius: .35rem; background: linear-gradient(180deg, #84cbb5, var(--saeng)); color: #0f2a26; font-size: .9em; }
+.pz-grope:hover { filter: brightness(1.12); }
+.pz-grope:focus-visible { outline: 3px solid var(--lantern-hi); outline-offset: 2px; }
+.pz-grope.zero { background: linear-gradient(180deg, #ffd27a, var(--lantern) 70%, #e8902c); color: #2b1d12; }
+@keyframes pzgrope { 50% { box-shadow: 0 2px 0 var(--line), 0 0 0 5px rgba(242, 165, 65, .18); } }
+
+/* 하늘 자리(오른쪽 위): 물 건너 중국 배와 자막 */
+.pz-sky { grid-column: 2; grid-row: 1; position: relative; height: clamp(3.1rem, 15vh, 8rem); pointer-events: none; }
+.pz-sky .tg-junk { right: 2%; bottom: -14%; height: 128%; }
+.pz-sky .tg-junk svg { height: 100%; width: auto; }
+.pz-sky .tg-cap { left: 0; top: auto; bottom: .15rem; transform: translateY(-4px); }
+.pz-sky .tg-cap.on { transform: none; }
+.pz-sky .tg-inst { left: 0; top: auto; bottom: -1.2rem; transform: none; }
+
+/* 쪽빛 판: 기억의 조각 패 */
+.pz-pool { grid-column: 2; grid-row: 2; align-self: start; max-height: 100%; min-height: 0; display: flex; flex-direction: column; padding: .45rem .8rem .55rem; border-radius: 1.05rem; background: linear-gradient(180deg, rgba(46, 60, 108, .82), rgba(26, 35, 68, .86)); border: 1.5px solid var(--plaque-line); color: var(--hanji); box-shadow: 0 8px 22px rgba(6, 8, 24, .4); backdrop-filter: blur(3px); animation: up .4s ease-out; }
+.pz-pool-head { display: flex; align-items: center; gap: .6rem; }
+.pz-pool-head h3 { margin: 0; flex: 1; font-size: 1rem; letter-spacing: .06em; color: #fff3d6; display: flex; align-items: center; gap: .5rem; }
+.pz-pool-head h3::after { content: ''; flex: 1; height: 1.5px; background: linear-gradient(90deg, var(--plaque-line), transparent); }
+.pz-answer { min-height: 1.9rem !important; font-size: .78rem; }
+.pz-pool-help { margin: .05rem 0 .35rem; font-size: .74rem; color: rgba(244, 234, 211, .72); }
+.pz-strips { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: .42rem; padding: .3rem .25rem .4rem; scrollbar-width: thin; scrollbar-color: rgba(255, 216, 138, .35) transparent; }
+.pz-none { margin: auto; color: rgba(244, 234, 211, .55); font-size: .85rem; }
+/* 종이 띠 조각: 양 끝을 찢은 한지 */
+.pz-strip { position: relative; display: block; width: 100%; text-align: left; padding: .4rem 1.05rem .42rem 1.15rem; border: 0; border-radius: .2rem; background: var(--paper-tex), linear-gradient(180deg, #fffaf0, #f1e2c1); color: var(--ink); font-family: var(--serif); font-weight: 700; font-size: .93rem; line-height: 1.35; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transform: rotate(var(--tilt, 0deg)); clip-path: polygon(0 8%, 2% 0, 98% 4%, 100% 0, 99% 30%, 100% 55%, 98.5% 78%, 100% 100%, 3% 96%, 0 100%, 1.2% 70%, 0 45%, 1.5% 25%); filter: drop-shadow(0 2px 0 rgba(10, 8, 24, .65)); transition: transform .15s, filter .2s, opacity .2s; }
+.pz-strip::before { content: ''; position: absolute; left: .45rem; top: 50%; width: .32rem; height: .32rem; margin-top: -.16rem; background: var(--ochre); transform: rotate(45deg); opacity: .7; }
+.pz-strip:hover { transform: rotate(0deg) translateY(-1px); filter: drop-shadow(0 3px 0 rgba(10, 8, 24, .65)) drop-shadow(0 0 8px rgba(255, 216, 138, .35)); }
+.pz-strip:focus-visible { outline: none; filter: drop-shadow(0 0 0 #ffd88a) drop-shadow(0 0 3px #ffd88a) drop-shadow(0 0 3px #ffd88a); }
+.pz-strip.sel { transform: rotate(0deg) translateY(-2px) scale(1.02); background: var(--paper-tex), linear-gradient(180deg, #fff1cf, #f7cf86); filter: drop-shadow(0 3px 0 rgba(10, 8, 24, .7)) drop-shadow(0 0 10px rgba(242, 165, 65, .85)); }
+.pz-strip.sel::before { background: var(--lantern-dk); opacity: 1; }
+.pz-strip.lifted { opacity: .32; }
+.pz-pool.many .pz-strip { touch-action: pan-y; }
+.pz.dragging, .pz.dragging * { cursor: grabbing !important; }
+/* 끌고 가는 조각 */
+.pz-ghost { position: fixed; left: 0; top: 0; z-index: 400; pointer-events: none; will-change: transform; }
+.pz-ghost span { display: block; transform: translate(-50%, -70%) rotate(-2.5deg); white-space: nowrap; padding: .42rem 1.1rem; border-radius: .2rem; background: var(--paper-tex), linear-gradient(180deg, #fff1cf, #f7cf86); color: var(--ink); font-family: var(--serif); font-weight: 700; font-size: .95rem; box-shadow: 0 3px 0 var(--line), 0 14px 26px rgba(6, 8, 24, .5), 0 0 18px rgba(242, 165, 65, .6); }
+
+/* 기억 더듬기·생 0 판(한지 카드) */
+.pz-back { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 3.2rem 4vw 1rem; background: radial-gradient(70% 70% at 50% 50%, rgba(14, 18, 44, .45), rgba(8, 10, 26, .72)); animation: fadein .2s; }
+.pz-sheet { width: min(32rem, 100%); max-height: 100%; overflow: auto; padding: .8rem 1.25rem .8rem; border-radius: 1.15rem; background: var(--paper-tex), var(--hanji); border: 2.5px solid var(--line); box-shadow: var(--frame), var(--lift), 0 0 0 7px rgba(255, 200, 110, .12); animation: up .25s ease-out; }
+.pz-sheet h3 { margin: .1rem 0 .1rem; font-size: 1.15rem; display: flex; align-items: center; gap: .6rem; }
+.pz-sheet h3::after { content: ''; flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--ochre), transparent); }
+.pz-sheet-kicker { display: flex; align-items: center; gap: .5em; font-size: .8rem; font-weight: 700; color: var(--ink-2); letter-spacing: .04em; }
+.pz-sheet-kicker b { padding: .02em .5em; border-radius: .35rem; background: linear-gradient(180deg, #84cbb5, var(--saeng)); color: #0f2a26; }
+.pz-sheet-help { margin: .1rem 0 .5rem; font-size: .85rem; color: var(--ink-2); }
+.pz-cands { display: grid; gap: .5rem; }
+.pz-cand { min-height: 2.9rem; }
+.pz-sheet-foot { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: .55rem; font-size: .75rem; color: var(--ink-3); }
+.pz-ex { text-align: center; background: radial-gradient(120% 95% at 50% 0%, #fff6dc, #f6e3b4 60%, #ebcf94); }
+.pz-ex p { margin: .45em 0; font-size: 1rem; line-height: 1.75; }
+.pz-ex .pz-sheet-kicker { justify-content: center; }
+.pz-ex .pz-sheet-foot { justify-content: center; }
+
+/* 다 맞췄을 때: 시 전체가 먹빛으로, 오른쪽엔 시의 뜻 */
+.pz.done .pz-scroll { box-shadow: var(--frame), var(--lift), 0 0 0 6px rgba(255, 216, 138, .22), 0 0 46px rgba(242, 165, 65, .4); }
+.pz.done .pz-title { letter-spacing: .12em; }
+.pz.done .pz-row.ok::after { background: linear-gradient(90deg, rgba(242, 165, 65, .8), rgba(242, 165, 65, 0)); }
+.pz.done .pz-slot { cursor: default; }
+.pz-note { grid-column: 2; grid-row: 2; align-self: start; max-height: 100%; min-height: 0; overflow: auto; display: flex; flex-direction: column; padding: .55rem 1.05rem .6rem; border-radius: 1.05rem; background: var(--paper-tex), var(--hanji-3); border: 2.5px solid var(--line); box-shadow: var(--frame), var(--lift); animation: up .4s ease-out; scrollbar-width: thin; }
+.pz-note h3 { margin: 0 0 .25rem; font-size: 1.02rem; display: flex; align-items: center; gap: .6rem; }
+.pz-note h3::after { content: ''; flex: 1; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--ochre), transparent); }
+.pz-gloss { margin: 0 0 .3rem; font-size: .88rem; line-height: 1.6; }
+.pz-point { margin: 0 0 .35rem; font-size: .84rem; color: var(--ink-2); }
+.pz-point b, .pz-gloss b { color: var(--lantern-dk); }
+.pz-words { display: grid; grid-template-columns: auto 1fr; gap: .1rem .6rem; margin: 0 0 .35rem; font-size: .76rem; line-height: 1.45; }
+.pz-words dt { font-weight: 700; color: var(--seal); white-space: nowrap; }
+.pz-words dd { margin: 0; color: var(--ink-2); }
+.pz-traps { padding: .35rem .6rem .3rem; border-radius: .6rem; background: rgba(255, 250, 240, .7); border: 1.5px dashed rgba(47, 40, 64, .25); }
+.pz-traps h4 { margin: 0 0 .15rem; font-size: .8rem; color: var(--ink-2); letter-spacing: .06em; }
+.pz-traps p { margin: .15rem 0; font-size: .8rem; line-height: 1.5; }
+.pz-traps b { color: var(--ink); }
+.pz-cat { display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; margin-right: .4rem; border-radius: .3rem; background: var(--night-2); color: var(--lantern-hi) !important; font-size: .72rem; vertical-align: .05em; }
+.pz-note-foot { display: flex; justify-content: flex-end; margin-top: auto; padding-top: .45rem; }
+.pz-next { min-height: 2.8rem; min-width: 7.5rem; }
+
+/* 휴대폰 가로(낮은 화면): 촘촘하게 */
+@media (max-height: 500px) {
+  .pz-grid { gap: .35rem .8rem; }
+  .pz-scroll { padding: .4rem .85rem .35rem; }
+  .pz-title { font-size: 1.45rem; }
+  .pz-help { font-size: .74rem; }
+  .pz-row { min-height: 2.55rem; padding: .1rem 0; gap: .5rem; }
+  .pz-slot { min-height: 2.2rem; }
+  .pz-filled.ok .pz-han { font-size: 1.15rem; }
+  .pz-filled.ok .pz-ko { font-size: .76rem; }
+  .pz-pool { padding: .35rem .65rem .45rem; }
+  .pz-pool-help { margin-bottom: .2rem; }
+  .pz-strips { gap: .32rem; padding-top: .2rem; }
+  .pz-strip { padding: .3rem .9rem .32rem 1.05rem; font-size: .86rem; }
+  .pz-words { display: none; }
+  .pz-note { padding: .45rem .85rem .5rem; }
+  .pz-gloss { font-size: .82rem; line-height: 1.5; }
+}
+/* PC(넓고 높은 화면): 시 네 행을 크게 */
+@media (min-height: 700px) and (min-width: 1000px) {
+  .pz-title { font-size: 2.1rem; }
+  .pz-row { min-height: 3.7rem; }
+  .pz-filled.ok .pz-han { font-size: 1.75rem; }
+  .pz-filled.ok .pz-ko { font-size: .9rem; }
+  .pz-filled .pz-ko { font-size: 1.02rem; }
+  .pz-num { width: 1.9rem; height: 1.9rem; font-size: 1.08rem; }
+  .pz-row { grid-template-columns: 2.1rem minmax(0, 1fr) auto; }
+  .pz-strip { font-size: .98rem; padding: .48rem 1.1rem .5rem 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tg-layer > .tg-junk, .tg-wave path, .pz-grope, .pz-row.target .pz-slot { animation: none; }
+}
