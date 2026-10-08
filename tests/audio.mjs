@@ -121,10 +121,12 @@ async function clarityCheck(page, label) {
   ok(r1 === true, 'tongso.play()가 true를 돌려줌');
   ok(await waitFor(page, () => G.audio.tongso.playing && G.audio.tongso.source === 'synth'), '퉁소 파일이 없으면 합성 퉁소음');
   ok(await page.evaluate(() => G.audio.tongso.instrument === null), '합성음이면 instrument = null');
+  ok(await page.evaluate(() => G.audio.ducked() && G.audio.now() === 'annam_night'), '퉁소가 울리는 동안 배경음을 낮춘다(곡은 그대로 이어짐)');
   await clarityCheck(page, '합성 퉁소');
   await page.evaluate(() => G.audio.tongso.stop());
   await page.waitForTimeout(1500);
   ok(await page.evaluate(() => !G.audio.tongso.playing && G.audio.tongso.level() === 0), 'tongso.stop() 뒤 멎고 level 0');
+  ok(await page.evaluate(() => !G.audio.ducked()), '퉁소가 멎으면 배경음을 되살린다');
 
   // 퉁소: 실제 파일(시험용 mp3를 fetch로 받아 풂)
   await page.evaluate((spec) => { G.audio.tongso._reset(); BGM.tongso = spec; G.audio.tongso.play({ clarity: 0.5 }); }, FIXSPEC);
@@ -217,13 +219,17 @@ async function clarityCheck(page, label) {
   ok(await page.locator('.title-screen h1').isVisible(), 'file://에서 타이틀이 뜸');
   await page.evaluate(() => G.audio.play('sea'));
   ok(await waitFor(page, () => { const f = G.audio.nowFile(); return f && f.src.endsWith('assets/bgm/sea.mp3') && !f.paused && f.t > 0.2; }), 'file://에서 배경음 파일(sea)이 흐름');
+  await page.waitForTimeout(1400); // 배경음이 다 들어올 때까지(1.2초)
+  const vol0 = await page.evaluate(() => G.audio.nowFile().vol);
   await page.evaluate(() => { G.audio.tongso._reset(); BGM.tongso = null; G.audio.tongso.play({ clarity: 0.5 }); });
   ok(await waitFor(page, () => G.audio.tongso.source === 'synth'), 'file://에서 합성 퉁소음');
+  ok(vol0 > 0.1 && (await waitFor(page, () => G.audio.nowFile().vol < 0.01, null, 3000)), `file://: 퉁소가 울리면 배경음 요소 음량을 낮춤(${vol0.toFixed(2)} → 0)`);
   await clarityCheck(page, 'file:// 합성 퉁소');
   await page.evaluate((spec) => { G.audio.tongso._reset(); BGM.tongso = spec; G.audio.tongso.play({ clarity: 0.5 }); }, FIXSPEC);
   ok(await waitFor(page, () => G.audio.tongso.source === 'file'), 'file://에서 퉁소 파일을 base64 js로 풀어 튼다');
   await clarityCheck(page, 'file:// 파일 퉁소');
   await page.evaluate(() => G.audio.tongso.stop());
+  ok(await waitFor(page, (v) => G.audio.nowFile().vol > v * 0.9, vol0, 4000), 'file://: 퉁소가 멎으면 배경음 음량을 되살림');
   const e = take(errs);
   ok(e.length === 0, 'file://: 오류 없음' + (e.length ? ' — ' + e.join(' / ') : ''));
   await ctx.close();

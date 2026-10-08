@@ -91,7 +91,9 @@ window.PLACES = window.PLACES || {};
     cover: 'sc_namwon_tongso',
     // 회상 동안은 여복, 피란처부터는 남복
     avatar: (st) => (st.done && st.done['b:namwon:nb-tongso'] ? 'sp_okyoung_m' : 'sp_okyoung_f'),
-    intro: '도망치려는 그 순간, 옥영의 귀에 한 가락이 스쳤다. 남원의 봄밤, 퉁소 소리.',
+    intro: '도망치려는 그 순간, 옥영의 귀에 한 가락이 스쳤다. 몇 해 전, 전쟁이 나기 전 남원의 봄밤에 최척이 불던 퉁소 소리였다. 옥영은 그 밤을 떠올린다.',
+    // 회상 동안은 미션도 회상이라고 밝힌다(서막의 '최척을 다시 만나라' 바로 뒤에 최척을 만나는 까닭을 헷갈리지 않게)
+    missions: [{ when: (st) => !(st.done && st.done['b:namwon:nb-tongso']), text: '회상 — 최척과 함께한 봄밤을 떠올려라.' }],
     maps: { home, yeongok },
     cast: {
       home: {
@@ -121,8 +123,8 @@ window.PLACES = window.PLACES || {};
     },
     beats: [
       {
-        id: 'nb-tongso', map: 'home', avatar: 'sp_okyoung_f', goal: '퉁소 소리를 따라가 보자', talk: 'cheok',
-        say: ['— 남원, 몇 해 전 봄밤.', '달이 밝았다. 마당 끝 버드나무 아래에서 퉁소 소리가 들려왔다.'],
+        id: 'nb-tongso', map: 'home', avatar: 'sp_okyoung_f', goal: '기억 속 퉁소 소리를 따라가 보자', talk: 'cheok',
+        say: ['— 회상: 몇 해 전, 전쟁이 나기 전 남원의 봄밤.', '달이 밝았다. 마당 끝 버드나무 아래에서 퉁소 소리가 들려왔다.'],
         steps: ['n-tongso', 'n-poem', 'n-poem-basic', 'n-poem-deep', 'n-frag1', 'n-answer', 'n-answer-card', 'n-omen', 'n-memcard-basic', 'n-memcard-deep'],
       },
       {
@@ -217,7 +219,7 @@ window.PLACES = window.PLACES || {};
       {
         id: 'n-namboc', type: 'say', scene: 'sc_namwon_namboc',
         lines: [
-          { fx: { tongsoSound: false }, t: '— 퉁소 소리가 끊겼다. 지리산 연곡 골짜기, 그 밤이었다.' },
+          { fx: { tongsoSound: false }, t: '— 퉁소 소리가 끊겼다. 옥영은 다시 지리산 연곡 골짜기의 그 밤으로 돌아왔다.' },
           '옥영은 사내 옷의 옷깃을 여몄다. 산에 들던 날 최척이 건넨 옷이었다.',
           { who: 'choecheok', t: '사람들 틈에서는 사내로 지내시오. 그래야 몸을 지킬 수 있소.' },
           '골짜기 아래 불빛이 조금씩 올라오고 있었다. 식구들을 챙겨 떠나야 한다.',

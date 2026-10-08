@@ -3,7 +3,7 @@
 ## 맡는 것
 - `util.js`: 요소 생성기 `h('div.cls', attrs, …)`, `**굵게**`·줄바꿈 변환, 받침에 맞춘 조사(`josa`), 글 속 자리 `{학생}`(`G.util.vars`에 더함), 그림 목록 조회 `G.util.art(kind, id)`, 인물 조회, 인물 초상 `G.util.pt(id, sp)`(모습이 여러 벌인 인물은 `PEOPLE[id].looks`에서 지금 모습 — `sp` 또는 게임이 채우는 `G.util.lookNow(id)` — 의 초상).
 - `save.js`: 저장 칸 하나(`localStorage['choecheok-jeon-v1']`)의 불러오기·쓰기·초기화. `G.save.extend`로 칸 더하기, `snapKeys`(단계 도중 새로고침 때 되돌릴 칸), `SETTINGS`(초기화에도 남는 설정).
-- `audio.js`: 배경음(파일 우선 → 못 읽으면 합성 곡), 효과음(모두 합성), 퉁소 층 `G.audio.tongso`(또렷함·방향, 파일 → base64 → 합성 차례로 대체).
+- `audio.js`: 배경음(파일 우선 → 못 읽으면 합성 곡), 효과음(모두 합성), 퉁소 층 `G.audio.tongso`(또렷함·방향, 파일 → base64 → 합성 차례로 대체). 퉁소가 울리는 동안 배경음을 낮춘다(`duck`).
 - `ui.js`: 토스트, 판(`sheet`), 아래 트레이 채우기(`fillTray`), 마지막 줄 맞추기(`keepLast`·`snapRows`: 걸친 줄 감추기·위쪽 흐림), 글 칸만 굴리기(`G.ui.reveal(el)` — `scrollIntoView` 대신), 아래 글 더 있음 표시(`checkMore`: `.more`와 ▼ 단추), 카드(표시 체계), 인물 얼굴(`G.ui.face(id, sp)`, 옥영은 지금 옷차림의 초상).
 - `hud.js`: 구석 HUD(초상·게이지·미션·아이콘), 때 딱지(`hud.where(맵 이름, 연도)`: 초상 아래·사건 띠), 사건 모드의 게이지 띠, 얻은 것 알림(카드·선택지·시구 맞추기가 떠 있으면 닫힌 뒤에), 게이지 첫 안내(`hud.gaugeHint`, 글은 `NOTES.gaugeHint`), 선생님용 숫자. 미션은 함수일 수 있다(거점의 `missions`). 왼쪽 위 초상은 `G.hud.syncFace()`가 지금 모습의 초상으로 바꾼다(`hud.refresh`와 맵의 옷차림이 바뀔 때 부름). 오른쪽 위 아이콘(수첩·지도·전체 화면·설정)은 `js/game/app.js`가 `hud.tools`로 채운다.
 - `oldmap.js`: 그림 고지도 위 거점·뱃길·배(옮겨 가기, 뱃길 고르기, 겹쳐 보기).
@@ -27,8 +27,8 @@
 - 각 파일은 즉시 실행 함수 하나로 `G.<이름>`을 만든다. 스크립트 차례: util → save → audio → ui → hud → oldmap. 뒤 파일은 앞 파일만 쓴다.
 - 확장은 덧붙이기로 한다: 새 효과음 `G.audio.addSfx(name, fn)`, 새 합성 곡 `G.audio.TRACKS.이름`, 새 글 속 자리 `G.util.vars.이름`, 카드 종류 `G.ui.KIND.이름`.
 - 모양은 `css/style.css`의 변수(`--night`, `--hanji`, `--lantern`, `--serif`, `--brush` …)를 쓴다. 강조색은 등불 주황 하나다.
-- 점검용 손잡이: `G.audio.synthOnly`, `G.audio.tongsoSynthOnly`, `G.audio.nowFile()`, `G.audio.nowSynth()`, `G.oldmap.fast`(연출 줄이기).
+- 점검용 손잡이: `G.audio.synthOnly`, `G.audio.tongsoSynthOnly`, `G.audio.nowFile()`(`vol` = 요소 음량), `G.audio.nowSynth()`, `G.audio.ducked()`(퉁소 때문에 배경음을 낮춘 상태), `G.oldmap.fast`(연출 줄이기).
 
 ## 점검
-- `tests/smoke.mjs`(HUD 겹침·고지도·사건 화면·세로 안내·파일로 열기), `tests/audio.mjs`(곡 바뀜, 파일 없을 때 합성, 퉁소 또렷함, AudioContext 없음, `file://`), `tests/resume.mjs`(되돌리기 칸).
+- `tests/smoke.mjs`(HUD 겹침·고지도·사건 화면·세로 안내·파일로 열기), `tests/audio.mjs`(곡 바뀜, 파일 없을 때 합성, 퉁소 또렷함, 퉁소가 울릴 때 배경음 낮추기, AudioContext 없음, `file://`), `tests/resume.mjs`(되돌리기 칸).
 - 저장 칸·`snapKeys`를 바꾸면 `node rules.mjs && node resume.mjs`. 소리를 바꾸면 `node audio.mjs && node file.mjs`. 점검은 하나씩 차례로 돌린다.

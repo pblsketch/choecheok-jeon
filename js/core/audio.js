@@ -1,16 +1,17 @@
 'use strict';
 // 소리: 배경음은 파일 목록(js/data/bgm.js의 BGM.tracks)에 있으면 그 파일을 먼저 틀고,
 //  파일이 없거나 읽지 못하면 브라우저 합성음(BGM.tracks.이름.synth)으로 튼다. 효과음은 모두 합성한다.
-// 퉁소 층(G.audio.tongso): 안남 장면의 퉁소 소리. 또렷함(clarity)에 따라 크기·저역 필터·메아리가 바뀐다.
+// 퉁소 층(G.audio.tongso): 남원 회상·안남 장면의 퉁소 소리. 또렷함(clarity)에 따라 크기·저역 필터·메아리가 바뀐다.
 //  실제 연주 파일(BGM.tongso)이 없거나 못 읽으면 합성 퉁소음을 같은 방법으로 튼다(아래 '퉁소 층' 참고).
 // 합성 엔진(가야금 Karplus-Strong·대금·해금·장구·징·잔향)은 같은 만든이의 「영웅의 길」에서 그대로 가져왔다.
 //  - 곡(TRACKS)은 영웅의 길에서 이 게임의 분위기에 맞는 몇 곡만 남기고 이름을 바꿨다(소리 작업에서 더 짓는다).
 //  - 새 곡 더하기: G.audio.TRACKS.이름 = { mode, tonic, unit, bar, lead:{inst, mel}, … } (아래 표기 참고)
 //  - 새 효과음 더하기: G.audio.addSfx('이름', (ctx, k) => { … }) — k는 합성 도구 묶음
-// 배경음·효과음은 설정에서 따로 끈다.
+// 배경음·효과음은 설정에서 따로 끈다. 퉁소가 울리는 동안에는 배경음을 낮춰 두 가락이 겹치지 않게 한다(duck).
 (function () {
   const MUSIC_VOL = 0.5, SFX_VOL = 0.8;
-  let ctx = null, comp, musicBus, sfxBus, revIn;
+  let ctx = null, comp, musicBus, duckBus, sfxBus, revIn;
+  let duckLv = 1; // 배경음 크기 배율: 퉁소가 울리면 0, 멎으면 1
   let ksCache = {}, noiseBuf = null;
   const A = (G.audio = { track: null });
   const S = () => G.save.state;
@@ -22,7 +23,8 @@
     cp.threshold.value = -14; cp.knee.value = 12; cp.ratio.value = 3; cp.attack.value = 0.01; cp.release.value = 0.25;
     const master = c.createGain(); master.gain.value = 1;
     cp.connect(master); master.connect(c.destination);
-    const mb = c.createGain(); mb.gain.value = MUSIC_VOL; mb.connect(cp);
+    const dk = c.createGain(); dk.gain.value = 1; dk.connect(cp); // 퉁소가 울릴 때 배경음을 낮추는 마디
+    const mb = c.createGain(); mb.gain.value = MUSIC_VOL; mb.connect(dk);
     const sb = c.createGain(); sb.gain.value = SFX_VOL; sb.connect(cp);
     const rev = c.createConvolver();
     const len = Math.floor(c.sampleRate * 2.6), ir = c.createBuffer(2, len, c.sampleRate);
@@ -35,7 +37,7 @@
     const ro = c.createGain(); ro.gain.value = 0.3;
     const rl = c.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 5000;
     ri.connect(rev); rev.connect(rl); rl.connect(ro); ro.connect(cp);
-    return { comp: cp, musicBus: mb, sfxBus: sb, revIn: ri };
+    return { comp: cp, musicBus: mb, duckBus: dk, sfxBus: sb, revIn: ri };
   }
 
   function init() {
@@ -43,7 +45,7 @@
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     try { ctx = new AC(); } catch (e) { return null; }
-    ({ comp, musicBus, sfxBus, revIn } = buildGraph(ctx));
+    ({ comp, musicBus, duckBus, sfxBus, revIn } = buildGraph(ctx));
     musicBus.gain.value = S().music ? MUSIC_VOL : 0;
     // 다른 탭으로 가면 소리를 멈춘다(교실에서 여러 기기가 동시에 울리지 않게)
     document.addEventListener('visibilitychange', () => {
@@ -425,7 +427,8 @@
       if (done) d.off = setTimeout(done, secs * 1000 + 100);
       return;
     }
-    const from = d.el.volume, goal = Math.min(1, MUSIC_VOL * to), t0 = Date.now();
+    d.to = to;
+    const from = d.el.volume, goal = Math.min(1, MUSIC_VOL * to * duckLv), t0 = Date.now();
     const tick = () => {
       const k = secs > 0 ? Math.min(1, (Date.now() - t0) / (secs * 1000)) : 1;
       try { d.el.volume = from + (goal - from) * k; } catch (e) { /* 음량을 못 바꾸는 기기 */ }
@@ -527,8 +530,22 @@
     if (want && ctx.state === 'suspended') ctx.resume();
     sync();
   };
+  // 퉁소가 울리는 동안 배경음 낮추기: on이면 0.8초에 걸쳐 거의 0으로, 끄면 1.5초에 걸쳐 되살린다.
+  //  웹에서는 duckBus(파일·합성 배경음이 모두 지나는 마디), file://의 파일 배경음은 요소 음량으로 맞춘다.
+  function duck(on) {
+    duckLv = on ? 0 : 1;
+    if (!ctx) return;
+    const secs = on ? 0.8 : 1.5, now = ctx.currentTime, g = duckBus.gain;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(Math.max(0.0001, g.value), now);
+    g.exponentialRampToValueAtTime(on ? 0.0001 : 1, now + secs);
+    if (on) g.setValueAtTime(0, now + secs);
+    if (cur && cur.d && !cur.d.bus) fade(cur.d, cur.d.to != null ? cur.d.to : 1, secs);
+  }
+  A.ducked = () => duckLv < 1; // 점검용: 퉁소 때문에 배경음을 낮춘 상태인가
+
   // 점검용: 지금 파일 배경음을 틀면 그 상태, 합성음이거나 멈췄으면 null
-  A.nowFile = () => (cur && cur.d ? { name: cur.name, src: cur.d.el.currentSrc, paused: cur.d.el.paused, t: cur.d.el.currentTime, graph: !!cur.d.bus } : null);
+  A.nowFile = () => (cur && cur.d ? { name: cur.name, src: cur.d.el.currentSrc, paused: cur.d.el.paused, t: cur.d.el.currentTime, graph: !!cur.d.bus, vol: cur.d.el.volume } : null);
   // 점검용: 지금 합성 곡을 틀면 { name: 장면 id, synth: 합성 곡 이름 }
   A.nowSynth = () => (cur && !cur.file ? { name: cur.name, synth: synthOf(cur.name) } : null);
   A.synthOnly = false; // 점검용: true면 파일 없이 합성음만
@@ -700,6 +717,7 @@
   function tgStart() {
     const t = tgChain(), now = ctx.currentTime;
     tg = t; TG.source = null;
+    duck(true);
     tgApply(t, true);
     t.amp.gain.setValueAtTime(0.0001, now); t.amp.gain.exponentialRampToValueAtTime(1, now + 0.6);
     t.watch = setInterval(() => { if (tg === t && !soundOn()) tgStop(true); }, 250); // 그사이 소리를 끄면 멎는다
@@ -710,6 +728,7 @@
     const t = tg;
     if (!t) return;
     tg = null; TG.source = null; tgLv = 0;
+    duck(false);
     clearInterval(t.sched); clearTimeout(t.timer); clearInterval(t.watch);
     const now = ctx.currentTime, g = t.amp.gain;
     g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.exponentialRampToValueAtTime(0.0001, now + (fast ? 0.3 : 1.2));
@@ -728,7 +747,7 @@
       return true;
     },
     set(o) { take(o); if (tg && ctx) { try { tgApply(tg); } catch (e) { /* 무시 */ } } },
-    stop(fast) { if (tg && ctx) { try { tgStop(!!fast); } catch (e) { tg = null; } } },
+    stop(fast) { if (tg && ctx) { try { tgStop(!!fast); } catch (e) { tg = null; duck(false); } } },
     get playing() { return !!tg; },
     get clarity() { return TG.clarity; },
     get pan() { return TG.pan; },
@@ -756,17 +775,17 @@
   A.render = async function (name, seconds = 20, rate = 44100) {
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
     const off = new OAC(2, Math.ceil(seconds * rate), rate);
-    const saved = [ctx, comp, musicBus, sfxBus, revIn, ksCache, noiseBuf];
+    const saved = [ctx, comp, musicBus, duckBus, sfxBus, revIn, ksCache, noiseBuf];
     try {
       ctx = off; ksCache = {}; noiseBuf = null;
-      ({ comp, musicBus, sfxBus, revIn } = buildGraph(off));
+      ({ comp, musicBus, duckBus, sfxBus, revIn } = buildGraph(off));
       const tr = buildTrack(TRACKS[name]);
       const tb = off.createGain(); tb.gain.value = TRACKS[name].gain || 1; tb.connect(musicBus);
       for (let loop = 0; loop * tr.length < seconds; loop++) {
         for (const n of tr.notes) { const t = loop * (tr.length + 0.6) + n.t + 0.05; if (t < seconds) playEvent(n, t, tb); }
       }
     } finally {
-      [ctx, comp, musicBus, sfxBus, revIn, ksCache, noiseBuf] = saved;
+      [ctx, comp, musicBus, duckBus, sfxBus, revIn, ksCache, noiseBuf] = saved;
     }
     return off.startRendering();
   };
