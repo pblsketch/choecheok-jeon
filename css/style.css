@@ -661,3 +661,16 @@ html.teacher .teacher-only { display: inline-flex !important; }
   .rc-saved { margin-top: .1rem; line-height: 1.3; }
   .rcard .kind { margin-bottom: 0; }
 }
+/* 손가락으로 누르는 기기(휴대폰·태블릿): 고르는 단추는 화면이 낮아도 44px 아래로 줄지 않게.
+   rem 크기가 화면 높이를 따라 작아지므로(가로 360~412px 휴대폰에서 29~42px) px로 바닥을 둔다 */
+@media (pointer: coarse) {
+  .title-side .btn, .title-tools .icon-btn, .sheet .actions .btn,
+  .ev-tray .actions .btn, .event.rcardmode .ev-tray .btn, .dlg-tray .actions .btn, .om-tray .btn,
+  .rs-nav .btn, .rs-order-again { min-height: 44px; }
+  .title-tools .icon-btn { min-width: 44px; }
+  .title-side .btn.primary.big { min-height: 48px; }
+  .ky-item, .ro-item { min-height: 44px; }
+  .ky-item { align-items: center; }
+}
+/* 잠긴 선택지의 '잠김 ·' 표시는 한 덩어리로(좁은 칸에서 가운뎃점이 다음 줄로 떨어지지 않게) */
+.opt .od.lock b { flex: none; white-space: nowrap; }
