@@ -45,7 +45,7 @@ window.PLACES = window.PLACES || {};
   const island = (o) => Object.assign({ name: '이름 없는 섬', theme: 'island', grid: GRID, spawn: [14, 16, 'up'], spots: SPOTS }, o);
 
   PLACES.sea = {
-    name: '바다', act: 2,
+    name: '바다', act: 2, year: '1620',
     map: 'island', spawn: [14, 16, 'up'],
     travel: false, // 항주에서 떠나는 길은 뱃길 고르기 고지도가 보여 준다
     avatar: 'sp_okyoung_ming',

@@ -6,19 +6,21 @@
 window.PLACES = window.PLACES || {};
 (function () {
   PLACES.interlude = {
-    name: '막간 — 항주의 몇 해', act: 2, node: 'hangzhou',
+    name: '막간 — 항주의 몇 해', act: 2, node: 'hangzhou', year: '1600~1618',
     avatar: 'sp_okyoung_ming', // 항주에서 명나라 옷을 입고 산 세월(대사 얼굴·HUD 초상이 따른다)
     music: 'hangzhou',
     cover: 'sc_interlude_hangzhou',
     intro: '안남에서 다시 만난 최척과 옥영은 송우를 따라 중국 항주에 자리를 잡았다. 그 뒤로 스무 해 가까운 세월이 흘렀다.',
     steps: [
+      // 지난 이야기: 1차시와 2차시 사이가 며칠 떨어져 있으므로 1막 줄거리와 내가 고른 길을 먼저 되짚는다(글: notes.js의 NOTES.recap)
+      { id: 'i-recap', type: 'recap', scene: 'sc_act1_end' },
       {
         id: 'i-settle', type: 'say', scene: 'sc_interlude_hangzhou',
         lines: [
           '송우는 집에 돌아오자 방 한 채를 따로 지어 최척 부부를 머물게 했다.',
           '낯선 나라였지만, 두 사람은 다시 한 지붕 아래에서 아침을 맞았다.',
           '그래도 최척은 남원에 두고 온 늙은 아버지와 어린 몽석을 하루도 잊지 못했다.',
-          '전란이 지나간 뒤의 고요한 몇 해. 옥영의 몸과 마음도 조금씩 추슬러졌다.',
+          '전란이 지나간 뒤의 고요한 몇 해. 옥영의 몸과 마음도 조금씩 추슬러졌다. 살아갈 힘(生)이 다시 차올랐다.',
         ],
       },
       {
@@ -53,6 +55,8 @@ window.PLACES = window.PLACES || {};
       },
     ],
     scenes: {
+      // 지난 이야기(i-recap)의 바탕: 1차시 끝 그림을 다시 쓴다(새로 그리지 않음)
+      sc_act1_end: { caption: '새벽 안남 포구, 나란히 선 두 척의 배', prompt_hint: 'Dawn at an Annam harbor: a Chinese junk and a Japanese trade ship moored side by side on calm water, soft mist' },
       sc_interlude_hangzhou: { caption: '항주, 송우가 내어 준 집', prompt_hint: 'A modest Ming-era house beside a willow-lined canal in Hangzhou, a Korean couple (Choe Cheok and Okyoung in Ming clothes) greeting the morning together in the courtyard, spring light, gouache picture-book style' },
       sc_interlude_mongseon: { caption: '몽선이 태어나던 밤', prompt_hint: 'Night interior: Okyoung sleeping, a soft golden standing Buddha figure appearing in her dream above her, warm lantern glow, gentle and serene, gouache picture-book style' },
       sc_interlude_hongdo: { caption: '아버지 얼굴을 모르는 홍도', prompt_hint: 'A young Chinese woman (Hongdo) standing at a window looking east over misty water at dusk, holding a small peach, quiet longing, gouache picture-book style' },

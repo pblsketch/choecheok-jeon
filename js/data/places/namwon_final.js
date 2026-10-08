@@ -18,7 +18,7 @@ window.PLACES = window.PLACES || {};
   const hasToken = (st) => (st.tokens || []).length > 0;
 
   PLACES.namwon_final = {
-    name: '남원', act: 2,
+    name: '남원', act: 2, year: '1620',
     map: 'nw_home', spawn: [2, 13, 'right'],
     avatar: 'sp_okyoung_joseon',
     music: 'namwon_memory',

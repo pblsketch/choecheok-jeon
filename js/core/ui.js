@@ -64,6 +64,9 @@
     setTimeout(() => ui.keepLast(sc), 450); // 부드럽게 굴러가던 스크롤(scrollIntoView smooth)이 끝난 뒤 한 번 더
   };
   // 글 칸(sc)의 마지막 줄이 보이게: 줄 묶음(.says)이면 그 마지막 줄, 칸보다 긴 줄이면 그 줄의 머리를 맞춘다
+  //  위로 밀려난 줄이 반쯤 잘려(이름표·얼굴 윗부분만 남아) 보이지 않게, 걸친 줄은 다 감출 수 있으면 다 감춘다.
+  //  그래도 걸친 줄이 남으면 위쪽을 흐리게 한다(.faded, style.css)
+  const rows = (main) => [...main.children].flatMap((x) => (x.classList.contains('says') ? [...x.children] : [x]));
   ui.keepLast = function (sc) {
     if (!sc || !sc.isConnected || sc.closest('.cardmode')) return;
     const main = sc.firstElementChild;
@@ -76,7 +79,75 @@
     const room = a.height - padT - padB;
     const delta = b.height > room ? b.top - (a.top + padT) : b.bottom - (a.bottom - padB);
     if (delta > 0.5) sc.scrollTop += Math.ceil(delta);
+    ui.snapRows(sc);
   };
+  // 위 가장자리에 걸친 줄을 다 감춘다(마지막 줄이 칸 안에 남을 때만)
+  ui.snapRows = function (sc) {
+    if (!sc || !sc.isConnected) return;
+    const main = sc.firstElementChild;
+    if (!main) return;
+    const cs = getComputedStyle(sc);
+    const padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+    const a = sc.getBoundingClientRect();
+    const top = a.top + padT, bottom = a.bottom - padB;
+    const list = rows(main);
+    const cut = list.find((x) => { const r = x.getBoundingClientRect(); return r.height && r.top < top - 1 && r.bottom > top + 1; });
+    const last = list[list.length - 1];
+    if (cut && last) {
+      const shift = Math.ceil(cut.getBoundingClientRect().bottom - top) + 2;
+      if (last.getBoundingClientRect().bottom - shift >= top + 8 && last.getBoundingClientRect().top - shift >= top - 1) sc.scrollTop += shift;
+    }
+    sc.classList.toggle('faded', sc.scrollTop > 2);
+  };
+  // 요소가 보이게 그 요소를 담은 글 칸만 굴린다(scrollIntoView는 바깥 틀까지 굴려 화면 전체가 밀린다)
+  ui.reveal = function (el, smooth) {
+    if (!el || !el.isConnected) return;
+    let sc = el.parentElement;
+    while (sc && sc !== document.body) {
+      const oy = getComputedStyle(sc).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && sc.scrollHeight > sc.clientHeight + 1) break;
+      sc = sc.parentElement;
+    }
+    if (!sc || sc === document.body) return;
+    const a = sc.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const cs = getComputedStyle(sc);
+    const padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0;
+    let to = sc.scrollTop;
+    if (b.bottom > a.bottom - padB) to += b.bottom - (a.bottom - padB);
+    if (b.top - (to - sc.scrollTop) < a.top + padT) to -= (a.top + padT) - (b.top - (to - sc.scrollTop));
+    if (Math.abs(to - sc.scrollTop) < 0.5) { ui.snapRows(sc); return; }
+    if (smooth) sc.scrollTo({ top: to, behavior: 'smooth' }); else sc.scrollTop = to;
+    setTimeout(() => ui.snapRows(sc), smooth ? 420 : 0);
+  };
+
+  // 글 칸 아래에 더 읽을 글이 남았으면 아래쪽을 흐리게 하고 작은 ▼ 단추를 띄운다(누르면 아래로 굴린다)
+  //  대상: 사건 화면·대화창 글 칸, 시구 맞추기의 조각 목록. 화면이 바뀌거나 굴릴 때마다 다시 본다
+  const MORE_SEL = '.ev-scroll, .dlg-scroll, .pz-strips';
+  ui.checkMore = function () {
+    for (const sc of document.querySelectorAll(MORE_SEL)) {
+      const host = sc.parentElement;
+      if (!host) continue;
+      const more = sc.offsetParent !== null && sc.scrollHeight - sc.scrollTop - sc.clientHeight > 6;
+      sc.classList.toggle('more', more);
+      let chip = sc._moreChip;
+      if (more && !chip) {
+        chip = sc._moreChip = h('button.more-chip', { type: 'button', 'aria-label': '아래 글 더 보기', tabindex: '-1', on: { click: () => sc.scrollBy({ top: sc.clientHeight * 0.7, behavior: 'smooth' }) } }, '▼');
+        if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+        host.appendChild(chip);
+      }
+      if (chip) {
+        chip.hidden = !more;
+        if (more) { chip.style.top = (sc.offsetTop + sc.offsetHeight - 30) + 'px'; chip.style.left = (sc.offsetLeft + sc.offsetWidth / 2 - 15) + 'px'; }
+      }
+    }
+  };
+  let moreQueued = false;
+  const queueMore = () => { if (moreQueued) return; moreQueued = true; requestAnimationFrame(() => { moreQueued = false; ui.checkMore(); }); };
+  if (typeof document !== 'undefined' && document.documentElement && typeof MutationObserver === 'function') { // 브라우저 없이 실을 때(점검)는 건너뛴다
+    document.addEventListener('scroll', queueMore, true);
+    window.addEventListener('resize', queueMore);
+    new MutationObserver(queueMore).observe(document.documentElement, { childList: true, subtree: true });
+  }
 
   // 아직 만들지 않은 화면·기능
   ui.notReady = function (what) {

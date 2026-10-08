@@ -160,6 +160,11 @@
 
   // ───────── 거점 정보 ─────────
   app.order = () => FL().order.slice();
+  // 미션: 거점 자료의 missions: [{ when, text }] 가운데 지금 맞는 첫 문장, 없으면 기본 미션(HUD가 그때그때 다시 읽는다)
+  function missionOf(p, base) {
+    if (!p.missions || !p.missions.length) return base;
+    return () => { for (const m of p.missions) if (G.steps.ok(m.when)) return m.text; return base; };
+  }
   // 거점 이름·막·미션·고지도 자리를 한데 모은다(거점 파일 값이 먼저, 없으면 flow.js)
   app.placeInfo = function (id) {
     const base = (FL().places || {})[id] || {};
@@ -169,7 +174,8 @@
     return {
       id, name: p.name || base.name || id, act,
       actName: A.name ? A.name + (A.title ? ' 「' + A.title + '」' : '') : '',
-      mission: p.mission != null ? p.mission : (base.mission != null ? base.mission : A.mission || ''),
+      mission: missionOf(p, p.mission != null ? p.mission : (base.mission != null ? base.mission : A.mission || '')),
+      year: p.year || base.year || '',
       node: p.node || base.node || null,
       ready: !!(window.PLACES || {})[id],
     };
@@ -266,6 +272,8 @@
       const els = G.hud.build();
       const stage = h('div.mapstage');
       playEl = h('div.play', h('div.mapwrap', stage), h('div.hud', els.panel, els.mission, els.tools), els.strip);
+      // 놀이 화면 틀은 굴러가지 않는다(overflow: clip을 모르는 옛 브라우저에서 포커스·끌기로 밀려도 되돌린다)
+      playEl.addEventListener('scroll', () => { if (playEl.scrollTop || playEl.scrollLeft) { playEl.scrollTop = 0; playEl.scrollLeft = 0; } });
       r.appendChild(playEl);
       G.hud.tools(
         [h('button.btn.small.teacher-only.skip-goal', { type: 'button', on: { click: () => { G.audio.tap(); if (!(G.world && G.world.skipGoal())) ui.toast('건너뛸 목표가 없어요'); } } }, h('span.ic', { html: ICON.skip }), '목표 건너뛰기'),
@@ -390,7 +398,7 @@
     ctx.main.appendChild(h('div.place-card',
       info.actName ? h('div.pc-act', info.actName) : null,
       h('h2.pc-name', info.name),
-      info.mission ? h('div.pc-mission', info.mission) : null,
+      info.mission ? h('div.pc-mission', typeof info.mission === 'function' ? info.mission() : info.mission) : null,
       place && place.intro ? h('p.pc-intro', boldNodes(place.intro)) : null));
     await G.steps.nextButton(ctx, resumed ? '이어서 ▶' : '펼치기 ▶');
     ctx.close();

@@ -50,7 +50,9 @@ window.PLACES = window.PLACES || {};
   ]);
 
   PLACES.annam = {
-    name: '안남', act: 1, node: 'annam',
+    name: '안남', act: 1, node: 'annam', year: '1600',
+    // 재회한 뒤에는 미션이 바뀐다(HUD가 조건에 맞는 첫 문장을 보인다)
+    missions: [{ when: { done: 's:annam:reunion' }, text: '최척을 다시 만났다. 이제 함께 살 길을 찾아라.' }],
     map: 'annam_port', spawn: [24, 8, 'down'],
     avatar: 'sp_okyoung_m',
     music: 'annam_night',
@@ -126,7 +128,7 @@ window.PLACES = window.PLACES || {};
         id: 'b-dawn', spawn: [25, 6, 'down'], hide: ['cheok'], music: 'reunion',
         show: { cheok_dawn: { who: 'choecheok', x: 26, y: 9, dir: 'up' } },
         goal: '부르는 소리를 따라 배에서 내려가자', talk: 'cheok_dawn',
-        steps: ['reunion', 'q-reunion', 'reunion-after', 'farewell', 'q-farewell', 'q-farewell-deep', 'farewell-after', 'act1end'],
+        steps: ['reunion', 'q-reunion', 'reunion-after', 'q-chance', 'farewell', 'q-farewell', 'q-farewell-deep', 'farewell-after', 'act1end'],
       },
     ],
     steps: [
@@ -239,7 +241,7 @@ window.PLACES = window.PLACES || {};
       },
       {
         id: 'q-reunion', type: 'card',
-        card: { id: 'q-annam-reunion', kind: 'orig', title: '원작에서 — 안남 포구의 재회', summary: '경자년(1600) 봄, 정유년에 헤어진 지 세 해 만이다. 중국 배와 일본 배에 따로 실려 온 두 사람이 남쪽 바다의 포구에서 만났다.', quote: { 원문: '二人相見, 驚呼抱持, 宛轉沙中, 聲絶氣塞, 口不能言.', 풀이: '두 사람은 서로 마주 보자 놀라 소리치며 부둥켜안고 모래밭에 뒹굴었다. 목이 메고 숨이 막혀 말을 하지 못했다.' } },
+        card: { id: 'q-annam-reunion', kind: 'orig', title: '원작에서 — 안남 포구의 재회', summary: '경자년(1600) 봄, 정유년에 헤어진 지 햇수로 네 해 만이다. 중국 배와 일본 배에 따로 실려 온 두 사람이 남쪽 바다의 포구에서 만났다.', quote: { 원문: '二人相見, 驚呼抱持, 宛轉沙中, 聲絶氣塞, 口不能言.', 풀이: '두 사람은 서로 마주 보자 놀라 소리치며 부둥켜안고 모래밭에 뒹굴었다. 목이 메고 숨이 막혀 말을 하지 못했다.' } },
       },
       {
         id: 'reunion-after', type: 'say', scene: 'sc_annam_reunion', lines: [
@@ -249,6 +251,15 @@ window.PLACES = window.PLACES || {};
           { who: 'okyoung', t: '산에서 강가까지 끌려갈 때만 해도 두 분 모두 무사하셨어요. 그런데 날이 저물어 배에 오르다가, 경황 중에 서로 놓치고 말았어요.' },
           '두 사람은 마주 보고 목 놓아 울었다. 듣는 사람마다 코끝이 시큰해졌다.',
         ],
+      },
+      // 해석 카드(두 방식 모두): 기이한 우연인가, 그럴 법한 만남인가 — 전기성과 역사 배경을 함께 생각한다
+      {
+        id: 'q-chance', type: 'card',
+        card: {
+          id: 'i-annam-chance', kind: 'interp', kindLabel: '해석', title: '우연일까, 그럴 법한 일일까',
+          body: '뱃사람들은 "하늘이 돕고 신령이 도운 일"이라며 놀랐다. 꿈에 나타난 장육불, 퉁소 가락과 시 한 수로 알아본 남편 — 이 재회는 기이한 우연처럼 보인다. 이렇게 우연과 기적이 이야기를 이끄는 성격을 **전기성(傳奇性)**이라 한다.\n그런데 이 무렵 안남 같은 남쪽 항구에는 실제로 중국 배와 일본 배가 함께 드나들었다. 중국 상선을 탄 최척과 일본 상선을 탄 옥영이 같은 포구에 닿는 것은, 당시 바다의 모습으로는 있을 법한 일이기도 하다.\n**나는 이 장면이 우연으로 읽히는가, 그럴 법한 일로 읽히는가? 짝과 근거를 들어 이야기해 보자.**',
+          src: '해석 · 근거: 역사 카드 「17세기 동아시아 바다의 교역선」',
+        },
       },
       {
         id: 'farewell', type: 'say', scene: 'sc_annam_farewell', lines: [

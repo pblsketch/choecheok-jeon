@@ -33,6 +33,8 @@
 - 딜레마 대조 카드: `card: { title, summary, quote:{원문,풀이}, quoteLong(깊이 읽기), extraGloss(처음 배우기), variant?(이본 노트), interp?(해석), src }`. 딜레마마다 `extraGloss`와 `quoteLong`이 있어야 한다(`tests/content.mjs`). 원문이 없는 창작 딜레마만 `quoteLong` 대신 `noQuoteLong: '까닭'`을 적고 더 긴 해석은 `interp`로 둔다. 원문은 `design/research/01_원문_사실확인.md`에서만 가져오고 지어내지 않는다.
 - 시구 조각은 행 번호로만 적는다: `frag` 단계는 `n`, 선택지는 `fx: { frag: 2 }`. 글(원문·풀이)은 `poem.js`의 `lines`에서 엔진이 꺼내 알림·수첩·시구 맞추기에 함께 보인다. 조각 글을 따로 적지 않는다.
 - 이야기 중 원작 장면 카드를 수첩에 모으려면 `type:'card'` 단계로 둔다(`card.id`, `kind:'orig'`). 지식을 주지 않는 카드 단계는 1막 거점에 더해도 이어 하기 글자 되풀이에서 늘 실행되어 어긋나지 않는다(단계 배열 차례만 지킨다).
+- 거점·맵의 `year`는 HUD의 때 딱지다(맵 값이 먼저, 회상 맵은 `year: '회상', memory: true`). 거점의 `missions: [{ when, text }]`는 조건에 따라 미션을 바꾼다.
+- 수첩 '줄거리'(`NOTES.timeline`)·'인물'(`NOTES.people`)은 단계 `done` 열쇠로 열린다. 단계 id를 더하거나 거점에 사건을 더하면 연표 한 줄도 함께 맞춘다.
 - 확정 못 한 사실은 가장 그럴듯한 쪽을 쓰고 역사 카드면 `review`에, 그 밖은 README 교사 검수 목록과 `design/research/01_원문_사실확인.md` §9에 '⚠ 검수 필요'로 올린다.
 
 ## 고친 뒤

@@ -402,7 +402,10 @@
     for (const nid in cast || {}) addNpc(nid, cast[nid]);
     placePlayer(spawn);
     W.setMusic(def.music);
-    if (G.hud) G.hud.where(def.name || '');
+    if (G.hud) G.hud.where(def.name || '', def.year || null);
+    // 회상 맵(memory:true): 놀이 화면을 바랜 빛으로(css .play.memory) — 시간이 거꾸로 갔다는 것을 눈으로도 알게
+    const playEl = root && root.closest('.play');
+    if (playEl) playEl.classList.toggle('memory', !!def.memory);
     amb.length = 0;
     const pn = G.hud && G.hud.info && G.hud.info.name;
     if (pn) W.banner(pn, def.name && def.name !== pn ? def.name : '');
@@ -647,7 +650,7 @@
       else el = G.steps.line(l, ctx);
       if (!el) continue;
       box.appendChild(el);
-      el.scrollIntoView({ block: 'nearest' });
+      G.ui.reveal(el);
       await G.steps.nextButton(ctx, i === lines.length - 1 ? '닫기' : '▶');
     }
     closeDlg(ctx);

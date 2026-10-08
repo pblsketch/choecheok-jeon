@@ -64,7 +64,7 @@
   function feedback(box, kind, text) {
     box.innerHTML = '';
     box.appendChild(h('div.feedback.' + kind, boldNodes(text)));
-    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    G.ui.reveal(box, true);
   }
   steps.feedback = feedback;
 
@@ -141,17 +141,26 @@
   };
   // 여러 줄을 한 줄씩 넘기며 보여 준다
   steps.lines = async function (lines, ctx, lastLabel = '다음 ▶') {
-    const box = h('div.says');
+    let box = h('div.says');
     ctx.main.appendChild(box);
     const list = (lines || []).filter((l) => typeof l === 'string' || steps.ok(l.when));
     for (let i = 0; i < list.length; i++) {
       const el = steps.line(list[i], ctx);
       if (!el) continue;
+      const lastOne = !list.slice(i + 1).some((l) => typeof l === 'string' || !l.fx || l.t != null || l.who || l.card);
+      // 이야기 줄 속 원작 카드({ card })는 좁은 글 칸에 끼우지 않고 사건 화면 가운데 한 장으로 크게 보인 뒤, 글 칸을 새로 시작한다
+      if (typeof list[i] === 'object' && list[i].card && ctx.mode === 'event' && ctx.el) {
+        el.classList.add('linecard');
+        await steps.cardMoment(ctx, el, lastOne ? lastLabel : '▶');
+        ctx.main.innerHTML = '';
+        box = h('div.says');
+        ctx.main.appendChild(box);
+        continue;
+      }
       box.appendChild(el);
       G.audio.page();
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      const last = !list.slice(i + 1).some((l) => typeof l === 'string' || !l.fx || l.t != null || l.who || l.card);
-      await nextButton(ctx, last ? lastLabel : '▶');
+      G.ui.reveal(el, true);
+      await nextButton(ctx, lastOne ? lastLabel : '▶');
     }
   };
 
@@ -170,7 +179,7 @@
     const st = S();
     if (step.scene) { if (ctx.setScene) ctx.setScene(step.scene); else ctx.main.appendChild(steps.scene(step.scene, '.short')); }
     for (const l of step.pre || []) { const el = steps.line(l, ctx); if (el) ctx.main.appendChild(el); }
-    if (step.q) { const el = steps.line(step.who ? { who: step.who, t: step.q } : { t: step.q }, ctx); if (el) { ctx.main.appendChild(el); el.scrollIntoView({ block: 'nearest' }); } }
+    if (step.q) { const el = steps.line(step.who ? { who: step.who, t: step.q } : { t: step.q }, ctx); if (el) { ctx.main.appendChild(el); G.ui.reveal(el); } }
     const opts = step.options.filter((o) => steps.ok(o.when));
     const preset = ctx.preset && ctx.preset[step.id] != null ? step.options[ctx.preset[step.id]] : null;
     const list = h('div.options.n' + Math.min(3, opts.length));
@@ -317,7 +326,7 @@
     for (const l of step.prompt || step.pre || []) { const el = steps.line(l, ctx); if (el) ctx.main.appendChild(el); }
     if (step.q) { const el = steps.line(step.who ? { who: step.who, t: step.q } : { t: step.q }, ctx); if (el) ctx.main.appendChild(el); }
     const last = ctx.main.lastElementChild;
-    if (last) last.scrollIntoView({ block: 'nearest' });
+    if (last) G.ui.reveal(last);
     const prev = (st.applied || {})[key];
     const presetIdx = ctx.preset && ctx.preset[step.id] != null ? ctx.preset[step.id] : null;
     const preset = prev && prev.choice ? step.options.find((o) => o.id === prev.choice) : presetIdx != null ? step.options[presetIdx] : null;

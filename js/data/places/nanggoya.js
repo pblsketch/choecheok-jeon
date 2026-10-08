@@ -82,6 +82,7 @@ window.PLACES = window.PLACES || {};
 
   PLACES.nanggoya = {
     name: '낭고야',
+    year: '1597~1600',
     act: 1,
     node: 'nanggoya',
     map: 'house',
@@ -123,7 +124,7 @@ window.PLACES = window.PLACES || {};
       },
     },
     beats: [
-      { id: 'gb-arrive', map: 'house', auto: true, steps: ['g-arrive', 'g-dream', 'g-wake'] },
+      { id: 'gb-arrive', map: 'house', auto: true, steps: ['g-arrive', 'g-dream', 'g-wake', 'g-news-ming'] },
       { id: 'gb-sagan', goal: '불당 앞의 돈우에게 가 보자', talk: 'donwoo', steps: ['g-sagan'] },
       { id: 'gb-out', goal: '대문을 나서 포구로 가 보자', go: 'gate' },
       {
@@ -131,7 +132,7 @@ window.PLACES = window.PLACES || {};
         say: ['포구 어딘가에서 귀에 익은 말소리가 들렸다. 조선말이었다.'],
         steps: ['g-news'],
       },
-      { id: 'gb-ship', goal: '배를 손보는 돈우에게 가 보자', talk: 'donwoo', steps: ['g-ship', 'g-sail'] },
+      { id: 'gb-ship', goal: '배를 손보는 돈우에게 가 보자', talk: 'donwoo', steps: ['g-ship', 'g-news-songwoo', 'g-sail'] },
     ],
     steps: [
       {
@@ -157,6 +158,17 @@ window.PLACES = window.PLACES || {};
           '그날부터 옥영은 억지로라도 밥을 떠 넣었다. 살아 있어야 다시 만날 수 있다.',
           { when: { mode: 'deep' }, card: { kind: 'orig', title: '만에 하나', han: '玉英覺而諗其夢, 不能無萬一之冀, 遂强食不死.', ko: '옥영은 깨어나 그 꿈을 곱씹으며, 만에 하나라도 바랄 것이 있지 않을까 하는 마음을 버릴 수 없었다. 그래서 억지로 밥을 먹으며 죽지 않고 버텼다.' } },
         ],
+      },
+      // 옥영이 모르는 소식 ③: 최척은 명나라 장수를 따라 중국으로(원작 ¶09). 지식을 주지 않는 카드 단계
+      {
+        id: 'g-news-ming', type: 'card',
+        lines: ['그 무렵, 바다 건너 조선에서 일어난 일이다.'],
+        card: {
+          id: 'q-news-ming', kind: 'letter', kindLabel: '옥영이 모르는 소식 ③', title: '금교의 명나라 장수',
+          body: '식구를 모두 잃었다고 여긴 최척은 무너진 남원 옛집 가까운 금교 다리 곁에 며칠을 굶은 채 쓰러져 있었다. 그때 말을 씻기러 온 명나라 장수 여유문을 만났다.\n의병 시절 명나라 군사들과 어울리며 익힌 중국말로 사정을 털어놓자, 여유문은 최척을 자기 진으로 데려갔다. 명나라 군대가 돌아갈 때 최척도 함께 건너가 중국 절강 땅에서 살게 되었다.\n옥영은 이 일을 모른다.',
+          quote: { 원문: '吾是吳總兵之千總余有文也. 家在浙江姚興府 … 遂以一馬載歸于陣.', 풀이: '"나는 오 총병 아래의 천총 여유문이오. 집은 절강 요흥부에 있소." … 마침내 말 한 필에 태워 진으로 데려갔다.' },
+          src: '「최척전」 ¶09',
+        },
       },
       {
         id: 'g-sagan', type: 'say', scene: 'sc_nanggoya_sagan',
@@ -268,6 +280,16 @@ window.PLACES = window.PLACES || {};
           extraGloss: '화장(火長)은 배에서 밥을 짓고 잔일을 하는 뱃사람이에요. 閩(민)은 지금 중국의 복건, 浙(절)은 절강 지방이에요.',
           variant: '沙干(사간)은 이본에 따라 沙于(사우)로도 적혀요.',
           src: '「최척전」 ¶11 · ¶19',
+        },
+      },
+      // 옥영이 모르는 소식 ④: 중국을 떠돌던 최척과 송우(원작 ¶12)
+      {
+        id: 'g-news-songwoo', type: 'card',
+        card: {
+          id: 'q-news-songwoo', kind: 'letter', kindLabel: '옥영이 모르는 소식 ④', title: '강남을 떠돌던 최척과 송우',
+          body: '중국에서 여유문은 최척과 의형제를 맺고 누이와 혼인시키려 했다. 최척은 "늙은 아버지와 아내가 살았는지 죽었는지도 모른다"며 끝내 사양했다.\n여유문이 병으로 죽자 기댈 곳을 잃은 최척은 강남의 이름난 곳을 떠돌다, 신선술을 배우러 깊은 촉 땅으로 들어갈 생각까지 했다. 그때 항주의 선비 **송우**가 찾아와 말렸다. "나와 함께 배를 타고 오·월 땅을 오가며 비단과 차를 팔며 삽시다."\n최척은 송우를 따라 장삿배에 올랐다. 옥영은 이 일을 모른다.',
+          quote: { 원문: '我以全家陷賊, 老父弱妻至今未知生死, 縱不得發喪服衰, 豈晏然婚娶, 以爲自逸之計乎?', 풀이: '"온 집안이 적에게 빠져 늙은 아버지와 약한 아내가 지금까지 살았는지 죽었는지도 모르오. 상복은 입지 못할망정, 어찌 태연히 장가들어 제 한 몸 편할 궁리를 하겠소?"' },
+          src: '「최척전」 ¶12',
         },
       },
       {

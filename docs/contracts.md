@@ -76,9 +76,9 @@
 
 ```js
 PLACES.namwon = {
-  name, act: 1|2, node: '고지도 거점', mission?, intro?, cover?: 'sc_…', music?: '곡 이름',
+  name, act: 1|2, node: '고지도 거점', mission?, missions?: [{ when, text }], year?: '1597', intro?, cover?: 'sc_…', music?: '곡 이름',
   map?: '첫 맵 id', spawn?: [x, y, 'down'|'left'|'right'|'up'], avatar?: 'sp_…' | (state) => 'sp_…', travel?: false,
-  maps: { 맵id: { name, theme: 'village'|'port'|'harbor_night'|'garden'|'island', night?, music?, spawn,
+  maps: { 맵id: { name, theme: 'village'|'port'|'harbor_night'|'garden'|'island', night?, music?, spawn, year?, memory?,
                  grid: G.world.mk(가로, 세로, '바탕 글자', [['rect'|'frame'|'dots'|'border', …]]),
                  props: [['pr_…', x, y, { flat?, w?, h? }]], lights?: [[x, y, 반지름px]],
                  spots: { id: { x, y, w, h, name, act?, look?: [줄…] } }, npcs? } },
@@ -91,6 +91,8 @@ PLACES.namwon = {
 ```
 
 - 맵이 없는 거점(서막·막간)은 `beats` 없이 `steps`를 차례로 펼친다.
+- `year`(거점·맵): HUD 초상 아래와 사건 화면 띠에 보이는 때 딱지('1597', '1600~1618', '회상'). 맵의 값이 거점의 값보다 먼저다. `memory: true`인 맵(회상)은 놀이 화면이 바랜 빛으로 보인다.
+- `missions`: 조건에 따라 바뀌는 미션. HUD가 그때그때 `when`이 맞는 첫 문장을 보이고, 없으면 `mission`(또는 막 미션). 예: 안남 재회(`done: 's:annam:reunion'`) 뒤 "최척을 다시 만났다. …".
 - `avatar`(옥영의 모습, 도트 id `sp_okyoung_f|m|ming|joseon`)는 거점마다 적는다. 맵의 도트뿐 아니라 대화 얼굴·HUD 초상도 이것을 따른다(`PEOPLE.okyoung.looks`가 도트 id → 초상 id). 차례: 단계의 `avatar`(그 단계 동안만, 예: 바다 `s-ship-prep`의 조선 옷) → 목표의 `avatar` → 거점의 `avatar`. 상태를 바꾸지 않으므로 이어 하기 글자와 상관없다. `tests/content.mjs`가 거점마다 정해졌고 looks에 있는지 본다.
 - 사람의 `talk`는 말을 걸 때마다 다음 묶음으로 넘어가고, 끝까지 가면 첫 묶음으로 돌아간다(몇 번째인지는 저장하지 않으므로 다시 열면 첫 묶음부터). 말 속 `{ learnStep: '단계 id' }`는 그 거점의 `card`·`know` 단계를 그 자리에서 한 번만 반영한다(역사 카드를 '읽을지 말지' 고르게 하는 장치).
 
@@ -111,11 +113,20 @@ PLACES.namwon = {
 | `poem` | `{ id, type:'poem', scene?, gropeCost? }` | 안남 시구 순서 맞추기 |
 | `route` | `{ id, type:'route', for:'딜레마 단계 id', from, title, note }` | 고지도에서 뱃길 고르기 → 다음 딜레마에 넘김 |
 | `stars` | `{ id, type:'stars', intro?, dipper, pole, helm, done?, ui:{ tag, aligned, doneTitle, doneText } }` | 별과 지남철로 뱃길 잡기(실패 없음) |
+| `recap` | `{ id, type:'recap', text? }` | 2막 첫머리 '지난 이야기': `NOTES.recap`의 줄거리와 학생이 1막에서 고른 길(`mine`). 상태를 바꾸지 않는다 |
 | `act1End` · `origEnding` · `kimyc` · `result` | `{ id, type }` | 1차시 끝 · 원작 결말 · 「김영철전」 · 결과 화면 |
 
 ### 줄의 꼴
 
-- `'서술'` · `{ who:'인물 id', t:'말', sp? }` · `{ card:{ kind:'orig'|'history'|'fiction'|'interp'|'note', title, han?, ko?, body?, real?, src? } }` · `{ wonmun:{ 원문, 풀이 } }` · `{ scene:'sc_…' }` · `{ fx:{…} }` · `{ when:{…}, … }` · `{ learnStep:'단계 id' }`.
+- `'서술'` · `{ who:'인물 id', t:'말', sp? }` · `{ card:{ kind:'orig'|'history'|'fiction'|'interp'|'note', title, han?, ko?, body?, real?, src? } }`(사건 화면에서는 좁은 글 칸에 끼우지 않고 가운데 한 장으로 크게 보인 뒤 글 칸을 새로 시작한다) · `{ wonmun:{ 원문, 풀이 } }` · `{ scene:'sc_…' }` · `{ fx:{…} }` · `{ when:{…}, … }` · `{ learnStep:'단계 id' }`.
 - 조건 `when`: `mode:'basic'|'deep'`, `teacher`, `flag:{…}`, `done:'열쇠'`, `min:{ yeon|saeng: n }`, `max:{…}`, `token:'id'`, `know:'id'|[…]`, `prep:true|false`, `route:'coast'|'sea'`, `act1Done`, `not:{…}`, `any:[…]`, 또는 `(state) => true|false`.
 - 효과 `fx`: `set:{…}`, `flags:{…}`, `gauge:{ yeon, saeng }`, `token:{ id, name, desc }`, `frag:2|[2, 3]`(시구 조각 행 번호), `know:'id'|[…]`, `tongsoSound:{ clarity, pan }|false`.
 - 표기 구분은 `원문`·`풀이`·`게임 설정`·`이본 노트`·`해석` 다섯뿐이다.
+
+### 이야기 수첩·끝부분이 읽는 글(`js/data/notes.js`)
+
+- `NOTES.timeline`: 수첩 '줄거리' 탭. `{ year, place, act?, when, ok?, ch?, both? }` — 옥영 줄(`ok`)과 최척 줄(`ch`)을 나란히, 함께한 일은 `both`. `when`(지나온 단계 `done`)이 맞아야 열린다. `act: 1`이면 이어 하기 글자로 되살렸거나 2막부터 시작했을 때도 연다.
+- `NOTES.people`: 수첩 '인물' 탭의 차례와 보이는 조건 `{ id, act?, when? }`. 이름·초상·소개는 `people.js`.
+- `NOTES.recap`: 2막 첫머리 '지난 이야기'(`kind`, `title`, `lines`, `mineTitle`, `mine:{ 딜레마 id: { 선택지 id: 글 } }`, `none`, `next`).
+- `NOTES.gaugeHint`: 게이지가 처음 움직일 때 한 번 막대 곁에 뜨는 안내(`title`, `yeon`, `saeng`, `foot`). 본 뒤에는 `flags.gaugeHint`가 남는다.
+- `NOTES.result.orderTitle·orderLead·orderItems(일어난 차례)·orderRight·orderWrong·orderAgain`: 결과 화면의 '줄거리 차례 맞추기'(점수 없음, 저장 그림에 넣지 않음).

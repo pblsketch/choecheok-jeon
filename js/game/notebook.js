@@ -191,6 +191,36 @@
         h('div.nb-kind.history', h('i'), h('p', h('b', '역사 카드'), ' — 작품 바깥의 실제 역사'))));
   }
 
+  // 1막 자리: 이어 하기 글자로 되살렸거나(act1Done) 2막부터 시작했으면(act2Only) 단계 기록이 없어도 연다
+  const opened = (e) => { const st = S(); return !!st.teacher || (e.act === 1 && (st.act1Done || st.act2Only)) || G.steps.ok(e.when); };
+
+  // 줄거리: 두 개의 항로(옥영 줄·최척 줄)를 해마다 나란히. notes.js의 NOTES.timeline
+  function storyPane() {
+    const rows = (N().timeline || []).map((e) => {
+      const open = opened(e);
+      const cell = (who, text, cls) => h('div.tl-cell.' + cls, h('span.tl-who', who), h('p', boldNodes(text)));
+      return h('li.tl-row' + (open ? '' : '.locked'),
+        h('div.tl-when', h('b', e.year || ''), h('small', e.place || '')),
+        open ? (e.both ? h('div.tl-cells.both', cell(NT().storyBoth || '함께', e.both, 'both'))
+          : h('div.tl-cells', cell(NT().storyOk || '옥영', e.ok || '', 'ok'), cell(NT().storyCh || '최척', e.ch || '', 'ch')))
+          : h('div.tl-cells', h('p.tl-locked', NT().lockedStory || '')));
+    });
+    return pane(NT().storyLead, h('ol.tl', rows));
+  }
+
+  // 인물: notes.js의 NOTES.people 차례, 이름·초상·소개는 people.js
+  function peoplePane() {
+    const cards = (N().people || []).map((e) => {
+      const p = G.util.person(e.id);
+      if (!p) return null;
+      const open = opened(e);
+      return h('div.pp-card' + (open ? '' : '.locked'), { style: { '--pc': p.color || 'var(--ochre)' } },
+        h('div.pp-face', open ? ui.face(e.id) : h('span.face-blank', { 'aria-hidden': 'true' }, '?')),
+        h('div.pp-body', h('b', open ? T(p.name) : (NT().lockedPeople || '')), open && p.role ? h('p', T(p.role)) : null));
+    }).filter(Boolean);
+    return pane(NT().peopleLead, h('div.pp-grid', cards));
+  }
+
   // 선생님 안내: 수업 시점·시간·디브리핑
   NB.teacherPane = function () {
     const TN = N().teacher || {};
@@ -209,7 +239,7 @@
   // ───────── 수첩 열기 ─────────
   NB.open = function (tab) {
     const st = S();
-    const tabs = [['pocket', pocketPane], ['orig', () => cardsPane(NT().origLead, NB.origCards(), NT().locked || '')],
+    const tabs = [['pocket', pocketPane], ['story', storyPane], ['people', peoplePane], ['orig', () => cardsPane(NT().origLead, NB.origCards(), NT().locked || '')],
       ['history', () => cardsPane(NT().historyLead, NB.historyCards(), NT().lockedHistory || '')],
       ['fiction', fictionPane], ['marks', marksPane]];
     if (st.teacher) tabs.push(['teacher', NB.teacherPane]);
@@ -223,7 +253,16 @@
       body.dataset.tab = t[0];
       body.appendChild(t[1]());
       body.scrollTop = 0;
+      // 좁은 화면: 고른 탭이 탭 줄 가운데 오게, 양 끝에 가려진 탭이 있으면 흐리게
+      const on = bar.querySelector('.nb-tab.on');
+      if (on) bar.scrollLeft = on.offsetLeft - bar.clientWidth / 2 + on.offsetWidth / 2;
+      edge();
     };
+    const edge = () => {
+      bar.classList.toggle('more-l', bar.scrollLeft > 2);
+      bar.classList.toggle('more-r', bar.scrollLeft + bar.clientWidth < bar.scrollWidth - 2);
+    };
+    bar.addEventListener('scroll', edge);
     for (const [k] of tabs) {
       bar.appendChild(h('button.nb-tab', { type: 'button', role: 'tab', 'data-tab': k, on: { click: () => { G.audio.tap(); go(k); } } }, names[k] || k));
     }
@@ -269,6 +308,27 @@
         groups.length ? groups : h('p.small.muted', C.empty || '')),
     ], [{ label: '닫기', value: true, cls: 'primary' }], { cls: 'credits-sheet' });
   };
+
+  // ───────── recap: 2막 첫머리 '지난 이야기'(글: NOTES.recap — 줄거리 몇 줄 + 내가 1막에서 고른 길) ─────────
+  //  { id, type:'recap', scene?, text?:{ NOTES.recap을 덮어쓸 값 } } · 상태를 바꾸지 않는다
+  G.steps.register('recap', async function (step, ctx) {
+    const R = Object.assign({}, N().recap || {}, step.text || {});
+    const st = S();
+    if (step.scene && ctx.setScene) ctx.setScene(step.scene);
+    const mine = [];
+    for (const d of Object.keys(R.mine || {})) {
+      const c = st.choices && st.choices[d];
+      const t = c && R.mine[d][c];
+      if (t) mine.push(t);
+    }
+    const el = h('div.card.rcard.note.recap',
+      h('span.kind', R.kind || ''),
+      R.title ? h('h3', T(R.title)) : null,
+      h('ol.rc-recap', (R.lines || []).map((l) => h('li', boldNodes(l)))),
+      R.mineTitle ? h('h4.rc-mine-h', R.mineTitle) : null,
+      mine.length ? h('ul.rc-mine', mine.map((t) => h('li', boldNodes(t)))) : h('p.rc-none', R.none || ''));
+    await G.steps.cardMoment(ctx, el, R.next || '다음 ▶');
+  });
 
   G.app.hooks.notebook = (tab) => NB.open(typeof tab === 'string' ? tab : undefined);
   G.app.hooks.credits = () => NB.credits();

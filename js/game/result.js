@@ -538,9 +538,51 @@
       h('button.btn.dark', { type: 'button', on: { click: () => { G.audio.tap(); app.openHook('notebook'); } } }, '이야기 수첩'),
       h('button.btn.dark', { type: 'button', on: { click: () => { G.audio.tap(); app.openHook('credits'); } } }, '만든 사람·출처'),
       h('button.btn.dark', { type: 'button', on: { click: () => { G.audio.tap(); app.title(); } } }, '타이틀로'));
-    r.appendChild(h('div.result-screen', h('div.rs-scroll', sheet, debrief, nav)));
+    r.appendChild(h('div.result-screen', h('div.rs-scroll', sheet, orderActivity(NR), debrief, nav)));
     if (st.flags && !st.flags.resultShown) { st.flags.resultShown = true; save(); setTimeout(() => ui.stamp && ui.stamp('完'), 500); }
   };
+
+  // 줄거리 차례 맞추기(점수 없음, 저장 그림에 넣지 않음): 섞인 다섯 장면을 일어난 차례대로 누른다.
+  //  다 누르면 제자리인 장면은 ✓, 아닌 장면에는 맞는 차례를 적는다. 글: NOTES.result.order*
+  function orderActivity(NR) {
+    const items = (NR.orderItems || []).map((t, i) => ({ t, n: i + 1 }));
+    if (items.length < 2) return null;
+    let seq = 0;
+    const box = h('div.rs-order-list');
+    const msg = h('p.rs-order-msg', { 'aria-live': 'polite' });
+    const again = h('button.btn.small.rs-order-again', { type: 'button', hidden: true, on: { click: () => { G.audio.tap(); deal(); } } }, NR.orderAgain || '다시');
+    function deal() {
+      seq = 0; msg.textContent = ''; again.hidden = true; box.innerHTML = '';
+      const mix = items.slice();
+      do { for (let i = mix.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [mix[i], mix[j]] = [mix[j], mix[i]]; } } while (mix.every((x, i) => x.n === i + 1));
+      for (const it of mix) {
+        const no = h('span.ro-no', '');
+        const b = h('button.ro-item', { type: 'button', 'data-n': String(it.n) }, no, h('span.ro-t', it.t), h('span.ro-fix'));
+        b.addEventListener('click', () => {
+          if (b.dataset.pick) return;
+          G.audio.tap();
+          b.dataset.pick = String(++seq); no.textContent = String(seq); b.classList.add('picked');
+          if (seq === items.length) check();
+        });
+        box.appendChild(b);
+      }
+    }
+    function check() {
+      let right = 0;
+      for (const b of box.children) {
+        const ok = b.dataset.pick === b.dataset.n;
+        if (ok) right++;
+        b.classList.add(ok ? 'ok' : 'no');
+        b.querySelector('.ro-fix').textContent = ok ? (NR.orderOk || '제자리') : (NR.orderFix || '{n}번째').replace('{n}', b.dataset.n);
+      }
+      msg.textContent = right === items.length ? (NR.orderRight || '') : (NR.orderWrong || '');
+      again.hidden = false;
+    }
+    deal();
+    return h('section.rs-order.card',
+      h('span.kind', h('span', NR.orderTitle || '줄거리 차례 맞추기'), ' ', G.steps.mark('해석')),
+      h('p.small.muted', NR.orderLead || ''), box, h('div.rs-order-foot', msg, again));
+  }
 
   // ═════════ 이미지로 저장(캔버스에 한 장으로 다시 그린다) ═════════
   E.saveImage = async function (o = {}) {

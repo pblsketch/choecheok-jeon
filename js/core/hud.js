@@ -62,17 +62,20 @@
     const pocket = h('div.pocket', { hidden: true }, tokens, frags);
     const face = h('button.hud-face', { type: 'button', 'aria-label': '옥영 — 이야기 수첩 열기', title: '이야기 수첩', on: { click: () => { G.audio.tap(); G.app.openHook('notebook'); } } },
       h('img', { src: faceSrc(), alt: '' }));
+    // 때(연도) 표: 초상 아래에 붙는 작은 딱지(hud.where가 채운다)
+    const year = h('span.hud-year', { hidden: true });
     const panel = h('aside.panel.hud-tl', { 'aria-label': '옥영의 게이지' },
-      face,
+      face, year,
       h('div.hud-tl-body', h('div.pl-sec.gauges', panelGauges), h('div.pl-head', place, where)),
       pocket);
     const tools = h('div.pl-tools.hud-tr');
     const missionText = h('strong.mi-text');
     const mission = h('div.mission', { role: 'status' }, h('div.mi-line', h('i.mi-orn', { 'aria-hidden': 'true' }), missionText, h('i.mi-orn', { 'aria-hidden': 'true' })), goal);
     const stripMission = h('div.st-mission');
+    const stripYear = h('span.st-year', { hidden: true });
     const stripTools = h('div.st-tools');
-    const strip = h('div.gstrip', h('div.st-gauges', stripGauges), stripMission, stripTools);
-    els = { panel, strip, mission, missionText, stripMission, bars, tokens, frags, goal, where, place, tools, stripTools, face };
+    const strip = h('div.gstrip', h('div.st-gauges', stripGauges), stripYear, stripMission, stripTools);
+    els = { panel, strip, mission, missionText, stripMission, bars, tokens, frags, goal, where, place, tools, stripTools, face, year, stripYear };
     hud.refresh(true);
     return els;
   };
@@ -159,9 +162,29 @@
     if (sum > 0) G.audio.grow(); else if (sum < 0) G.audio.drop();
     return out;
   };
+  // 게이지가 처음 움직일 때 한 번: 두 막대의 뜻을 막대 곁에 짧게 알린다(글: NOTES.gaugeHint).
+  //  누르는 것을 막지 않고(pointer-events 없음), 아무 곳이나 누르거나 8초가 지나면 사라진다. 카드·선택지를 읽는 중이면 닫힌 뒤에
+  hud.gaugeHint = function (waited = 0) {
+    const g = (window.NOTES || {}).gaugeHint;
+    if (!g || !els || document.querySelector('.ghint')) return;
+    if ((busyView() || document.querySelector('.gettoast') || queue.length) && waited < 60000) { setTimeout(() => hud.gaugeHint(waited + 300), 300); return; }
+    const anchor = [els.strip, els.panel].find((e) => e && e.offsetParent !== null && e.getBoundingClientRect().height);
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const el = h('div.ghint', { role: 'status', 'aria-live': 'polite', style: { left: Math.max(8, r.left + 6) + 'px', top: (r.bottom + 8) + 'px' } },
+      g.title ? h('strong', g.title) : null,
+      h('p', G.util.boldNodes(g.yeon || '')), h('p', G.util.boldNodes(g.saeng || '')),
+      g.foot ? h('small', g.foot) : null);
+    document.body.appendChild(el);
+    const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 350); document.removeEventListener('pointerdown', close, true); document.removeEventListener('keydown', close, true); };
+    setTimeout(() => { document.addEventListener('pointerdown', close, true); document.addEventListener('keydown', close, true); }, 600);
+    setTimeout(close, 8000);
+  };
   // 출렁임: 막대가 흔들리고 ▲/▼ 표시가 잠깐 떴다 사라진다(선생님용이면 +2 같은 숫자)
   hud.wave = function (key, real, asked) {
     if (!els) return;
+    const st0 = S();
+    if (st0.flags && !st0.flags.gaugeHint) { st0.flags.gaugeHint = true; G.save.write(); setTimeout(() => hud.gaugeHint(), 400); }
     const d = asked || real;
     const teacher = S().teacher;
     for (const e of els.bars[key] || []) {
@@ -181,7 +204,10 @@
     queue.push(o);
     if (!showing) next();
   };
-  function next() {
+  // 읽고 있는 카드 한 장(.rcardmode)·고르는 중인 선택지가 떠 있으면 알림이 그 글을 덮지 않게, 닫힐 때까지 기다렸다 띄운다
+  const busyView = () => !!document.querySelector('.event.rcardmode, .choice-tray .opt:not([disabled]), .pz:not(.done)');
+  function next(waited = 0) {
+    if (queue.length && busyView() && waited < 60000) { showing = true; setTimeout(() => next(waited + 250), 250); return; }
     const o = queue.shift();
     if (!o) { showing = false; return; }
     showing = true;
@@ -193,7 +219,13 @@
           h('strong', G.util.T(o.name || '')),
           o.desc ? h('p', G.util.boldNodes(o.desc)) : null)));
     document.body.appendChild(el);
-    setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); next(); }, 420); }, o.ms || 2600);
+    // 떠 있는 동안 카드 한 장·선택지가 새로 열리면 비켜 섰다가(대기열 맨 앞으로) 그것이 닫힌 뒤 다시 띄운다
+    let gone = false;
+    const watch = setInterval(() => {
+      if (gone || !busyView() || (o._yield || 0) >= 3) return;
+      gone = true; clearInterval(watch); el.remove(); o._yield = (o._yield || 0) + 1; queue.unshift(o); next();
+    }, 200);
+    setTimeout(() => { if (gone) return; gone = true; clearInterval(watch); el.classList.add('out'); setTimeout(() => { el.remove(); next(); }, 420); }, o.ms || 2600);
   }
 
   // 신표 챙기기: { id, name, desc } 또는 '이름'
@@ -227,21 +259,32 @@
     els.goal.querySelector('strong').textContent = text || '';
     els.goal.classList.toggle('hide', !text);
   };
-  hud.where = function (name) { if (els) els.where.textContent = name || ''; };
+  // 지금 있는 자리(맵 이름)와 때(연도). 때는 거점·맵 자료의 year — 학생이 '지금이 언제인지' 늘 볼 수 있게
+  hud.where = function (name, year) {
+    if (!els) return;
+    els.where.textContent = name || '';
+    if (year !== undefined) hud._year = year || null;
+    const y = hud._year || (hud.info && hud.info.year) || '';
+    for (const e of [els.year, els.stripYear]) { e.textContent = y; e.hidden = !y; }
+  };
   hud.setPlace = function (info) {
     hud.info = info || {};
     hud._mission = null;
+    hud._year = null;
     if (!els) return;
     els.place.innerHTML = '';
     const act = info && info.actName;
     G.util.append(els.place, [act ? h('small', act) : null, h('strong', (info && info.name) || '')]);
     hud.mission();
+    hud.where(els.where.textContent);
   };
   // 한 문장 미션(탐색 화면 가운데 위와 사건 화면 띠에 늘 보인다)
   hud.mission = function (text) {
     if (text !== undefined) hud._mission = text;
     if (!els) return;
-    const t = hud._mission != null ? hud._mission : (hud.info && hud.info.mission) || '';
+    // 미션은 함수일 수 있다(거점 자료의 missions: 조건에 맞는 첫 문장 — js/game/app.js의 placeInfo)
+    let t = hud._mission != null ? hud._mission : (hud.info && hud.info.mission) || '';
+    if (typeof t === 'function') t = t() || '';
     els.missionText.textContent = t;
     els.mission.classList.toggle('hide', !t);
     els.stripMission.textContent = t;

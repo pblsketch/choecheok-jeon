@@ -4,8 +4,8 @@
 - `util.js`: 요소 생성기 `h('div.cls', attrs, …)`, `**굵게**`·줄바꿈 변환, 받침에 맞춘 조사(`josa`), 글 속 자리 `{학생}`(`G.util.vars`에 더함), 그림 목록 조회 `G.util.art(kind, id)`, 인물 조회, 인물 초상 `G.util.pt(id, sp)`(모습이 여러 벌인 인물은 `PEOPLE[id].looks`에서 지금 모습 — `sp` 또는 게임이 채우는 `G.util.lookNow(id)` — 의 초상).
 - `save.js`: 저장 칸 하나(`localStorage['choecheok-jeon-v1']`)의 불러오기·쓰기·초기화. `G.save.extend`로 칸 더하기, `snapKeys`(단계 도중 새로고침 때 되돌릴 칸), `SETTINGS`(초기화에도 남는 설정).
 - `audio.js`: 배경음(파일 우선 → 못 읽으면 합성 곡), 효과음(모두 합성), 퉁소 층 `G.audio.tongso`(또렷함·방향, 파일 → base64 → 합성 차례로 대체).
-- `ui.js`: 토스트, 판(`sheet`), 아래 트레이 채우기(`fillTray`), 카드(표시 체계), 인물 얼굴(`G.ui.face(id, sp)`, 옥영은 지금 옷차림의 초상).
-- `hud.js`: 구석 HUD(초상·게이지·미션·아이콘), 사건 모드의 게이지 띠, 얻은 것 알림, 선생님용 숫자. 왼쪽 위 초상은 `G.hud.syncFace()`가 지금 모습의 초상으로 바꾼다(`hud.refresh`와 맵의 옷차림이 바뀔 때 부름). 오른쪽 위 아이콘(수첩·지도·전체 화면·설정)은 `js/game/app.js`가 `hud.tools`로 채운다.
+- `ui.js`: 토스트, 판(`sheet`), 아래 트레이 채우기(`fillTray`), 마지막 줄 맞추기(`keepLast`·`snapRows`: 걸친 줄 감추기·위쪽 흐림), 글 칸만 굴리기(`G.ui.reveal(el)` — `scrollIntoView` 대신), 아래 글 더 있음 표시(`checkMore`: `.more`와 ▼ 단추), 카드(표시 체계), 인물 얼굴(`G.ui.face(id, sp)`, 옥영은 지금 옷차림의 초상).
+- `hud.js`: 구석 HUD(초상·게이지·미션·아이콘), 때 딱지(`hud.where(맵 이름, 연도)`: 초상 아래·사건 띠), 사건 모드의 게이지 띠, 얻은 것 알림(카드·선택지·시구 맞추기가 떠 있으면 닫힌 뒤에), 게이지 첫 안내(`hud.gaugeHint`, 글은 `NOTES.gaugeHint`), 선생님용 숫자. 미션은 함수일 수 있다(거점의 `missions`). 왼쪽 위 초상은 `G.hud.syncFace()`가 지금 모습의 초상으로 바꾼다(`hud.refresh`와 맵의 옷차림이 바뀔 때 부름). 오른쪽 위 아이콘(수첩·지도·전체 화면·설정)은 `js/game/app.js`가 `hud.tools`로 채운다.
 - `oldmap.js`: 그림 고지도 위 거점·뱃길·배(옮겨 가기, 뱃길 고르기, 겹쳐 보기).
 
 ## 맡지 않는 것

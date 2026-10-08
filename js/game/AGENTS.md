@@ -6,7 +6,8 @@
 - `code.js`: 이어 하기 글자 부호화·검사·되풀이 되살리기.
 - `tiles.js`·`world.js`: 코드로 그리는 땅 타일과 테마, 탑다운 맵(카메라·충돌·조이스틱·말 걸기·목표 진행·대화창), 시험 손잡이 `G.world.test`.
 - `app.js`: 화면 흐름(타이틀·방식 고르기·거점 차례·사건 화면·고지도 이동·설정·'처음부터'·이미지 내려받기 도구), 걸이 `G.app.hooks`, 옥영의 지금 모습 `G.app.avatar()`(단계 `avatar` → 맵의 `G.world.avatar` → 지금 거점의 `avatar`, `G.util.lookNow`에 걸려 대화 얼굴·HUD 초상이 따른다), 전체 화면 `G.app.fs`(`supported`·`active`·`enter`·`exit`·`toggle`·`button`·`sync`, 글은 `TEXTS.FULLSCREEN`).
-- `poem.js`(안남 `tongso`·`poem`), `sea.js`(`route`·`stars`, `wonmun` 줄, `{신표}`), `notebook.js`(이야기 수첩·만든 사람·출처), `result.js`(`act1End`·`origEnding`·`kimyc`·`result`, 글자 넣기 창, 결과 화면과 저장 그림).
+- `poem.js`(안남 `tongso`·`poem`), `sea.js`(`route`·`stars`, `wonmun` 줄, `{신표}`), `notebook.js`(이야기 수첩 — 모은 것·줄거리 연표·인물·카드·게임 설정·표기, 만든 사람·출처, 2막 첫머리 `recap` 단계), `result.js`(`act1End`·`origEnding`·`kimyc`·`result`, 글자 넣기 창, 결과 화면·줄거리 차례 맞추기와 저장 그림).
+- 글 칸의 줄을 보이게 할 때는 `G.ui.reveal(el)`만 쓴다. `scrollIntoView`는 놀이 화면 틀까지 굴려 HUD가 잘린다(docs/engineering-notes.md).
 
 ## 맡지 않는 것
 - 이야기 글·선택지·카드 문안·조정 숫자는 `js/data/`에 있다. 여기에 줄거리 문장, 딜레마 문안, 게이지 숫자를 새로 쓰지 않는다(엔진의 대체 글 — '준비 중', 기본 단추 이름 — 만 예외). 숫자는 `TEXTS.RULES`, `POEM`, 거점 파일의 `TUNE`에서 읽는다.
