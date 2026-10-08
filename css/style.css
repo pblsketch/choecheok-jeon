@@ -245,7 +245,9 @@ html.teacher .teacher-only { display: inline-flex !important; }
 .frags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
 .frag { min-height: 2.2rem; display: flex; align-items: center; justify-content: center; text-align: center; padding: .2em .5em; border-radius: .55rem; border: 1.5px dashed rgba(47, 40, 64, .35); background: rgba(255, 255, 255, .35); font-size: .9em; line-height: 1.35; }
 .frag .fn { color: var(--ink-3); font-weight: 700; }
-.frag.got { border-style: solid; border-color: var(--yeon); background: #fff4e2; font-weight: 700; }
+.frag.got { flex-direction: column; gap: .1em; border-style: solid; border-color: var(--yeon); background: #fff4e2; }
+.frag .fh { font-weight: 700; letter-spacing: .06em; }
+.frag .fk { font-size: .8em; color: var(--ink-2); }
 
 /* ───────── 얻은 것 알림(신표·시구 조각) ───────── */
 .gettoast { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center; pointer-events: none; background: radial-gradient(50% 45% at 50% 48%, rgba(12, 14, 36, .55), rgba(12, 14, 36, 0) 75%); animation: fadein .25s; }
@@ -596,8 +598,9 @@ html.teacher .teacher-only { display: inline-flex !important; }
 @media (max-height: 500px) {
   .rcard { padding: .55rem 1rem .5rem; }
   .rcard h3 { margin-bottom: .15em; }
-  .rquote { margin: .35rem 0 .15rem; padding: .3rem .7rem .35rem; }
-  .rc-cmp { margin-top: .4rem; padding-top: .35rem; }
+  .rquote { margin: .25rem 0 .1rem; padding: .3rem .7rem .35rem; }
+  .rc-note { margin-top: .2rem; line-height: 1.45; }
+  .rc-cmp { margin-top: .25rem; padding-top: .25rem; gap: 0 .8rem; line-height: 1.45; }
   .rc-saved { margin-top: .2rem; }
   .rdream { padding: .5rem 1rem .55rem; }
   .rdream h3 { font-size: 1.45rem; }

@@ -5,14 +5,14 @@
 //     목표 차례 = 단계 배열 차례(이어 하기 글자 되풀이가 실제 놀이와 같은 차례로 돈다)
 //  2) 참조: 인물(who)·초상·스프라이트·소품·맵·목표 자리(걸어서 닿는가)·장면 삽화·배경음·역사 카드·지식·조각·고지도 거점·
 //     index.html·css가 부르는 파일이 실제로 있음
-//  3) 표기 체계 구분값이 정해진 다섯 가지(원문·풀이·게임 설정·이본 노트·해석) 안에 있음, 원문 구절은 늘 풀이와 짝
+//  3) 표기 체계 구분값이 정해진 다섯 가지(원문·풀이·게임 설정·이본 노트·해석) 안에 있음(카드 종류 이름 포함), 원문 구절은 늘 풀이와 짝
 //  4) 글: 괄호·따옴표 짝, 모르는 글 속 자리({…})
 //  5) 모든 거점에서 결말까지 갈 수 있음: 모든 선택 조합(지식 있음/없음) × 거점마다 게이지 극값에서 시작해도 막힌 딜레마 없이
 //     결말 넷 가운데 하나에 닿고, 알아보는 장면·후일담이 하나씩만 맞는다. 원작대로(떠남·준비) 걸으면 뱃길 앞에서 생 6 이상
-//  6) 원작 대조 카드가 모든 딜레마에 있음(원작 장면이면 원문+풀이), 선택지 갈래 값이 규칙 표와 같음, 결과 표 문안이 딜레마마다 있음
-//  7) 납품 조건: assets/(sprites·sc·pt·ui·bgm·sfx·fonts)의 모든 파일이 credits/*.tsv에 한 줄씩 있고 이용 조건이 허용 목록 안,
+//  6) 원작 대조 카드가 모든 딜레마에 있음(원작 장면이면 원문+풀이, 처음 배우기 extraGloss·깊이 읽기 quoteLong), 선택지 갈래 값이 규칙 표와 같음, 결과 표 문안이 딜레마마다 있음
+//  7) 납품 조건: assets/ 아래 모든 파일(raw·raw_audio 빼고)이 credits/*.tsv에 한 줄씩 있고 이용 조건이 허용 목록 안,
 //     크레딧 줄의 파일이 실제로 있음, 「영웅의 길」 소재 파일을 그대로 가져온 것이 없음(디지털 이음 공공누리 제1유형 배경음과
-//     SIL OFL 글꼴만 예외)
+//     SIL OFL 글꼴만 예외. 「영웅의 길」 폴더가 없는 기기에서는 이 대조만 건너뛴다)
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
@@ -229,16 +229,22 @@ for (const pid of ORDER) for (const s of PLACES[pid].steps || []) for (const k o
       const from = KNOW_SRC[k] || [];
       if (!from.length || !from.some((p) => ORDER.indexOf(p) <= ORDER.indexOf(pid))) badNeed.push(`${pid}/${s.id}/${o.id} → ${k}`);
     }
+    // 조각은 행 번호로만 적는다(frag 단계의 n, 선택지 fx.frag: 2 · [2, 3]). 글은 늘 정답 시의 그 행(원문 + 풀이)에서 찾는다
     const frags = [];
-    if (s.type === 'frag') frags.push([s.n, s.text]);
-    for (const o of s.options || []) for (const [n, t] of Object.entries((o.fx || {}).frag || o.frag || {})) frags.push([+n, t]);
-    for (const [n, t] of frags) { const line = POEM.lines[n - 1]; if (!(n >= 1 && n <= 4) || !line || !String(t).startsWith(line.원문)) badFrag.push(`${pid}/${s.id}: ${n}행 ${t}`); }
+    if (s.type === 'frag') { frags.push(s.n); if ('text' in s) badFrag.push(`${pid}/${s.id}: 조각 글(text)을 따로 적음`); }
+    for (const o of s.options || []) {
+      const v = (o.fx || {}).frag ?? o.frag;
+      if (v == null) continue;
+      if (typeof v === 'object' && !Array.isArray(v)) badFrag.push(`${pid}/${s.id}/${o.id}: 조각을 행 번호가 아닌 꼴로 적음`);
+      frags.push(...(typeof v === 'object' && !Array.isArray(v) ? Object.keys(v) : [].concat(v)));
+    }
+    for (const n0 of frags) { const n = Number(n0), line = POEM.lines[n - 1]; if (!(n >= 1 && n <= 4) || !line || !line.원문 || !line.풀이) badFrag.push(`${pid}/${s.id}: ${n0}행`); }
   }
   for (const pid of ORDER) { const nd = G.app.placeInfo(pid).node; if (!nd || !OLDMAP.nodes[nd]) badNode.push(pid + '→' + nd); }
   ok(HISTORY.length === 7 && badH.length === 0 && hist.every((id) => KNOW_SRC[id]), `역사 카드 일곱 장이 모두 거점 단계에서 펼쳐진다(${hist.join(' ')})` + list(badH));
   ok(badNeed.length === 0, '지혜의 길 조건(need) 지식마다 그 거점이나 앞 거점에 얻는 곳이 있다' + list(badNeed));
   ok(G.code.LAYOUT.know.every((k) => KNOW_SRC[k] && KNOW_SRC[k].every((p) => RU.act1.includes(p))) && Object.keys(KNOW_SRC).filter((k) => KNOW_SRC[k].some((p) => RU.act1.includes(p))).every((k) => G.code.LAYOUT.know.includes(k)), '이어 하기 글자가 1막 지식을 빠짐없이 담는다: ' + G.code.LAYOUT.know.join(' '));
-  ok(badFrag.length === 0, '조각 1~4의 글이 정답 시의 그 행 원문으로 시작한다' + list(badFrag));
+  ok(badFrag.length === 0, '시구 조각은 행 번호(1~4)로만 적혀 있고, 정답 시의 그 행에 원문과 풀이가 함께 있다' + list(badFrag));
   ok(badNode.length === 0, '거점마다 고지도 자리가 있다' + list(badNode));
 }
 
@@ -273,6 +279,15 @@ const FIVE = ['원문', '풀이', '게임 설정', '이본 노트', '해석'];
   const badK = [];
   for (const pid of ORDER) walkAll(PLACES[pid].steps, (s, at, o) => { if (o && o.card && typeof o.card === 'object' && o.card.kind && !KINDS.has(o.card.kind)) badK.push(pid + '.' + at + ' → ' + o.card.kind); });
   ok(badK.length === 0, `카드 종류가 정해진 것 안에 있다(${[...KINDS].join('·')})` + list(badK));
+  // 카드에 붙는 종류 이름(ui.KIND 값·TEXTS.CARD의 종류 이름·거점 카드의 kindLabel): 표기 구분 다섯 가운데 하나이거나
+  //  정해 둔 카드 갈래 이름이어야 한다. 편지 카드(kind 'letter')만 이름을 자유롭게 붙인다(옥영이 모르는 소식 ①…)
+  const CATEGORY = ['원작 대조', '역사 카드', '게임 창작', '알아 두기'];
+  const labelOk = (t) => FIVE.includes(t) || CATEGORY.includes(t);
+  const labels = Object.entries(G.ui.KIND).map(([k, v]) => ['ui.KIND.' + k, v])
+    .concat(['origKind', 'fictionKind', 'historyKind'].map((k) => ['TEXTS.CARD.' + k, (TEXTS.CARD || {})[k]]));
+  for (const pid of ORDER) walkAll(PLACES[pid].steps, (s, at, o) => { if (o && o.card && typeof o.card === 'object' && o.card.kindLabel && o.card.kind !== 'letter') labels.push([pid + '.' + at, o.card.kindLabel]); });
+  const badL = labels.filter(([, v]) => !labelOk(v)).map(([at, v]) => at + ' → ' + v);
+  ok(badL.length === 0, `카드 종류 이름 ${labels.length}곳이 표기 다섯 구분이나 정해 둔 갈래(${CATEGORY.join('·')}) 안에 있다` + list(badL));
   const css = fs.readFileSync(path.join(ROOT, 'css', 'style.css'), 'utf8') + LINKS.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
   ok(['letter', 'variant'].every((k) => new RegExp('\\.rcard\\.' + k + '\\b').test(css)), '편지·이본 노트 카드에 모습(css)이 있다');
 }
@@ -394,7 +409,7 @@ console.log('\n6) 딜레마와 원작 대조 카드');
 {
   const dil = [];
   for (const pid of ORDER) for (const s of PLACES[pid].steps || []) if (s.type === 'dilemma') dil.push([pid, s]);
-  const badCard = [], badOpt = [], badDelta = [], badNotes = [], wisdomPer = {};
+  const badCard = [], badOpt = [], badDelta = [], badNotes = [], badMode = [], wisdomPer = {};
   for (const [pid, s] of dil) {
     const c = s.card || {};
     const ids = s.options.map((o) => o.id);
@@ -402,6 +417,10 @@ console.log('\n6) 딜레마와 원작 대조 카드');
     if (!c.title || !c.summary) badCard.push(`${s.dilemma}: 카드 제목·요약 없음`);
     if (s.orig != null && !(c.quote && c.quote.원문 && c.quote.풀이)) badCard.push(`${s.dilemma}: 원작 장면인데 원문+풀이 없음`);
     if (!s.dilemma || !/^d-/.test(s.dilemma)) badCard.push(`${pid}/${s.id}: 딜레마 id`);
+    // 방식에 따른 차이(spec §7-4): 처음 배우기는 풀이 덧붙임(extraGloss), 깊이 읽기는 긴 원문(quoteLong).
+    //  원문이 없는 창작 딜레마만 긴 원문 대신 그 까닭(noQuoteLong)을 적을 수 있다(원문을 지어내지 않는다)
+    if (!c.extraGloss || !String(c.extraGloss).trim()) badMode.push(`${s.dilemma}: 처음 배우기 풀이 덧붙임(extraGloss) 없음`);
+    if (!(c.quoteLong && c.quoteLong.원문 && c.quoteLong.풀이) && !(s.orig === null && c.noQuoteLong)) badMode.push(`${s.dilemma}: 깊이 읽기 긴 원문(quoteLong) 없음` + (s.orig === null ? '(창작 딜레마면 noQuoteLong에 까닭)' : ''));
     if (s.options.length < 2 || s.options.length > 3) badOpt.push(`${s.dilemma}: 선택지 ${s.options.length}개`);
     for (const o of s.options) {
       if (!['yeon', 'saeng', 'wisdom', 'none'].includes(o.type) || !o.label) badOpt.push(`${s.dilemma}/${o.id}: 갈래·글`);
@@ -414,6 +433,7 @@ console.log('\n6) 딜레마와 원작 대조 카드');
   }
   ok(dil.length === 7, `딜레마 일곱(${dil.map(([, s]) => s.dilemma).join(' ')})`);
   ok(badCard.length === 0, '딜레마마다 원작 대조 카드(제목·요약, 원작 장면이면 원문+풀이, 원작 선택 표시)가 있다' + list(badCard));
+  ok(badMode.length === 0, '딜레마 카드마다 처음 배우기 풀이 덧붙임(extraGloss)과 깊이 읽기 긴 원문(quoteLong, 원문 없는 창작 딜레마는 그 까닭)이 있다' + list(badMode));
   ok(badOpt.length === 0 && Object.values(wisdomPer).every((n) => n <= 1), '선택지 2~3개, 갈래는 연·생·지혜·변동 없음, 지혜의 길은 거점마다 하나·조건과 실마리' + list(badOpt));
   ok(badDelta.length === 0, '선택지 게이지 값이 갈래 표와 같다(연 +2/−2 · 생 −2/+2 · 지혜 +1/+1)' + list(badDelta));
   const prep = dil.find(([, s]) => s.dilemma === RU.prepDilemma)[1];
@@ -438,7 +458,10 @@ console.log('\n7) 납품 조건: 크레딧·이용 조건·「영웅의 길」 �
     for (const l of lines.slice(1)) { const c = l.split('\t'); rows[c[0]] = { file: f, src: c[1] || '', lic: c[2] || '', mod: c[3] || '' }; }
   }
   ok(badHead.length === 0, 'credits/*.tsv 머리줄: 파일·출처·이용 조건·고친 내용' + list(badHead));
-  const DIRS = ['sprites', 'sc', 'pt', 'ui', 'bgm', 'sfx', 'fonts'];
+  // assets/ 아래 모든 폴더(저장소에 올리지 않는 생성 원본 raw·내려받은 원음 raw_audio만 뺀다)
+  const SKIP = ['raw', 'raw_audio'];
+  const DIRS = fs.readdirSync(path.join(ROOT, 'assets'), { withFileTypes: true }).filter((e) => e.isDirectory() && !SKIP.includes(e.name) && !e.name.startsWith('.')).map((e) => e.name).sort();
+  const loose = fs.readdirSync(path.join(ROOT, 'assets'), { withFileTypes: true }).filter((e) => e.isFile() && !e.name.startsWith('.')).map((e) => 'assets/' + e.name);
   const files = [];
   for (const d of DIRS) {
     const dir = path.join(ROOT, 'assets', d);
@@ -446,6 +469,7 @@ console.log('\n7) 납품 조건: 크레딧·이용 조건·「영웅의 길」 �
     const rec = (p) => { for (const e of fs.readdirSync(p, { withFileTypes: true })) { if (e.name.startsWith('.')) continue; const q = path.join(p, e.name); if (e.isDirectory()) rec(q); else files.push(path.relative(ROOT, q).split(path.sep).join('/')); } };
     rec(dir);
   }
+  files.push(...loose);
   const noRow = files.filter((f) => !rows[f]);
   const badLic = files.filter((f) => rows[f] && (!ALLOWED.test(rows[f].lic) || FORBIDDEN.test(rows[f].lic.replace(/상업적 이용·변경 가능/g, ''))));
   const emptySrc = files.filter((f) => rows[f] && (!rows[f].src.trim() || !rows[f].mod.trim()));
@@ -459,7 +483,8 @@ console.log('\n7) 납품 조건: 크레딧·이용 조건·「영웅의 길」 �
   for (const f of files) { const k = rows[f] ? rows[f].lic.split(/[(—]/)[0].trim() : '?'; lics[k] = (lics[k] || 0) + 1; }
   console.log('    이용 조건: ' + Object.entries(lics).map(([k, v]) => `${k} ${v}`).join(' · '));
   // 「영웅의 길」 소재를 그대로 가져온 파일이 없는가(같은 크기 → 해시 비교)
-  if (!fs.existsSync(HERO)) ok(false, '「영웅의 길」 소재 폴더를 찾을 수 없음: ' + HERO);
+  // 형제 폴더가 없는 기기(배포 묶음만 받은 곳 등)에서는 대조를 건너뛴다(통과로 세고 까닭을 남긴다)
+  if (!fs.existsSync(HERO)) ok(true, '「영웅의 길」 소재 폴더가 이 기기에 없어 같은 파일 대조를 건너뜀(HERO_ASSETS로 정할 수 있음): ' + HERO);
   else {
     const mine = new Map();
     for (const f of files) mine.set(f, fs.statSync(path.join(ROOT, f)).size);

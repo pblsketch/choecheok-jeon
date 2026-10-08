@@ -266,6 +266,7 @@ for (const vp of VIEWS) {
   await page.waitForSelector('.notebook-sheet .pocket-view');
   const nb = await page.evaluate(() => ({ t: document.querySelector('.notebook-sheet').textContent, frags: document.querySelectorAll('.notebook-sheet .frag.got').length, tok: document.querySelectorAll('.notebook-sheet .token').length }));
   ok(nb.tok === 1 && nb.t.includes('옥가락지') && nb.frags === 3, '수첩: 챙긴 신표와 얻은 시구 조각');
+  ok(nb.t.includes('王子吹簫月欲低') && nb.t.includes('왕자진이 퉁소 부는 밤') && nb.t.includes('蓬島煙霞路不迷') && nb.t.includes('길 잃지 않으리'), '수첩: 시구 조각마다 원문과 풀이가 함께 보인다');
   ok(nb.t.includes('퉁소 대신 단소 연주'), '수첩: 퉁소 대신 다른 악기면 "퉁소 대신 단소 연주"라고 밝힌다');
   await C.shot('14_notebook_pocket');
   await page.click('.nb-tab[data-tab="orig"]');

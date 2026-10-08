@@ -2,7 +2,8 @@
 // 시작: 저장 불러오기 → 주소 바로가기 → 타이틀
 //  ?teacher=1        선생님용 켜기(게이지 숫자, 장면·목표 건너뛰기)
 //  ?place=거점 id     그 거점부터 바로 펼치기(만들면서 확인할 때)
-//  ?act=2            2막(막간)부터: 연 5·생 5, 지식·조각 없이(선생님 미리 보기). 새로고침하면 하던 2막을 잇는다
+//  ?act=2            2막(막간)부터: 연 5·생 5, 지식·조각 없이(선생님 미리 보기). 새로고침하면 하던 2막을 잇는다.
+//                    이 브라우저에 다른 진행이 있으면 지우기 전에 한 번 묻는다(NOTES.act2Preview)
 //  새 바로가기는 G.boot.routes에 더한다: G.boot.routes.push((q, st) => { if (q.get('act') === '2') { …; return true; } })
 //   (true를 돌려주면 그 바로가기가 화면을 맡고 타이틀은 띄우지 않는다)
 (function () {
@@ -25,8 +26,17 @@
     if (qq.get('act') !== '2' || !G.rules) return false;
     const act2 = ((window.TEXTS || {}).RULES || {}).act2 || [];
     const going = st.act2Only && act2.includes(st.place) && !st.finishedAt;
-    if (!going) G.rules.startAct2();
-    G.app.continue();
+    if (going || !G.save.started()) {
+      if (!going) G.rules.startAct2();
+      G.app.continue();
+      return true;
+    }
+    // 이 브라우저에 하던 이야기가 있으면 지우기 전에 한 번 묻는다(타이틀 위에 판을 띄우고, 그만두면 타이틀에 남는다)
+    const A = (window.NOTES || {}).act2Preview || {};
+    G.app.title();
+    G.ui.sheet([G.util.h('h3', A.title || ''), G.util.h('p', A.body || '')],
+      [{ label: A.cancel || '', value: false }, { label: A.go || '', value: true, cls: 'primary' }], { cls: 'overwrite-sheet.act2-sheet' })
+      .then((ok) => { if (!ok) return; G.rules.startAct2(); G.app.continue(); });
     return true;
   });
   // 다른 파일이 바로가기를 더할 틈을 준 뒤(같은 순서로 실린 스크립트가 모두 끝난 다음) 시작한다

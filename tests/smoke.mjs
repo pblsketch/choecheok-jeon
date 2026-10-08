@@ -194,9 +194,9 @@ async function hudClear(page) {
   // HUD 안전 여백: 맵 네 구석 끝에 선 사람과 이름표가 HUD(초상·미션·아이콘·조이스틱·행동 단추) 밑에 숨지 않는다
   ok(await hudClear(page), 'HUD 밑에 숨는 사람·이름표가 없다(휴대폰 가로)');
   // 시구 조각 알림
-  await page.evaluate(() => G.hud.setFrag(1, '시험 조각'));
+  await page.evaluate(() => { delete G.save.state.frags[1]; G.hud.setFrag(1, true); });
   await page.waitForTimeout(200);
-  ok(await visible(page, '.gettoast.frag:has-text("시험 조각")'), '시구 조각을 얻으면 크게 알린다');
+  ok(await visible(page, '.gettoast.frag:has-text("王子吹簫月欲低"):has-text("왕자진이 퉁소 부는 밤")'), '시구 조각을 얻으면 원문과 풀이를 함께 크게 알린다');
   await page.waitForFunction(() => !document.querySelector('.gettoast'), null, { timeout: 8000 });
   // 오른쪽 위 '지도': 고지도를 겹쳐 본다
   await page.click('.hud-tr [aria-label="지도"]');

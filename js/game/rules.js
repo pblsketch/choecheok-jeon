@@ -134,6 +134,12 @@
     return { delta: out, collapse, zero: st.saeng === 0, exception };
   };
 
+  // 시구 조각 효과의 행 번호들: frag: 2 · [2, 3] · { 2: … }(예전 꼴: 열쇠가 행 번호) → [2, 3]
+  //  저장 칸 frags에는 행 번호만 둔다({ 2: 2 }). 글(원문·풀이)은 늘 정답 시(js/data/poem.js의 POEM.lines)에서 찾는다
+  R.fragRows = function (v) {
+    const list = typeof v === 'number' || typeof v === 'string' ? [v] : Array.isArray(v) ? v : Object.keys(v || {});
+    return list.map(Number).filter((n) => n >= 1 && n <= 4);
+  };
   // 효과(set·flags·token·frag·know)를 상태 객체에 적용하고 새로 얻은 것을 got에 모은다(게이지는 따로)
   function fxOn(st, fx, got) {
     if (!fx) return got;
@@ -146,9 +152,9 @@
         if (!st.tokens.some((x) => (x.id || x) === t.id)) { st.tokens.push(t); got.tokens.push(t); }
       }
     }
-    if (fx.frag) {
+    if (fx.frag != null) {
       st.frags = st.frags || {};
-      for (const n in fx.frag) if (st.frags[n] !== fx.frag[n]) { st.frags[n] = fx.frag[n]; got.frags[n] = fx.frag[n]; }
+      for (const n of R.fragRows(fx.frag)) if (!st.frags[n]) { st.frags[n] = n; got.frags[n] = n; }
     }
     if (fx.know) {
       st.know = st.know || {};
@@ -230,7 +236,7 @@
         fxOn(st, { know: step.know }, res.got);
         break;
       case 'frag':
-        if (step.n != null) fxOn(st, { frag: { [step.n]: step.text } }, res.got);
+        if (step.n != null) fxOn(st, { frag: step.n }, res.got);
         break;
       case 'card': {
         const id = step.history || (step.card && step.card.id) || step.id;
@@ -313,9 +319,10 @@
     for (const k of GAUGES) { const d = res.delta && res.delta[k]; if (d) { G.hud.wave(k, d); sum += d; } }
     if (G.audio) { if (sum > 0 && G.audio.grow) G.audio.grow(); else if (sum < 0 && G.audio.drop) G.audio.drop(); }
     const got = res.got || {};
-    for (const t of got.tokens || []) G.hud.announce({ kind: 'token', label: '신표를 챙겼다', name: t.name || t.id, desc: t.desc || '이야기 수첩에 넣어 두었어요.' });
-    for (const n in got.frags || {}) G.hud.announce({ kind: 'frag', label: '시구 조각 ' + n + ' / ' + (G.hud.FRAG_SLOTS || 4), name: String(got.frags[n]), desc: '이야기 수첩에 적어 두었어요.' });
-    for (const k of got.know || []) G.hud.announce({ kind: 'know', label: (TX().KNOW_GOT || '알게 되었다'), name: R.knowName(k), desc: '지혜의 길을 여는 실마리가 될지도 몰라요.', ms: 2000 });
+    for (const t of got.tokens || []) G.hud.announceToken(t);
+    for (const n in got.frags || {}) G.hud.announceFrag(n);
+    const K = (TX().GOT || {}).know || {};
+    for (const k of got.know || []) G.hud.announce({ kind: 'know', label: K.label || '', name: R.knowName(k), desc: K.desc || '', ms: 2000 });
   }
   R.show = show;
   const save = () => { if (G.save.write) G.save.write(); };
@@ -347,9 +354,10 @@
     return { saeng: S().saeng, zero: r.zero, exception: !!r.exception, collapse: r.collapse, delta: r.delta };
   };
   // 시구 맞추기 기록(안남): 더듬어 찾기(생을 쓰고 횟수 +1) · 놓은 함정 · 고친 횟수
+  //  생이 이미 0일 때 누른 것은 더듬기로 세지 않는다(안남 예외: 퉁소가 다시 울릴 뿐 쓸 생이 없다)
   R.grope = function (cost) {
     const st = S();
-    st.puzzle.groped = (st.puzzle.groped || 0) + 1;
+    if ((Number(st.saeng) || 0) > 0) st.puzzle.groped = (st.puzzle.groped || 0) + 1;
     return R.spendSaeng(cost ?? RU().gropeCost ?? 1, { inPuzzle: true });
   };
   R.puzzleTrap = function (t) {
@@ -435,8 +443,9 @@
   R.decideEnding = function (high) { const e = R.ending(S(), high); S().ending = e; save(); return e; };
 
   // ───────── 원작 궤적(spec §8) ─────────
-  //  원작 옥영의 선택(딜레마의 orig)을 같은 규칙으로 따라간다. orig가 null인 창작 딜레마는 변화 없음(점선),
+  //  원작 옥영의 선택(딜레마의 orig)을 같은 규칙으로 따라간다. orig가 null인 창작 딜레마는 변화 없음,
   //  단 origNearest가 있으면 그것으로(항로 → 바다길). 고정 사건(fixed:true인 gauge·dream 단계)과 막간 회복은 똑같이 반영.
+  //  invented(그래프 점선): 그 구간에 창작 딜레마가 있고, 그 가운데 어느 것도 원작에 가까운 쪽으로 값을 바꾸지 않을 때만
   //  → { trail:[{ place, label, yeon, saeng, invented, dilemmas:{ orig:[…], invented:[…] } }], before:{ 딜레마: { yeon, saeng } }, choices:{ 딜레마: { orig, nearest } } }
   R.originalRun = function (places, o = {}) {
     places = places || PL();
@@ -463,7 +472,7 @@
         if (step.fixed && (step.type === 'gauge' || step.type === 'dream')) R.stepOn(st, step, pid, null, { places });
       }
       const pt = R.leavePlaceOn(st, pid);
-      if (pt) Object.assign(pt, { invented: seg.invented.length > 0, dilemmas: seg });
+      if (pt) Object.assign(pt, { invented: seg.invented.length > 0 && seg.invented.every((d) => !choices[d].nearest), dilemmas: seg });
     }
     return { trail: st.trail, before, choices };
   };
@@ -489,7 +498,7 @@
   };
 
   // ───────── 시험용 손잡이 ─────────
-  //  G.rules.test.set({ yeon, saeng, know:['id'…]|{…}, frags:{1:'…'}|['…'…], mode, …그 밖의 저장 칸 })
+  //  G.rules.test.set({ yeon, saeng, know:['id'…]|{…}, frags:{1:…}|[…](값이 있는 행만, 저장은 행 번호), mode, …그 밖의 저장 칸 })
   R.test = {
     set(o = {}) {
       const st = S();
@@ -497,7 +506,7 @@
         const v = o[k];
         if (k === 'yeon' || k === 'saeng') st[k] = R.clamp(v);
         else if (k === 'know') { st.know = {}; for (const id of Array.isArray(v) ? v : Object.keys(v || {}).filter((x) => v[x])) st.know[id] = true; }
-        else if (k === 'frags') { st.frags = {}; if (Array.isArray(v)) v.forEach((t, i) => { if (t != null) st.frags[i + 1] = t; }); else Object.assign(st.frags, v); }
+        else if (k === 'frags') { st.frags = {}; const rows = Array.isArray(v) ? v.map((t, i) => (t != null ? i + 1 : 0)) : Object.keys(v || {}).filter((n) => v[n]); for (const n of R.fragRows(rows)) st.frags[n] = n; }
         else st[k] = clone(v);
       }
       save();

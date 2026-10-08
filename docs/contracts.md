@@ -15,7 +15,7 @@
 | 옵션 | 입력 | 하는 일 | 끝난 뒤 상태 | 오류·예외 |
 |---|---|---|---|---|
 | `?teacher=1` | 값이 정확히 `1` | 선생님용을 켠다: 게이지 숫자, 장면·목표 건너뛰기, 시구 '정답 보기', 수첩 카드 모두 열기와 '⚠ 검수' 거리 | 저장의 `teacher: true`로 **남는다**. 끄려면 설정에서 끈다. 주소에서 빼도 꺼지지 않는다 | 다른 값(`0` 등)은 아무 일도 하지 않는다(켜진 것을 끄지도 않음) |
-| `?act=2` | 값이 정확히 `2` | 2막(막간)부터: 연 5·생 5, 지식·조각·신표 없이. 1막 기록은 '1막 기록 없음' | 진행과 **이름을 확인 없이 지운다**(설정은 남김). 단, 이 옵션으로 시작한 2막을 하던 중이면(아직 끝나지 않음) 지우지 않고 잇는다 | 이미 1막을 한 학생에게 주면 그 진행이 사라진다. 학생의 2차시는 '이어 하기'나 이어 하기 글자로 한다 |
+| `?act=2` | 값이 정확히 `2` | 2막(막간)부터: 연 5·생 5, 지식·조각·신표 없이. 1막 기록은 '1막 기록 없음' | 다른 진행이 있으면 **한 번 묻고**(`NOTES.act2Preview`), '2막부터 시작'을 누르면 진행과 이름을 지운다(설정은 남김). '그만두기'면 타이틀에 남고 지우지 않는다. 이 옵션으로 시작한 2막을 하던 중이면(아직 끝나지 않음) 지우지 않고 잇는다 | 이미 1막을 한 학생에게 주면 그 진행이 사라진다. 학생의 2차시는 '이어 하기'나 이어 하기 글자로 한다 |
 | `?place=<거점 id>` | `FLOW.order`에 있는 id | 타이틀을 건너뛰고 그 거점을 **지금 저장 그대로** 펼친다(만들면서 확인할 때) | 저장을 지우지 않는다. 그 거점에 들어선 기록이 남는다 | 목록에 없는 id는 무시하고 다음 옵션·타이틀로 |
 
 - 판단 차례: `teacher`를 먼저 반영하고, 바로가기는 `place` → `act` 차례로 본다. `place`가 맞으면 `act`는 보지 않는다.
@@ -99,21 +99,21 @@ PLACES.namwon = {
 |---|---|---|
 | `say` | `{ id, type:'say', scene?, title?, lines:[줄…], next? }` | 줄을 하나씩 넘긴다 |
 | `choice` | `{ id, type:'choice', q, options:[{ t, d?, when?, reply?, …fx }] }` | 게이지 규칙 없는 고르기 |
-| `dilemma` | `{ id, type:'dilemma', dilemma:'d-…', scene?, prompt:[줄…], q?, hint?, options:[{ id, type:'yeon'|'saeng'|'wisdom'|'none', label, desc?, need?:'지식 id', lockHint?, when?, gauge?, fx?:{ frag, token, know, set }, reply? }], orig:'선택지 id'|null, origNearest?, card:{ title, summary, quote:{원문,풀이}, quoteLong?, extraGloss?, variant?, interp?, src? } }` | 세 갈래 선택, 게이지, 원작 대조 카드 |
+| `dilemma` | `{ id, type:'dilemma', dilemma:'d-…', scene?, prompt:[줄…], q?, hint?, options:[{ id, type:'yeon'|'saeng'|'wisdom'|'none', label, desc?, need?:'지식 id', lockHint?, when?, gauge?, fx?:{ frag, token, know, set }, reply? }], orig:'선택지 id'|null, origNearest?, card:{ title, summary, quote:{원문,풀이}, quoteLong, extraGloss, variant?, interp?, noQuoteLong?, src? } }`(`extraGloss`는 처음 배우기, `quoteLong`은 깊이 읽기. 원문 없는 창작 딜레마만 `quoteLong` 대신 `noQuoteLong`에 까닭) | 세 갈래 선택, 게이지, 원작 대조 카드 |
 | `gauge` | `{ id, type:'gauge', fixed?:true, gauge:{ yeon?, saeng? }, when?, lines? }` | 게이지 변동(`fixed`면 원작 궤적에도) |
 | `dream` | `{ id, type:'dream', fixed?, gauge?, lines?, quote? }` | 장육불 꿈 장면(쓰러짐 횟수는 세지 않음) |
 | `know` | `{ id, type:'know', know:'id', lines? }` | 지식 얻기 |
-| `frag` | `{ id, type:'frag', n:1~4, text:'원문 행', lines? }` | 시구 조각 얻기 |
+| `frag` | `{ id, type:'frag', n:1~4, lines? }` | 시구 조각 얻기(글은 `POEM.lines`의 n행 원문·풀이) |
 | `card` | `{ id, type:'card', history?:'h-…', card?:{ id?, kind?, kindLabel?, title, body, quote?, src? }, lines? }` | 카드 띄우기 + 수첩. `history`면 지식이 되고 `history.js`의 같은 id 카드가 먼저 |
-| `tongso` | `{ id, type:'tongso', sound:1|2|3, scene?, lines?, stray?, heard? }` | 안남 퉁소 알아듣기 |
+| `tongso` | `{ id, type:'tongso', sound:1|2|3, scene?, lines?, stray?, heard?, next? }` | 안남 퉁소 알아듣기(수첩에 모을 원작 카드는 다음 `card` 단계로) |
 | `poem` | `{ id, type:'poem', scene?, gropeCost? }` | 안남 시구 순서 맞추기 |
 | `route` | `{ id, type:'route', for:'딜레마 단계 id', from, title, note }` | 고지도에서 뱃길 고르기 → 다음 딜레마에 넘김 |
-| `stars` | `{ id, type:'stars', intro?, dipper, pole, helm, done? }` | 별과 지남철로 뱃길 잡기(실패 없음) |
+| `stars` | `{ id, type:'stars', intro?, dipper, pole, helm, done?, ui:{ tag, aligned, doneTitle, doneText } }` | 별과 지남철로 뱃길 잡기(실패 없음) |
 | `act1End` · `origEnding` · `kimyc` · `result` | `{ id, type }` | 1차시 끝 · 원작 결말 · 「김영철전」 · 결과 화면 |
 
 ### 줄의 꼴
 
 - `'서술'` · `{ who:'인물 id', t:'말', sp? }` · `{ card:{ kind:'orig'|'history'|'fiction'|'interp'|'note', title, han?, ko?, body?, real?, src? } }` · `{ wonmun:{ 원문, 풀이 } }` · `{ scene:'sc_…' }` · `{ fx:{…} }` · `{ when:{…}, … }` · `{ learnStep:'단계 id' }`.
 - 조건 `when`: `mode:'basic'|'deep'`, `teacher`, `flag:{…}`, `done:'열쇠'`, `min:{ yeon|saeng: n }`, `max:{…}`, `token:'id'`, `know:'id'|[…]`, `prep:true|false`, `route:'coast'|'sea'`, `act1Done`, `not:{…}`, `any:[…]`, 또는 `(state) => true|false`.
-- 효과 `fx`: `set:{…}`, `flags:{…}`, `gauge:{ yeon, saeng }`, `token:{ id, name, desc }`, `frag:{ n: '원문 행' }`, `know:'id'|[…]`, `tongsoSound:{ clarity, pan }|false`.
+- 효과 `fx`: `set:{…}`, `flags:{…}`, `gauge:{ yeon, saeng }`, `token:{ id, name, desc }`, `frag:2|[2, 3]`(시구 조각 행 번호), `know:'id'|[…]`, `tongsoSound:{ clarity, pan }|false`.
 - 표기 구분은 `원문`·`풀이`·`게임 설정`·`이본 노트`·`해석` 다섯뿐이다.

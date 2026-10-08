@@ -77,11 +77,11 @@ if (ONLY.includes('2')) {
   ok(log.arrive && !log.arrive.frags[2] && !log.arrive.frags[3] && log.arrive.frags[1] && log.arrive.frags[4], '시구 맞추기 때 2·3행이 비어 있다(양식·침묵)');
   ok(zeroBtn && zeroBtn.saeng === 0 && zeroBtn.zero.includes('3') && /퉁소 가락에 기대기/.test(zeroBtn.label), `생 1에서 2행을 더듬어 생 0 → 3행 단추가 "퉁소 가락에 기대기"로 (${JSON.stringify(zeroBtn)})`);
   ok(log.poemException === 1 && log.exceptionSeen && !log.exceptionSeen.dream && log.exceptionSeen.saeng === 0 && log.exceptionSeen.jangyuk === beforeJ, '생 0에서 더듬으면 장육불 꿈 없이 퉁소가 다시 울린다(안남 예외)');
-  ok(log.poemAfter && log.poemAfter.saeng === 0 && log.poemAfter.jangyuk === beforeJ && log.poemAfter.puzzle.groped === 2, `정답이 떠올라 시가 완성된다 — 생 ${log.poemAfter && log.poemAfter.saeng}, 장육불 ${log.poemAfter && log.poemAfter.jangyuk}(그대로), 더듬기 ${log.poemAfter && log.poemAfter.puzzle.groped}`);
+  ok(log.poemAfter && log.poemAfter.saeng === 0 && log.poemAfter.jangyuk === beforeJ && log.poemAfter.puzzle.groped === 1, `정답이 떠올라 시가 완성된다 — 생 ${log.poemAfter && log.poemAfter.saeng}, 장육불 ${log.poemAfter && log.poemAfter.jangyuk}(그대로), 더듬기 ${log.poemAfter && log.poemAfter.puzzle.groped}(생 0에서 누른 것은 세지 않음)`);
   ok(!log.dreams.some((d) => d.place === 'annam'), '안남에서는 꿈 장면이 한 번도 뜨지 않는다');
   ok(trailOf(st, 'annam').saeng === 0 && st.jangyuk === beforeJ, `1막 끝까지 생 0 그대로(안남 기록 생 ${trailOf(st, 'annam').saeng}), 쓰러짐으로 세지 않음`);
   ok(trailOf(st, 'hangzhou').saeng === 9 && st.choices['d-hangzhou-wait'] === 'wait', `막간에서 생 5로 돌아온 뒤 기다림(+2)·배와 양식(+2) → 항주를 떠날 때 생 ${trailOf(st, 'hangzhou').saeng}`);
-  ok(r.rs && r.rs.groped === '2' && r.rs.dream === String(beforeJ), `결과 화면: 더듬어 찾기 ${r.rs && r.rs.groped}, 장육불 ${r.rs && r.rs.dream}`);
+  ok(r.rs && r.rs.groped === '1' && r.rs.dream === String(beforeJ), `결과 화면: 더듬어 찾기 ${r.rs && r.rs.groped}, 장육불 ${r.rs && r.rs.dream}`);
   ok(r.errs.length === 0, '콘솔 오류·실패한 요청 0건' + (r.errs.length ? ': ' + r.errs.slice(0, 5).join(' | ') : ''));
   await r.ctx.close();
 }

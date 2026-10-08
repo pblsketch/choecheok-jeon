@@ -8,7 +8,7 @@
 //   - 고른 길은 같은 사건 화면의 다음 딜레마 단계에 미리 골라 둔 값(ctx.preset)으로 넘긴다.
 //     그래서 게이지·route 저장·원작 대조 카드·원작 궤적은 모두 보통 딜레마 규칙(rules.js) 그대로다.
 //   - 딜레마가 없거나 뱃길 자료가 없으면 '준비 중'으로 넘어간다.
-//  stars: { id, type:'stars', intro?:[줄…], dipper, pole, helm, done?:[줄…] }
+//  stars: { id, type:'stars', intro?:[줄…], dipper, pole, helm, done?:[줄…], ui:{ tag(뱃머리 표시), aligned(맞췄을 때), doneTitle, doneText(별하늘 글 판) } }
 //   - 밤바다에서 북두칠성을 차례로 잇고 → 국자 끝 두 별을 따라 북극성을 찾고 → 지남철로 뱃머리를 북동쪽(조선)에 맞춘다.
 //   - 틀려도 잃는 것이 없다(실패 없음). 끝나면 done 줄을 별하늘 위 글 판에 보여 준다.
 (function () {
@@ -200,7 +200,7 @@
   }
 
   // 지남철 판: 바늘은 늘 북쪽, 뱃머리 화살표를 ◀ ▶로 돌린다
-  function buildHelm() {
+  function buildHelm(step) {
     const dial = h('div.helm-dial', { html:
       '<svg viewBox="-60 -60 120 120" aria-hidden="true">' +
       '<circle r="56" class="hd-rim"/><circle r="49" class="hd-face"/>' +
@@ -210,7 +210,7 @@
       '<g class="hd-heading"><path d="M0 -44 L7 -30 L2 -30 L2 16 L-2 16 L-2 -30 L-7 -30Z"/></g>' +
       '<g class="hd-needle"><path d="M0 -36 L4 0 L0 4 L-4 0Z" class="nn"/><path d="M0 36 L4 0 L0 -4 L-4 0Z" class="ns"/><circle r="3.4" class="hc"/></g>' +
       '</svg>' });
-    const tl = h('span.helm-tag', '조선');
+    const tl = h('span.helm-tag', (step.ui || {}).tag || '');
     const left = h('button.btn.helm-btn.helm-l', { type: 'button', 'aria-label': '뱃머리를 왼쪽으로' }, '◀');
     const right = h('button.btn.helm-btn.helm-r', { type: 'button', 'aria-label': '뱃머리를 오른쪽으로' }, '▶');
     const read = h('div.helm-read');
@@ -227,7 +227,8 @@
     const sky = h('div.sea-stars');
     const bg = buildSky();
     const st = buildStage();
-    const helm = buildHelm();
+    const helm = buildHelm(step);
+    const U = step.ui || {};
     const plaque = h('div.sky-guide', { role: 'status', 'aria-live': 'polite' });
     sky.append(bg, st.stage, helm.wrap, plaque);
     const cleanup = onLeave(ctx, () => { sky.remove(); el.classList.remove('starsmode', 'starsplay'); if (ro) ro.disconnect(); });
@@ -307,7 +308,7 @@
         hd += d; sfx('tap'); show();
         if ((((hd - HELM.target) % 360) + 360) % 360 === 0) {
           done = true; sfx('grow');
-          helm.read.textContent = '뱃머리가 조선을 향했다';
+          helm.read.textContent = U.aligned || '';
           setTimeout(res, 900);
         }
       };
@@ -318,7 +319,7 @@
     });
     sky.classList.remove('ph-helm'); sky.classList.add('ph-done');
     plaque.innerHTML = '';
-    plaque.append(h('strong', '뱃길을 잡았다'), h('span', '북극성을 왼쪽 앞에 두고, 배는 북동쪽으로 나아간다.'), prog(3));
+    plaque.append(h('strong', U.doneTitle || ''), h('span', U.doneText || ''), prog(3));
 
     // 끝: 별하늘을 뒤에 두고 글 판에 옥영의 말
     el.classList.remove('starsplay');

@@ -18,7 +18,6 @@ window.PLACES = window.PLACES || {};
     return r.sound;
   };
   const heard = (st) => !!((st && st.flags) || {})['annam:heard'];
-  const line = (n) => { const l = (POEM().lines || [])[n - 1] || {}; return (l.원문 || '') + ' — ' + (l.풀이 || ''); };
 
   // 맵 격자(엔진의 G.world.mk가 없을 때 — 브라우저 밖에서 자료만 읽을 때 — 같은 방식으로 만든다)
   const mk = (w, hgt, base, ops) => {
@@ -64,9 +63,8 @@ window.PLACES = window.PLACES || {};
         '옥영은 숨을 멈췄다. 이 가락은…. 남원의 봄밤, 달 아래에서 그이가 불던 바로 그 가락이다.',
         { who: 'okyoung', t: '(그이가 저 배에 있는 걸까. 아니, 그럴 리가…. 그래도 만에 하나라면.)' },
       ],
-      // 알아들은 뒤 가운데에 크게 보이는 원작 대조(소리를 '알아듣는' 근거)
-      card: { kind: 'orig', title: '원작에서 — 옥영이 들은 소리', summary: '원작에서도 옥영이 먼저 소리를 알아듣고, 시를 읊어 떠본다.', quote: { 원문: '玉英夜於船中聞其簫聲, 乃是朝鮮之曲調, 而一似疇昔慣聆之調, 竊疑其夫之或來于其船, 試詠其詩而探之.', 풀이: '옥영도 밤에 배 안에서 퉁소 소리를 들었다. 조선 가락인 데다 예전에 늘 듣던 가락과 똑같아서, 혹시 남편이 그 배에 와 있는 것은 아닐까 남몰래 의심했다. 그래서 그 시를 읊어 떠보았다.' } },
       after: ['옥영은 그 밤의 시로 답해 보기로 했다. 세상에서 두 사람만 아는 시다.'],
+      next: '다음 ▶', // 알아들은 뒤 마지막 단추(이어서 원작 대조 카드 q-heard → 화답)
     },
     maps: {
       annam_port: {
@@ -123,7 +121,7 @@ window.PLACES = window.PLACES || {};
       { id: 'b-sound1', auto: true, steps: ['tongso-1'] },
       { id: 'b-walk2', when: (st) => !heard(st), goal: '잠이 오지 않는다. 긴 부두 끝까지 걸어 보자', go: 'pier_end', steps: ['tongso-2'] },
       { id: 'b-walk3', when: (st) => !heard(st), goal: '모래밭으로 내려가 보자', go: 'beach', steps: ['recall-sky', 'tongso-3'] },
-      { id: 'b-poem', auto: true, steps: ['poem', 'cheok-words', 'q-cheok', 'cheok-night'] },
+      { id: 'b-poem', auto: true, steps: ['q-heard', 'poem', 'cheok-words', 'q-cheok', 'cheok-night'] },
       {
         id: 'b-dawn', spawn: [25, 6, 'down'], hide: ['cheok'], music: 'reunion',
         show: { cheok_dawn: { who: 'choecheok', x: 26, y: 9, dir: 'up' } },
@@ -175,7 +173,7 @@ window.PLACES = window.PLACES || {};
         ],
       },
       {
-        id: 'frag4', type: 'frag', n: 4, text: line(4), lines: [
+        id: 'frag4', type: 'frag', n: 4, lines: [
           { who: 'donwoo', t: '사간, 어디 다녀오느냐. 밤바람이 차다. 들어와 쉬어라.' },
           '돈우는 뱃머리에 앉아 낮게 염불을 외기 시작했다. 나무아미타불, 나무아미타불….',
           { who: 'okyoung', t: '(봉래섬, 안개와 노을, 길을 잃지 않는다….)' },
@@ -193,7 +191,7 @@ window.PLACES = window.PLACES || {};
         stray: ['가락은 귓가를 맴돌다 멀어졌다. 옥영의 귀는 그 소리를 붙잡지 못했다.', { who: 'okyoung', t: '(분명 어디서 들은 가락인데….)' }],
       },
       {
-        id: 'recall-sky', type: 'frag', n: 2, text: line(2),
+        id: 'recall-sky', type: 'frag', n: 2,
         when: (st) => hearAt(st) >= 3 && !((st && st.frags) || {})[2],
         lines: [
           '모래밭에 서서 하늘을 올려다보았다. 별이 가득한 하늘이 바다처럼 깊고 푸르다. 어깨에 이슬이 차갑게 내려앉는다.',
@@ -204,6 +202,11 @@ window.PLACES = window.PLACES || {};
       {
         id: 'tongso-3', type: 'tongso', sound: 3, scene: 'sc_annam_tongso',
         lines: ['세 번째로 가락이 물을 건너왔다. 이번에는 옥영의 귀가 그 소리를 붙잡았다.'],
+      },
+      // 알아들은 뒤의 원작 대조(소리를 '알아듣는' 근거). 지식을 주지 않는 카드 단계라 이어 하기 글자로 되살릴 때도 늘 모인다
+      {
+        id: 'q-heard', type: 'card', next: '그 밤의 시로 답하기 ▶',
+        card: { id: 'q-annam-heard', kind: 'orig', title: '원작에서 — 옥영이 들은 소리', summary: '원작에서도 옥영이 먼저 소리를 알아듣고, 시를 읊어 떠본다.', quote: { 원문: '玉英夜於船中聞其簫聲, 乃是朝鮮之曲調, 而一似疇昔慣聆之調, 竊疑其夫之或來于其船, 試詠其詩而探之.', 풀이: '옥영도 밤에 배 안에서 퉁소 소리를 들었다. 조선 가락인 데다 예전에 늘 듣던 가락과 똑같아서, 혹시 남편이 그 배에 와 있는 것은 아닐까 남몰래 의심했다. 그래서 그 시를 읊어 떠보았다.' }, src: '「최척전」 ¶13' },
       },
       { id: 'poem', type: 'poem', scene: 'sc_annam_poem' },
       {

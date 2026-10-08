@@ -6,7 +6,7 @@
 |---|---|
 | 브라우저(크롬·엣지·사파리·파이어폭스) | 게임 실행. 설치할 것 없음 |
 | Git | 저장소 받기·커밋 |
-| Node.js 18 이상 | 점검(`tests/`), 장면 프롬프트 만들기(`tools/make_prompts.py`가 node로 거점 자료를 읽음) |
+| Node.js 20 이상(점검에 쓰는 Playwright가 요구) | 점검(`tests/`), 장면 프롬프트 만들기(`tools/make_prompts.py`가 node로 거점 자료를 읽음) |
 | Google Chrome(설치본) | 점검. Playwright가 내려받은 크로미움이 아니라 `channel: 'chrome'`으로 **설치된 크롬**을 쓴다 |
 | `../영웅소설` 폴더(같은 시리즈의 「영웅의 길」) | `tests/content.mjs`의 소재 해시 대조. 다른 자리에 있으면 `HERO_ASSETS` 환경 변수로 그 `assets` 폴더를 가리킨다 |
 | Python 3 + `fonttools`·`brotli` | 글꼴 다시 만들기(`tools/build_fonts.py`, woff2에 brotli 필요) |
@@ -31,7 +31,7 @@ python -m http.server 8765                  # 저장소 뿌리에서
 ```
 
 - 서버 없이: `index.html`을 더블클릭해도 시작·저장·소리가 된다. 브라우저에 따라 글꼴 파일을 막아 기기 글꼴로 보일 수 있다.
-- 주소 옵션: `?teacher=1`(선생님용 켜기), `?act=2`(막간부터, 진행과 이름을 지우고 시작), `?place=<거점 id>`(그 거점을 지금 저장 그대로 바로 펼침 — 만들면서 확인할 때). 거점 id: `prologue`, `namwon`, `nanggoya`, `annam`, `interlude`, `hangzhou`, `sea`, `namwon_final`.
+- 주소 옵션: `?teacher=1`(선생님용 켜기), `?act=2`(막간부터 시작. 이 브라우저에 다른 진행이 있으면 진행과 이름을 지우기 전에 한 번 묻는다), `?place=<거점 id>`(그 거점을 지금 저장 그대로 바로 펼침 — 만들면서 확인할 때). 거점 id: `prologue`, `namwon`, `nanggoya`, `annam`, `interlude`, `hangzhou`, `sea`, `namwon_final`.
 - 저장을 비우고 처음부터 보려면 타이틀 '처음부터'를 누르거나, 개발자 도구에서 `localStorage.removeItem('choecheok-jeon-v1')` 후 새로고침.
 - 맵 테마 견본 보기(개발자 도구): `G.world.test.enter('demo_port')`(`demo_village`·`demo_harbor_night`·`demo_garden`·`demo_island`).
 

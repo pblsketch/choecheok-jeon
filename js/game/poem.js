@@ -3,11 +3,12 @@
 //  - tongso: { id, type:'tongso', sound:1|2|3, scene?, lines:[줄…](소리가 나기 전후), stray?:[줄…](스쳐 갈 때), heard?:[줄…] }
 //      안남에 닿을 때의 연(처음 울릴 때 flags['annam:yeon0']에 적는다)으로 몇 번째 소리에 알아듣는지 정한다(POEM.hear).
 //      알아들으면 flags['annam:heard'] = 소리 번호. 거점의 목표(b-walk2·b-walk3)가 이 값을 보고 포구를 한 번 더 걷게 한다.
-//      거점 자료의 tongso: { pan, heard:[줄…] }가 공통 글이다.
+//      거점 자료의 tongso: { pan, heard:[줄…], after?:[줄…], next?(마지막 단추) }가 공통 글이다. 수첩에 모을 원작 카드는 이 단계 안이 아니라
+//      다음 카드 단계(type:'card')로 둔다(tongso의 card는 화면에만 보이고 수첩에 모이지 않는다).
 //  - poem: { id, type:'poem', scene?, gropeCost? } — 화면 전체의 시구 맞추기
 //      1~4행 빈자리 + 조각 패(가진 조각 + 함정). 끌어다 놓기와 눌러 고른 뒤 자리 누르기(터치·마우스·키보드 1~4).
-//      못 가진 행은 '더듬어 찾기'(생 1, G.rules.grope): 후보 3개(정답 1 + 함정 2). 생이 0이면 꿈 없이 퉁소가 다시 울리고
-//      남은 빈 행의 정답이 하나씩 떠오른다(반드시 완성). 감점 없음. 놓은 함정·고친 횟수는 G.rules.puzzleTrap·puzzleFix로.
+//      못 가진 행은 '더듬어 찾기'(생 gropeCost, G.rules.grope): 후보 3개(정답 1 + 함정 2). 생이 0이면 꿈 없이 퉁소가 다시 울리고
+//      남은 빈 행의 정답이 하나씩 떠오른다(반드시 완성, 이 누름은 더듬기로 세지 않는다). 감점 없음. 놓은 함정·고친 횟수는 G.rules.puzzleTrap·puzzleFix로.
 //  - 소리를 꺼도 끝까지 할 수 있다: 소리의 방향·또렷함을 물결 무늬(굵기 = 또렷함)와 자막 '(퉁소 소리)'로 함께 보인다.
 //  자료(시·함정·조정값)는 js/data/poem.js의 POEM, 글은 거점 파일(js/data/places/annam.js)에 있다.
 (function () {
@@ -275,7 +276,7 @@
         memoryFlash(host);
         const card = step.card || cfg.card;
         const after = step.after || cfg.after || [];
-        const last = '그 밤의 시로 답하기 ▶';
+        const last = step.next || cfg.next || '다음 ▶';
         await G.steps.lines(step.heard || cfg.heard || [], ctx, card || after.length ? '▶' : last);
         if (card) await G.steps.cardMoment(ctx, G.steps.infoCard(card, card.kind || 'orig'), after.length ? '▶' : last);
         if (after.length) { ctx.main.innerHTML = ''; await G.steps.lines(after, ctx, last); }
@@ -296,7 +297,7 @@
     const D = PZ();
     const plc = placeOf(ctx);
     const mode = st.mode === 'deep' ? 'deep' : 'basic';
-    const cost = step.gropeCost;
+    const cost = step.gropeCost ?? ((window.TEXTS || {}).RULES || {}).gropeCost ?? 1; // 더듬어 찾기 한 번에 드는 생
     // 퍼즐 상태: 행마다 { owned(가진 조각인가), strip(놓인 조각 id), groped(더듬어 찾았는가) }
     const rows = {};
     for (let n = 1; n <= 4; n++) rows[n] = { n, owned: !!(st.frags || {})[n], strip: null, groped: false };
@@ -379,8 +380,8 @@
           h('span.pz-ko', s.t))
         : h('div.pz-empty', h('span.pz-dots', { 'aria-hidden': 'true' }));
       const grope = lacking && !s
-        ? h('button.pz-grope' + (saeng0 ? '.zero' : ''), { type: 'button', 'data-row': n, 'aria-label': n + '행 — ' + (saeng0 ? '퉁소 가락에 기대기' : (D.gropeLabel || '기억을 더듬기') + ', 생 1을 써요') },
-          h('span', saeng0 ? '퉁소 가락에 기대기' : (D.gropeLabel || '기억을 더듬기')), saeng0 ? null : h('b', '生 1'))
+        ? h('button.pz-grope' + (saeng0 ? '.zero' : ''), { type: 'button', 'data-row': n, 'aria-label': n + '행 — ' + (saeng0 ? '퉁소 가락에 기대기' : (D.gropeLabel || '기억을 더듬기') + ', 생을 ' + cost + ' 써요') },
+          h('span', saeng0 ? '퉁소 가락에 기대기' : (D.gropeLabel || '기억을 더듬기')), saeng0 ? null : h('b', '生 ' + cost))
         : null;
       return h('li.pz-row' + (ok ? '.ok' : s ? '.filled' : '.empty') + (sel && !ok ? '.target' : ''), { 'data-row': n },
         h('span.pz-num', { 'aria-hidden': 'true' }, NUM[n]),
@@ -460,10 +461,10 @@
       if (r0.owned || r0.groped) return;
       busy = true;
       try {
-        const before = Number(S().saeng) || 0;
-        const r = G.rules.grope(cost);
+        // 생이 이미 0이면 더듬기로 세지 않고(생을 쓰지 않는다) 곧바로 안남 예외: 퉁소가 다시 울리고 정답이 떠오른다
+        if ((Number(S().saeng) || 0) <= 0) { await exception(); busy = false; await floatAnswers(); return; }
+        G.rules.grope(cost);
         G.hud.refresh();
-        if (before <= 0) { await exception(); busy = false; await floatAnswers(); return; }
         r0.groped = true;
         const cands = P.candidates(n, mode);
         for (const id of cands) if (!strips[id]) { strips[id] = P.strip(id); order.push(id); }
@@ -485,7 +486,7 @@
         });
         const later = h('button.btn.ghost.small', { type: 'button', on: { click: () => { G.audio.tap(); close(null); } } }, '나중에 고르기');
         const card = h('div.pz-sheet', { role: 'dialog', 'aria-modal': 'true', 'aria-label': n + '행 기억 더듬기' },
-          h('div.pz-sheet-kicker', h('b', '生 −1'), ' 기억을 더듬는다'),
+          h('div.pz-sheet-kicker', h('b', '生 −' + cost), ' 기억을 더듬는다'),
           h('h3', NUM[n] + ' · ' + n + '행에 올 구절은?'),
           h('p.pz-sheet-help', '흐릿한 기억 속에서 구절 셋이 떠올랐다. 하나는 그 밤의 시다.'),
           opts,

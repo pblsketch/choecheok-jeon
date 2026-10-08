@@ -94,7 +94,7 @@ for (const vp of VIEWS) {
   }
 
   // 시구 조각 알림(맵 위)
-  await page.evaluate(() => G.hud.setFrag(2, '月白風淸夜'));
+  await page.evaluate(() => { delete G.save.state.frags[2]; G.hud.setFrag(2, true); });
   await wait(700);
   await shot('11_frag_toast');
   await wait(2600);

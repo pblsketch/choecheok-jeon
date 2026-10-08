@@ -2,7 +2,7 @@
 //  - 자료: 단계가 목표 차례(=플레이 차례)대로인가, 목표 자리·사람이 있고 걸어서 닿는가(최척의 중국 배는 닿지 않는가), 삽화 id 선언
 //  - 퉁소 알아듣기: 연 8/5/2 → 첫/두 번째/세 번째 소리에 알아듣는다(그사이 포구를 더 걷는다, 3 이하는 2행이 되살아난다)
 //  - 조각 패: 네 조각을 다 가져도 함정 하나 이상 / 깊이 읽기에만 C / 연이 높을수록 함정이 적다
-//  - 생 1 + 더듬어 찾기 두 번 → 꿈 없이 완성, 생 0 유지, 장육불 횟수 그대로 / 소리를 꺼도 완성 / 함정·고친 횟수·더듬기 저장(이어 하기 글자에도)
+//  - 생 1 + 더듬어 찾기 → 생 0에서 한 번 더 누름(더듬기로 세지 않음) → 꿈 없이 완성, 생 0 유지, 장육불 횟수 그대로 / 소리를 꺼도 완성 / 함정·고친 횟수·더듬기 저장(이어 하기 글자에도)
 //  - 선생님용 '정답 보기' / 끝까지 가면 1막 끝(act1End) 단계에 닿는다
 //  - 조각 놓기: 휴대폰 가로(터치: 눌러 놓기·끌어 놓기) · PC(마우스: 눌러 놓기·끌어 놓기, 키보드 1~4)
 //  - 콘솔 오류 0, 화면 사진 tests/shots/T8/
@@ -354,7 +354,7 @@ async function placeOwned(page) {
   await placeOwned(page);
   await page.waitForSelector('.pz.done', { timeout: 5000 });
   const ex = await page.evaluate(() => ({ saeng: G.save.state.saeng, jangyuk: G.save.state.jangyuk, groped: G.save.state.puzzle.groped }));
-  ok(ex.saeng === 0 && ex.jangyuk === 0 && ex.groped === 2, `생 1 + 더듬기 두 번: 완성, 생 ${ex.saeng}, 장육불 ${ex.jangyuk}, 더듬기 ${ex.groped}`);
+  ok(ex.saeng === 0 && ex.jangyuk === 0 && ex.groped === 1, `생 1 + 더듬기 → 생 0에서 한 번 더 누름: 완성, 생 ${ex.saeng}, 장육불 ${ex.jangyuk}, 더듬기 ${ex.groped}(생 0에서 누른 것은 세지 않음)`);
   await page.click('.pz-next');
   await page.waitForFunction(() => window.__d === true);
   ok(await page.evaluate(() => G.save.state.saeng === 0), '단계가 끝나도 생은 0 그대로(쓰러짐 없음)');

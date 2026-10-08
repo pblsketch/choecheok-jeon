@@ -13,14 +13,14 @@ PLACES.prologue = {
 PLACES.namwon = {
   name: '남원(점검)', act: 1,
   steps: [
-    { id: 's-tongso', type: 'frag', n: 1, text: '王子吹簫月欲低', lines: ['퉁소 소리가 달빛 아래 흘렀다.'] },
+    { id: 's-tongso', type: 'frag', n: 1, lines: ['퉁소 소리가 달빛 아래 흘렀다.'] },
     { id: 's-war', type: 'card', history: 'h-namwon-war', card: { title: '정유재란과 남원성 함락', body: '1597년 남원성이 함락되었다.' } },
     { id: 's-ming', type: 'card', history: 'h-namwon-ming', card: { title: '명군 장수와 조선', body: '명나라 군대가 조선에 왔다.' } },
     {
       id: 's-flee', type: 'dilemma', dilemma: 'd-namwon-flee',
       prompt: ['불길이 가까워진다. 무엇을 들고 도망칠까?'],
       options: [
-        { id: 'sinpyo', type: 'yeon', label: '신표를 챙긴다', fx: { frag: { 2: '碧天如海露凄凄' }, token: { id: 'sinpyo', name: '신표' } } },
+        { id: 'sinpyo', type: 'yeon', label: '신표를 챙긴다', fx: { frag: 2, token: { id: 'sinpyo', name: '신표' } } },
         { id: 'food', type: 'saeng', label: '양식을 챙긴다' },
       ],
       orig: null,
@@ -39,9 +39,9 @@ PLACES.nanggoya = {
       id: 's-news', type: 'dilemma', dilemma: 'd-nanggoya-news',
       prompt: ['조선 소식을 물을 것인가?'],
       options: [
-        { id: 'ask', type: 'yeon', label: '직접 묻는다', fx: { frag: { 3: '會須共御靑鸞去' } } },
+        { id: 'ask', type: 'yeon', label: '직접 묻는다', fx: { frag: 3 } },
         { id: 'silent', type: 'saeng', label: '입을 다문다' },
-        { id: 'wisdom', type: 'wisdom', label: '돈우를 통해 에둘러 묻는다', need: 'h-nanggoya-donwoo', fx: { frag: { 3: '會須共御靑鸞去' } } },
+        { id: 'wisdom', type: 'wisdom', label: '돈우를 통해 에둘러 묻는다', need: 'h-nanggoya-donwoo', fx: { frag: 3 } },
       ],
       orig: null,
       card: { title: '포로살이', summary: '옥영은 남자로 꾸며 돈우의 집에서 지냈다.', quote: { 원문: '頓于憐之', 풀이: '돈우가 그를 가엾게 여겼다.' } },
@@ -64,7 +64,7 @@ PLACES.annam = {
   name: '안남(점검)', act: 1,
   steps: [
     { id: 's-trade', type: 'card', history: 'h-annam-trade', card: { title: '교역선', body: '여러 나라 배가 모였다.' } },
-    { id: 's-frag4', type: 'frag', n: 4, text: '蓬島煙霞路不迷' },
+    { id: 's-frag4', type: 'frag', n: 4 },
     { id: 's-poem', type: 'poem' },
   ],
 };

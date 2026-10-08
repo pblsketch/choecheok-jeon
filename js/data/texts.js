@@ -20,7 +20,7 @@ TEXTS.RULES = {
   interlude: { place: 'interlude', saeng: 5 }, // 막간에 들어서면 생을 이 값으로(연은 그대로)
   high: 6,                         // 결말: 이 값 이상이면 '높음'
   gropeCost: 1,                    // 안남 시구 맞추기 '더듬어 찾기' 한 번에 드는 생(poem 단계에 gropeCost를 적으면 그것이 먼저)
-  countCap: 7,                     // 이어 하기 글자에 담는 횟수의 끝(8 이상은 7로 담고 '7+'로 보인다)
+  countCap: 7,                     // 화면에 보이는 횟수의 끝: 8 이상은 '7+'로 보인다(이어 하기 글자에는 더듬기 0~10·고친 횟수 0~8을 그대로 담는다)
   act1: ['prologue', 'namwon', 'nanggoya', 'annam'],
   act2: ['interlude', 'hangzhou', 'sea', 'namwon_final'],
   // 거점 기록(결과 그래프): 시작값 '출발' + 이 거점들을 떠날 때의 연·생
@@ -112,8 +112,13 @@ TEXTS.CODE = {
   char: '쓰지 않는 글자가 섞여 있어요(0, O, 1, I는 쓰지 않아요). 글자를 다시 확인해 주세요',
 };
 
-// 지식을 얻었을 때 알림
-TEXTS.KNOW_GOT = '알게 되었다';
+// 얻은 것 알림(화면 가운데에 크게)과 이야기 수첩의 '모은 것' 글. 시구 조각 알림은 정답 시(poem.js)의 원문과 풀이를 함께 보인다
+//  frag.label의 {n}은 몇 행인지, {all}은 조각 칸 수(4)
+TEXTS.GOT = {
+  token: { label: '신표를 챙겼다', desc: '이야기 수첩에 넣어 두었어요.', head: '챙긴 신표', empty: '아직 챙긴 신표가 없어요' },
+  frag: { label: '시구 조각 {n} / {all}', desc: '이야기 수첩에 적어 두었어요.', head: '얻은 시구 조각', empty: '{n}번째 조각 — 아직 없음' },
+  know: { label: '알게 되었다', desc: '지혜의 길을 여는 실마리가 될지도 몰라요.' },
+};
 
 // 표기 체계 다섯 구분(spec §6-4)의 이름과 색. notes.js가 NOTES.marks로 바꿀 수 있다
 TEXTS.MARKS = {

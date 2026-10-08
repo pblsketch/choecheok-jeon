@@ -139,7 +139,7 @@ console.log('1부: 규칙(브라우저 없이)');
   r = R.grope();
   ok(r.zero && r.exception && !r.collapse && S().saeng === 0 && S().jangyuk === 0, '안남 예외: 생 0, 꿈 없음, 횟수 그대로');
   r = R.grope();
-  ok(S().saeng === 0 && S().puzzle.groped === 2 && S().jangyuk === 0, '안남 예외: 계속 더듬어도 생 0, 횟수 그대로, 더듬어 2번 기록');
+  ok(r.exception && S().saeng === 0 && S().puzzle.groped === 1 && S().jangyuk === 0, '안남 예외: 생 0에서 다시 눌러도 생 0, 장육불 횟수 그대로, 더듬기는 생을 쓴 1번만 기록');
   r = R.spendSaeng(1, { inPuzzle: true });
   ok(r.exception && S().saeng === 0, 'spendSaeng(n, { inPuzzle: true })도 같은 예외');
   // 시구 맞추기 밖에서 spendSaeng → 기본 쓰러짐
@@ -481,8 +481,16 @@ try {
   await page.waitForFunction(() => window.__d === true);
   ok(await page.evaluate(() => !!G.save.state.know['h-namwon-war'] && G.save.state.cards.some((c) => c.id === 'h-namwon-war')), '역사 카드 단계: 지식 + 수첩');
 
-  // ?act=2
+  // ?act=2: 하던 이야기가 있으면 지우기 전에 한 번 묻는다 → 그만두면 그대로, 시작을 누르면 막간부터
   await page.goto(BASE + '?act=2');
+  await page.waitForSelector('.act2-sheet', { timeout: 10000 });
+  ok(await page.evaluate(() => !!G.save.state.know['h-namwon-war'] && G.save.state.place !== 'interlude'), '?act=2: 하던 이야기가 있으면 묻는 판이 뜨고, 그 전에는 진행이 그대로');
+  await page.click('.act2-sheet .actions .btn:not(.primary)');
+  await page.waitForSelector('.title-screen', { timeout: 5000 });
+  ok(await page.evaluate(() => !document.querySelector('.act2-sheet') && !!G.save.state.know['h-namwon-war']), '?act=2: 그만두면 타이틀에 남고 진행이 지워지지 않는다');
+  await page.goto(BASE + '?act=2');
+  await page.waitForSelector('.act2-sheet', { timeout: 10000 });
+  await page.click('.act2-sheet .actions .btn.primary');
   await page.waitForSelector('.place-card, .event.on', { timeout: 10000 });
   const a2 = await page.evaluate(() => ({ p: G.save.state.place, y: G.save.state.yeon, s: G.save.state.saeng, k: Object.keys(G.save.state.know).length, f: Object.keys(G.save.state.frags).length, t: G.save.state.trail }));
   ok(a2.p === 'interlude' && a2.y === 5 && a2.s === 5 && a2.k === 0 && a2.f === 0, '?act=2: 막간부터 연 5·생 5, 지식·조각 없음');
