@@ -21,5 +21,5 @@ window.BGM = {
     reunion: { src: 'assets/bgm/reunion.mp3', synth: 'reunion', from: '가야금 경기민요 — 도라지·아리랑' },
     result: { src: 'assets/bgm/result.mp3', synth: 'title', from: '가야금 경기민요 — 천안삼거리·한강수타령·창부타령' },
   },
-  tongso: null,
+  tongso: { src: 'assets/sfx/tongso.mp3', js: 'assets/sfx/tongso_data.js', instrument: "퉁소", from: "국립국악원 디지털 이음 「단음 다운로드」 퉁소 — 연주: 애원성(Tungso_8)" },
 };
