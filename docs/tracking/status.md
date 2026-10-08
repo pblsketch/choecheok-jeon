@@ -8,10 +8,10 @@
 
 | 스크립트 | 점검 수 · 문제 | 스크립트 | 점검 수 · 문제 |
 |---|---|---|---|
-| content | 57 · 0 | endgame | 118 · 0 |
+| content | 59 · 0 | endgame | 120 · 0 |
 | sprites | 통과(OK) | maps | 24 · 0 |
 | art | 통과(OK) | file | 17 · 0 |
-| rules | 105 · 0 | code | 50 · 0 |
+| rules | 107 · 0 | code | 50 · 0 |
 | smoke | 84 · 0 | resume | 25 · 0 |
 | audio | 81 · 0 | original | 13 · 0 |
 | act1 | 87 · 0 | hard | 30 · 0 |
