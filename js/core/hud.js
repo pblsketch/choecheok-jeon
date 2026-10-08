@@ -17,7 +17,8 @@
     { key: 'yeon', han: '緣', ko: '연', tip: '인연을 붙드는 힘' },
     { key: 'saeng', han: '生', ko: '생', tip: '살아갈 여력' },
   ];
-  // HUD 초상: 초상 그림(PEOPLE.okyoung의 pt)이 있으면 그것, 없으면 UI용 작은 초상
+  // HUD 초상: 옥영의 지금 모습에 맞는 초상 그림(G.util.pt — PEOPLE.okyoung의 looks·pt)이 있으면 그것, 없으면 UI용 작은 초상
+  //  모습이 바뀌면(맵의 도트 옷차림·사건 화면의 거점 설정) hud.syncFace가 그림을 바꾼다(hud.refresh도 부른다)
   hud.FACE = 'assets/ui/hud_okyoung.webp';
   let els = null; // { panel, strip, mission, bars:{key:[el…]}, tokens, frags, goal, where, place, tools, stripTools }
 
@@ -39,6 +40,12 @@
     return el;
   }
   function faceSrc() { return G.util.pt('okyoung') || hud.FACE; }
+  hud.syncFace = function () {
+    const img = els && els.face && els.face.querySelector('img');
+    if (!img) return;
+    const src = faceSrc();
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+  };
 
   // HUD를 새로 만든다(app.explore가 부른다)
   //  els.panel(왼쪽 위 묶음) · els.mission(가운데 위) · els.tools(오른쪽 위) · els.strip(사건 모드 띠)
@@ -88,6 +95,7 @@
       }
     }
     fillPocket(els.tokens, els.frags);
+    hud.syncFace();
     hud.mission();
   };
   function fillPocket(tokEl, fragEl) {

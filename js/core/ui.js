@@ -124,9 +124,10 @@
   ui.tag = (kind) => h('span.tagbadge.' + kind, KIND[kind] || kind);
 
   // 인물 얼굴(말풍선 옆): 초상 그림이 목록에 있으면 그림, 없으면 도트 인물의 머리·어깨, 그것도 없으면 이름 첫 글자 동그라미
+  //  모습이 여러 벌인 인물(옥영)은 지금 모습(sp 또는 G.util.lookNow)에 맞는 초상(G.util.pt의 looks)을 쓴다
   //  옥영은 초상 그림이 생기기 전까지 HUD 초상(G.hud.FACE)을 쓴다
   ui.face = function (id, sp) {
-    const src = G.util.pt(id) || (id === 'okyoung' && G.hud && G.hud.FACE) || null;
+    const src = G.util.pt(id, sp) || (id === 'okyoung' && G.hud && G.hud.FACE) || null;
     if (src) return h('img', { src, alt: '' });
     const p = G.util.person(id);
     const spr = sp || (p && p.sp);

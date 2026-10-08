@@ -91,6 +91,7 @@ PLACES.namwon = {
 ```
 
 - 맵이 없는 거점(서막·막간)은 `beats` 없이 `steps`를 차례로 펼친다.
+- `avatar`(옥영의 모습, 도트 id `sp_okyoung_f|m|ming|joseon`)는 거점마다 적는다. 맵의 도트뿐 아니라 대화 얼굴·HUD 초상도 이것을 따른다(`PEOPLE.okyoung.looks`가 도트 id → 초상 id). 차례: 단계의 `avatar`(그 단계 동안만, 예: 바다 `s-ship-prep`의 조선 옷) → 목표의 `avatar` → 거점의 `avatar`. 상태를 바꾸지 않으므로 이어 하기 글자와 상관없다. `tests/content.mjs`가 거점마다 정해졌고 looks에 있는지 본다.
 - 사람의 `talk`는 말을 걸 때마다 다음 묶음으로 넘어가고, 끝까지 가면 첫 묶음으로 돌아간다(몇 번째인지는 저장하지 않으므로 다시 열면 첫 묶음부터). 말 속 `{ learnStep: '단계 id' }`는 그 거점의 `card`·`know` 단계를 그 자리에서 한 번만 반영한다(역사 카드를 '읽을지 말지' 고르게 하는 장치).
 
 ### 단계 종류
@@ -101,6 +102,7 @@ PLACES.namwon = {
 | `choice` | `{ id, type:'choice', q, options:[{ t, d?, when?, reply?, …fx }] }` | 게이지 규칙 없는 고르기 |
 | `dilemma` | `{ id, type:'dilemma', dilemma:'d-…', scene?, prompt:[줄…], q?, hint?, options:[{ id, type:'yeon'|'saeng'|'wisdom'|'none', label, desc?, need?:'지식 id', lockHint?, when?, gauge?, fx?:{ frag, token, know, set }, reply? }], orig:'선택지 id'|null, origNearest?, card:{ title, summary, quote:{원문,풀이}, quoteLong, extraGloss, variant?, interp?, noQuoteLong?, src? } }`(`extraGloss`는 처음 배우기, `quoteLong`은 깊이 읽기. 원문 없는 창작 딜레마만 `quoteLong` 대신 `noQuoteLong`에 까닭) | 세 갈래 선택, 게이지, 원작 대조 카드 |
 | `gauge` | `{ id, type:'gauge', fixed?:true, gauge:{ yeon?, saeng? }, when?, lines? }` | 게이지 변동(`fixed`면 원작 궤적에도) |
+| (모든 단계 공통) | `avatar?: 'sp_okyoung_…'` | 그 단계 동안 옥영의 대화 얼굴·HUD 초상을 이 모습으로(옷을 갈아입는 장면) |
 | `dream` | `{ id, type:'dream', fixed?, gauge?, lines?, quote? }` | 장육불 꿈 장면(쓰러짐 횟수는 세지 않음) |
 | `know` | `{ id, type:'know', know:'id', lines? }` | 지식 얻기 |
 | `frag` | `{ id, type:'frag', n:1~4, lines? }` | 시구 조각 얻기(글은 `POEM.lines`의 n행 원문·풀이) |

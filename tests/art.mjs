@@ -47,7 +47,14 @@ for (const f of placeFiles) {
 
 // 초상 id: 인물 목록 + 대사·배치의 who
 const ptIds = new Set();
-for (const [id, p] of Object.entries(PEOPLE)) ptIds.add(p.pt || 'pt_' + id);
+for (const [id, p] of Object.entries(PEOPLE)) {
+  ptIds.add(p.pt || 'pt_' + id);
+  // 모습이 여러 벌인 인물(옥영)의 모습별 초상도 모두 있어야 한다
+  for (const [sp, pt] of Object.entries(p.looks || {})) {
+    ptIds.add(pt);
+    if (!/^sp_/.test(sp)) fail(`PEOPLE.${id}.looks: '${sp}' is not a sprite id`);
+  }
+}
 for (const f of placeFiles) {
   const src = fs.readFileSync(path.join(root, 'js/data/places', f), 'utf8');
   for (const m of src.matchAll(/who:\s*'([a-z_]+)'/g)) {

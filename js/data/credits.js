@@ -10,8 +10,9 @@
   const OWN = '자체 생성물';
   const EUM = 'https://www.gugak.go.kr/digitaleum/';
 
-  // 퉁소: js/data/bgm.js의 tongso가 비어 있으면(실제 연주 파일을 아직 넣지 않았으면) 합성음이라고 밝힌다.
-  //  tools/make_tongso.py가 파일을 만들면 bgm.js의 tongso 줄이 바뀌고, 이 줄도 저절로 실제 연주로 바뀐다.
+  // 퉁소: 디지털 이음 단음 다운로드의 실제 퉁소 연주 「애원성」(Tungso_8.wav, 2026-10-08 상업용으로 받음)을
+  //  tools/make_tongso.py가 assets/sfx/tongso.mp3로 만들고 js/data/bgm.js의 tongso 줄을 쓴다. 이 줄은 bgm.js를 읽어 출처를 밝히고,
+  //  tongso 줄이 비어 있으면(파일을 뺐으면) 합성음이라고 밝힌다. 다른 악기로 바꾸면 '퉁소 대신 ○○ 연주'가 된다.
   //  화면을 열 때마다 bgm.js를 다시 읽도록 값을 그때그때 꺼낸다(get).
   const tg = () => (window.BGM && window.BGM.tongso) || null;
   const inst = () => (tg() ? tg().instrument || '퉁소' : '');
@@ -21,8 +22,8 @@
     get license() { return tg() ? KOGL : '자체 제작'; },
     get note() {
       return tg()
-        ? '앞뒤를 줄이고 소리 크기를 맞춤. 연주자는 사이트에 적혀 있지 않음(국립국악원 제작 음원).'
-        : '국립국악원 「디지털 이음」의 실제 퉁소 연주 「애원성」(Tungso_8.wav, 공공누리 제1유형)을 받아 넣으면 그 연주로 바뀌어요.';
+        ? '실제 연주를 앞뒤를 줄여 13초로 자르고 소리 크기를 맞춤. 연주자는 사이트에 적혀 있지 않음(국립국악원 제작 음원).'
+        : '실제 연주 파일이 빠져 있어 브라우저가 만든 퉁소 소리로 들려요.';
     },
     get src() { return tg() ? EUM : ''; },
   };
@@ -32,7 +33,7 @@
       {
         title: '그림',
         items: [
-          { title: '장면 삽화 54장 · 대화 초상 20장', by: 'Codex CLI 이미지 생성(만든이가 직접 생성), 현대 그림책풍', license: OWN, note: '크기를 줄여 webp로 바꿈. 그림 안에 글자를 넣지 않았어요.' },
+          { title: '장면 삽화 54장 · 대화 초상 23장', by: 'Codex CLI 이미지 생성(만든이가 직접 생성), 현대 그림책풍', license: OWN, note: '크기를 줄여 webp로 바꿈. 그림 안에 글자를 넣지 않았어요. 옥영 초상은 장면의 옷차림에 맞춘 네 벌(여복·남복·명나라 옷·조선 옷)이에요.' },
           { title: '도트 인물 20벌 · 소품 34가지', by: 'Codex CLI 이미지 생성(만든이가 직접 생성)', license: OWN, note: '배경을 빼고 프레임을 잘라 땅 한 칸 32px에 맞게 줄이고 색 수를 줄임.' },
           { title: '타이틀 그림 · 고지도 · 옥영 초상(HUD) · 한지 무늬', by: 'Codex CLI 이미지 생성(만든이가 직접 생성)', license: OWN, note: '고지도에는 글자가 없고, 지명과 뱃길은 화면 글자로 얹었어요. 앱 아이콘과 링크 미리 보기 그림은 타이틀 그림에서 잘라 만들었어요.' },
           { title: '땅 무늬 · 빛 · 물결', by: '코드로 그림', license: '자체 제작' },

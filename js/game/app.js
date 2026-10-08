@@ -48,10 +48,90 @@
     musicOn: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'),
     musicOff: SV('<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/>'),
     close: SV('<path d="M6 6l12 12M18 6 6 18"/>'),
+    fsEnter: SV('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>'),
+    fsExit: SV('<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>'),
   };
   app.ICON = ICON;
   const iconBtn = (name, label, fn, cls = '') => h('button.icon-btn' + cls, { type: 'button', 'aria-label': label, title: label, html: ICON[name], on: { click: (e) => { e.currentTarget.blur(); G.audio.tap(); fn(); } } });
   app.iconBtn = iconBtn;
+
+  // ───────── 옥영의 지금 모습(도트 id) ─────────
+  //  초상(G.util.pt의 looks)과 HUD 초상이 이것을 따른다. 차례: 지금 단계의 avatar → 맵 위(목표·거점의 avatar, G.world.avatar)
+  //  → 지금 거점의 avatar(맵 없는 거점·거점 첫 화면). 거점 자료의 avatar는 'sp_…' 또는 (state) => 'sp_…'
+  app._stepAvatar = null;
+  app.avatar = function () {
+    if (app._stepAvatar) return app._stepAvatar;
+    const W = G.world;
+    if (!W || !W.avatarOf) return null;
+    const pid = S().place;
+    if (W.placeId ? W.placeId === pid : W.avatarOverride) return W.avatar();
+    return W.avatarOf((window.PLACES || {})[pid]);
+  };
+  G.util.lookNow = (id) => (id === 'okyoung' ? app.avatar() : null);
+
+  // ───────── 전체 화면(Fullscreen API, 옛 웹킷 이름도) ─────────
+  //  누름(사용자 손짓) 안에서만 부른다. 지원하지 않는 브라우저(아이폰 사파리 등)에서는 단추를 만들지 않고, 설정에 홈 화면 안내를 보인다.
+  //  휴대폰에서 전체 화면에 들어가면 가로로 고정해 본다(안 되면 그냥 둔다). 글은 js/data/texts.js의 TEXTS.FULLSCREEN
+  const fsText = () => ((window.TEXTS || {}).FULLSCREEN) || {};
+  const fs = (app.fs = {
+    supported() {
+      const d = document, e = d.documentElement;
+      return !!((d.fullscreenEnabled || d.webkitFullscreenEnabled) && (e.requestFullscreen || e.webkitRequestFullscreen));
+    },
+    active() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+    // 홈 화면에 추가해 연 앱 창(이미 브라우저 틀이 없다)
+    standalone() { return !!(navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches)); },
+    async enter() {
+      const e = document.documentElement;
+      try {
+        const r = e.requestFullscreen ? e.requestFullscreen({ navigationUI: 'hide' }) : e.webkitRequestFullscreen();
+        if (r && typeof r.then === 'function') await r;
+      } catch (err) { ui.toast(fsText().fail || '전체 화면으로 바꾸지 못했어요'); return false; }
+      fs.lockLandscape();
+      return true;
+    },
+    async exit() {
+      const d = document;
+      try {
+        const r = d.exitFullscreen ? d.exitFullscreen() : (d.webkitExitFullscreen ? d.webkitExitFullscreen() : null);
+        if (r && typeof r.then === 'function') await r;
+      } catch (err) { return false; }
+      return true;
+    },
+    toggle() { return fs.active() ? fs.exit() : fs.enter(); },
+    lockLandscape() {
+      const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      const o = screen.orientation;
+      if (!coarse || !o || typeof o.lock !== 'function') return;
+      try { const r = o.lock('landscape'); if (r && typeof r.catch === 'function') r.catch(() => {}); } catch (err) { /* 고정하지 못해도 괜찮다 */ }
+    },
+    // 화면의 전체 화면 단추·설정 단추를 지금 상태에 맞춘다(fullscreenchange마다)
+    sync() {
+      const on = fs.active();
+      document.documentElement.classList.toggle('is-fullscreen', on);
+      for (const b of $$('.fs-toggle')) paintFs(b, on);
+      for (const g of $$('.fs-seg')) for (const b of $$('.btn', g)) {
+        const mine = (b.dataset.fs === 'on') === on;
+        b.classList.toggle('primary', mine); b.setAttribute('aria-pressed', mine ? 'true' : 'false');
+      }
+    },
+    // 아이콘 단추(타이틀·HUD 오른쪽 위). 지원하지 않으면 null(단추를 두지 않는다)
+    button() {
+      if (!fs.supported()) return null;
+      const b = h('button.icon-btn.fs-toggle', { type: 'button', on: { click: (e) => { e.currentTarget.blur(); G.audio.unlock(); G.audio.tap(); fs.toggle(); } } });
+      paintFs(b, fs.active());
+      return b;
+    },
+  });
+  // 단추 그림·이름: 들어가기(네 모서리가 바깥으로) / 끝내기(안으로)
+  function paintFs(b, on) {
+    const T = fsText();
+    const label = on ? (T.exit || '전체 화면 끝내기') : (T.enter || '전체 화면');
+    b.innerHTML = ICON[on ? 'fsExit' : 'fsEnter'];
+    b.setAttribute('aria-label', label); b.title = label;
+    b.classList.toggle('on', on);
+  }
+  if (typeof document !== 'undefined') for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => fs.sync());
 
   // ───────── 설정 적용·세로 화면 ─────────
   app.applySettings = function () {
@@ -128,7 +208,7 @@
         h('div.credits-line',
           st.teacher ? h('div.credit.teacher', '선생님용이 켜져 있어요') : null,
           h('div.credit.maker', ((window.NOTES || {}).credits || {}).maker || ''))),
-      h('div.title-tools', musicToggle(), iconBtn('gear', '설정', () => app.settings()))));
+      h('div.title-tools', musicToggle(), fs.button(), iconBtn('gear', '설정', () => app.settings()))));
   };
   // 타이틀 그림(현대 그림책풍: 밤바다 뱃머리의 옥영). 다른 그림으로 바꾸려면 이 값을 고친다
   app.TITLE_ART = 'assets/ui/title.webp';
@@ -189,7 +269,7 @@
       r.appendChild(playEl);
       G.hud.tools(
         [h('button.btn.small.teacher-only.skip-goal', { type: 'button', on: { click: () => { G.audio.tap(); if (!(G.world && G.world.skipGoal())) ui.toast('건너뛸 목표가 없어요'); } } }, h('span.ic', { html: ICON.skip }), '목표 건너뛰기'),
-          iconBtn('book', '이야기 수첩', () => app.openHook('notebook')), iconBtn('map', '지도', () => app.openMap()), iconBtn('gear', '설정', () => app.settings())],
+          iconBtn('book', '이야기 수첩', () => app.openHook('notebook')), iconBtn('map', '지도', () => app.openMap()), fs.button(), iconBtn('gear', '설정', () => app.settings())],
         [iconBtn('gear', '설정', () => app.settings()), h('button.btn.small.teacher-only.skip-scene', { type: 'button', on: { click: () => { G.audio.tap(); if (app._skip) app._skip(); } } }, h('span.ic', { html: ICON.skip }), '장면 건너뛰기')]);
     }
     G.hud.setPlace(info || {});
@@ -273,6 +353,7 @@
         ctx.main.innerHTML = ''; ctx.tray(null);
         if (step.music) G.audio.play(step.music);
         const sk = app.key.step(pid, step.id);
+        app._stepAvatar = step.avatar || null; // 이 단계 동안 옥영의 모습(예: 옷을 갈아입는 장면)
         if (st.snap[sk]) Object.assign(st, JSON.parse(JSON.stringify(st.snap[sk])));
         else { const snap = {}; for (const k of G.save.snapKeys) snap[k] = st[k]; st.snap[sk] = JSON.parse(JSON.stringify(snap)); }
         G.save.write(); G.hud.refresh();
@@ -293,6 +374,8 @@
         G.save.write(); G.hud.refresh();
       }
     } finally {
+      app._stepAvatar = null;
+      if (G.hud) G.hud.syncFace();
       if (G.world && ctx.mode === 'event') G.world.busy = Math.max(0, G.world.busy - 1);
       if (ctx.mode === 'event') ctx.close(); else if (G.world) G.world.closeDlg(ctx);
       if (G.world && G.world.music) G.audio.play(G.world.music);
@@ -425,6 +508,14 @@
         });
         return b;
       })));
+    // 전체 화면: 저장하는 설정이 아니라 지금 화면 상태를 켜고 끈다(지원하지 않으면 줄을 두지 않고 아래에 안내)
+    const fsSeg = () => {
+      if (!fs.supported()) return null;
+      const T = fsText();
+      const b = (v, t) => { const mine = (v === 'on') === fs.active(); return h('button.btn.small' + (mine ? '.primary' : ''), { type: 'button', 'data-fs': v, 'aria-pressed': mine ? 'true' : 'false', on: { click: () => { G.audio.tap(); if ((v === 'on') !== fs.active()) fs.toggle(); } } }, t); };
+      return h('div.seg', h('div.seg-l', T.label || '전체 화면'),
+        h('div.seg-opts.fs-seg', { role: 'group', 'aria-label': T.label || '전체 화면' }, b('off', T.off || '끄기'), b('on', T.on || '켜기')));
+    };
     const inGame = !!(playEl && playEl.isConnected);
     const res = await ui.sheet([
       h('h3', '설정'),
@@ -433,8 +524,10 @@
         seg('소리(효과음)', 'sound', [[true, '켜기'], [false, '끄기']]),
         seg('배경음', 'music', [[true, '켜기'], [false, '끄기']]),
         seg('방식', 'mode', [['basic', (M.basic || {}).name || '처음 배우기'], ['deep', (M.deep || {}).name || '깊이 읽기']]),
-        seg('선생님용', 'teacher', [[false, '끄기'], [true, '켜기']])),
+        seg('선생님용', 'teacher', [[false, '끄기'], [true, '켜기']]),
+        fsSeg()),
       h('div.set-notes',
+        !fs.supported() && !fs.standalone() && fsText().hint ? h('p.small.muted.fs-hint', fsText().hint) : null,
         h('p.small.muted', '선생님용을 켜면 게이지에 숫자가 보이고, 장면·목표를 건너뛸 수 있어요. 주소 끝에 ?teacher=1을 붙여도 켜져요.'),
         h('p.small.muted', '진행 상황은 이 브라우저에만 저장돼요(서버로 보내지 않아요).')),
     ], inGame ? [{ label: '타이틀로', value: 'title' }, { label: '닫기', value: true, cls: 'primary' }] : [{ label: '닫기', value: true, cls: 'primary' }], { cls: 'settings-sheet' });

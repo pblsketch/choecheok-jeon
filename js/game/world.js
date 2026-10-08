@@ -375,6 +375,7 @@
     if (!P) return;
     P.sp = W.avatar();
     P.speed = 88;
+    if (G.hud && G.hud.syncFace) G.hud.syncFace(); // 옷차림이 바뀌면 HUD 초상도 그 모습으로
   }
 
   function placePlayer(sp) {

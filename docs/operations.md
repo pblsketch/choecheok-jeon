@@ -93,23 +93,31 @@ cd tests && node sprites.mjs && node content.mjs
 ### 배경음
 
 ```bash
-# 원음: 디지털 이음 '악구 다운로드'에서 받은 wav를 assets/raw_audio/<폴더>/에(폴더·악구 코드는 tools/make_bgm.py의 TRACKS)
+# 원음 받기: 디지털 이음 '악구 다운로드'의 wav를 assets/raw_audio/<폴더>/에(폴더·악구 코드는 tools/make_bgm.py의 TRACKS)
+python tools/fetch_digitaleum.py                                  # 기본값: 사용목적 상업용 · 용도 어플리케이션 제작 · 기관 온양여자고등학교
+python tools/fetch_digitaleum.py --purpose 상업용 --use "어플리케이션 제작" --org "<기관명>"   # 내려받기 창 값을 바꿀 때
 python tools/make_bgm.py [장면 이름 …]
 python tools/make_bgm.py --raw "../영웅소설/assets/raw_audio"   # 「영웅의 길」이 받아 둔 같은 원음을 읽기만 할 때
 cd tests && node audio.mjs && node content.mjs
 ```
 
 - 장면마다 -17 LUFS, 안남 밤 포구만 -22 LUFS, 모노 64kbps mp3. 곡을 바꾸면 `credits/audio.tsv`·`CREDITS.md`·`js/data/bgm.js`의 `from`을 함께 고친다.
+- 지금 원음은 2026-10-08 `fetch_digitaleum.py`(기본값)로 받은 악구 63개다. 다시 만든 9곡은 「영웅의 길」 원음으로 만든 이전 파일과 바이트까지 같았다. 인터넷이 필요하고, 받은 원음은 저장소에 올리지 않는다.
 
-### 퉁소 실제 연주(아직 하지 않은 일)
+### 퉁소 실제 연주
 
-1. https://www.gugak.go.kr/digitaleum/front/monotone/list.do → 관악기 → 퉁소 → 연주 '애원성'(`Tungso_8.wav`)을 내려받는다. 내려받기 창의 사용목적은 **상업용**(납품하므로), 용도·기관명은 만든이가 적는다. 이 창 때문에 자동으로 받을 수 없다.
-2. 파일을 `assets/raw_audio/tongso/`에 넣는다.
-3. `python tools/make_tongso.py` → `assets/sfx/tongso.mp3`·`assets/sfx/tongso_data.js`가 생기고 `js/data/bgm.js`의 `tongso:` 줄이 바뀐다.
-4. `credits/audio.tsv`에 두 줄(`design/research/음원_이용조건.md` §3에 그대로 있음)을 넣고 `CREDITS.md`의 퉁소 단락을 고친다.
-5. `cd tests && node audio.mjs && node content.mjs`, 이어서 전체 점검.
+지금 게임에 들어간 퉁소는 디지털 이음 단음 다운로드의 퉁소 연주 '애원성'(`Tungso_8.wav`)이다. 2026-10-08 내려받기 창에 사용목적 **상업용**, 사용용도 **어플리케이션 제작**, 기관명 **온양여자고등학교**로 적어 받았다(시김새 `Tungso_6.wav`·`Tungso_7.wav`도 같이 받았지만 쓰지 않는다). 다시 만들 때:
 
-- 퉁소를 받을 수 없으면 같은 조건(공공누리 제1유형)의 단소 → 소금 → 대금 실연으로: `python tools/make_tongso.py --src <파일> --instrument 단소 --from "<출처>"`. 수첩·출처 화면에 "퉁소 대신 단소 연주"가 저절로 나온다.
+```bash
+# 원음: https://www.gugak.go.kr/digitaleum/front/monotone/list.do → 관악기 → 퉁소 → 연주 '애원성'(Tungso_8.wav), 사용목적 '상업용'
+#       → assets/raw_audio/tongso/Tungso_8.wav (fetch_digitaleum.py는 악구만 받는다)
+python tools/make_tongso.py                  # assets/sfx/tongso.mp3 · assets/sfx/tongso_data.js + js/data/bgm.js의 tongso: 줄
+cd tests && node audio.mjs && node content.mjs
+```
+
+- `make_tongso.py`는 앞뒤 무음을 줄이고 숨 쉬는 틈에서 13초로 자르고 -16 LUFS 모노 64kbps mp3로 만든다. 크레딧 두 줄은 이미 `credits/audio.tsv`에 있다(원음을 바꾸면 출처 칸을 고친다).
+- 다른 악기로 대신하려면 같은 조건(공공누리 제1유형)의 단소 → 소금 → 대금 실연으로: `python tools/make_tongso.py --src <파일> --instrument 단소 --from "<출처>"`. 수첩·출처 화면에 "퉁소 대신 단소 연주"가 저절로 나온다.
+- 파일이 없거나 못 읽으면 엔진이 합성 퉁소음으로 대신한다(`G.audio.tongso.source()`가 `'synth'`).
 
 ## 올리기
 

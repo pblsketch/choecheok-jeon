@@ -4,7 +4,7 @@
 - `flow.js`: 제목·두 방식 이름·거점 차례(`FLOW.order`)·막 미션, 고지도 위 거점·뱃길·나라 이름 자리(`OLDMAP`, 그림에 대한 0~1 비율).
 - `places/*.js`: 거점 여덟(`PLACES[id]`) — 맵 격자·소품·자리·사람·목표(beats)·단계(steps)·삽화 설명(scenes). 차례: `prologue`, `namwon`, `nanggoya`, `annam`, `interlude`, `hangzhou`, `sea`, `namwon_final`.
 - `texts.js`: 규칙 숫자 `TEXTS.RULES`(선택지 폭, 쓰러진 뒤 생, 막간 생, 결말 기준, 더듬기 값, 보이는 횟수 끝, 1막·2막 거점, 거점 기록 자리, 준비·뱃길 딜레마 id)와 공통 글(얻은 것 알림 `GOT`·장육불 꿈·떠올리는 글·안남 예외·잠김 실마리·대조 카드 틀·글자 오류 문구·표기 색).
-- `poem.js`(정답 시·함정 A·B·C·더듬기 후보·패 함정 수·알아듣는 소리·또렷함), `history.js`(역사 카드 7장, `review`는 교사 검수 거리), `original.js`(원작 결말), `kimyc.js`(「김영철전」 대목·활동·깊이 읽기 물음), `notes.js`(표기 다섯 가지, 결말 이름, 결과 화면 비교표 문안, 1차시 끝·글자 넣기 글, 디브리핑, 게임 설정 카드, 수첩·선생님 안내), `people.js`(인물 이름·초상·도트·색), `bgm.js`(장면별 배경음, 퉁소 파일 자리), `credits.js`(게임 안 출처 화면).
+- `poem.js`(정답 시·함정 A·B·C·더듬기 후보·패 함정 수·알아듣는 소리·또렷함), `history.js`(역사 카드 7장, `review`는 교사 검수 거리), `original.js`(원작 결말), `kimyc.js`(「김영철전」 대목·활동·깊이 읽기 물음), `notes.js`(표기 다섯 가지, 결말 이름, 결과 화면 비교표 문안, 1차시 끝·글자 넣기 글, 디브리핑, 게임 설정 카드, 수첩·선생님 안내), `people.js`(인물 이름·초상·도트·색, 옥영의 모습별 초상 `looks`), `bgm.js`(장면별 배경음, 퉁소 파일 자리), `credits.js`(게임 안 출처 화면).
 - 생성 파일: `sprites.js` 전체(`tools/process_sprites.py`), `people.js`의 `// ART:BEGIN`~`// ART:END`(`tools/process_assets.py`), `bgm.js`의 `tongso:` 한 줄(`tools/make_tongso.py`). 손으로 고치지 않는다.
 
 ## 맡지 않는 것
@@ -25,6 +25,7 @@
 - **숫자 원칙**: 지혜의 길 폭(+1/+1)은 다른 두 길(±2)보다 작게. 원작대로(떠남·준비) 걸으면 뱃길 앞 생이 바다길 문턱(`sea.js`의 `TUNE.seaMin`) 이상: 5(막간) − 2 + 1 + 2(항주 `h-boat`) = 6.
 - 장면 id는 `sc_<거점>_<무엇>`(그 밖에 1차시 끝 `sc_act1_end`, 결말 넷 `sc_ending_<결말>`, 항주 소식 카드 `sc_letter_<무엇>`, 원작 결말 `sc_orig_ending`, 「김영철전」 `sc_kimyc_<무엇>`, 순천 상륙 `sc_suncheon_landing`), 초상은 `pt_<인물 id>`, 도트는 `sp_…`, 소품은 `pr_…`. 거점 `scenes`에 `caption`(그림 설명)과 `prompt_hint`(영어, 그림 안에 글자 없음)를 적어야 그림 도구가 프롬프트를 만든다.
 - 붓글씨로 보일 이름은 `name: '…'` 꼴로 적는다(글꼴 도구가 그 꼴만 찾는다).
+- **옥영의 모습**(`avatar`): 거점마다 적고(맵 없는 서막·막간도), 목표·단계에도 달 수 있다. 대화 얼굴과 HUD 초상이 `people.js`의 `looks`로 따라 바뀐다: 남원 회상 `sp_okyoung_f` → 피란·낭고야·안남 `sp_okyoung_m` → 막간·항주·바다(뱃길·섬) `sp_okyoung_ming` → 조선 배에서 갈아입는 단계 `s-ship-prep`과 남원 재회 `sp_okyoung_joseon`. 글이 말하는 옷차림과 맞춘다. `avatar`는 상태를 바꾸지 않으므로 1막 거점에 달아도 이어 하기 글자와 상관없다.
 
 ## 이 폴더의 방식
 - 파일마다 전역 하나를 채운다(`window.PLACES.namwon = {…}`, `window.TEXTS.RULES = {…}`). 거점 파일은 `G.world.mk`가 없으면(엔진 없이 실릴 때) 조용히 빠진다.

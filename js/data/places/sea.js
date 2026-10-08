@@ -247,6 +247,7 @@ window.PLACES = window.PLACES || {};
       },
       {
         id: 's-ship-prep', type: 'gauge', fixed: true, when: { prep: true }, gauge: TUNE.shipPrep,
+        avatar: 'sp_okyoung_joseon', // 항주에서 지어 온 조선 옷으로 갈아입는다(이 장면의 대사 얼굴)
         lines: [
           '옥영은 항주에서 지어 온 조선 옷으로 갈아입었다. 몽선이 언덕에 올라 옷을 흔들었다.',
           { who: 'joseon_sailor', t: '당신들은 누구요? 어째서 이런 외딴섬에 있소?' },

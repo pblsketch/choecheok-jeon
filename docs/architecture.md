@@ -23,9 +23,9 @@ tests/ ──(serve.mjs로 서빙 또는 file://)──▶ index.html을 크롬�
 | `js/data/places/` | 거점 여덟(`PLACES[id]` = 맵·사람·목표·단계·삽화) | `G.world.mk`·`blobGrid`, `G.steps` 확장점 |
 | `js/main.js` | 시작: 저장 불러오기 → `?teacher=1` 반영 → 규칙을 거점 이동에 걸기 → 주소 바로가기(`G.boot.routes`) → 타이틀 | 위 전부 |
 | `css/` | 화면 모양(`style.css` 공통 + 시구·바다·수첩·결과 화면) | `assets/fonts`, `assets/ui` |
-| `assets/` | 도트 인물·소품(`sprites`), 장면 삽화(`sc`), 대화 초상(`pt`), 화면 그림(`ui`), 배경음(`bgm`), 퉁소 파일 자리(`sfx`), 부분 글꼴(`fonts`) | — |
+| `assets/` | 도트 인물·소품(`sprites`), 장면 삽화(`sc`), 대화 초상(`pt`), 화면 그림(`ui`), 배경음(`bgm`), 퉁소 실제 연주(`sfx`: 「애원성」 mp3와 파일로 열 때의 base64 js), 부분 글꼴(`fonts`) | — |
 | `credits/*.tsv` | 소재 파일마다 출처·이용 조건·고친 내용 | 사람이 적거나 도구가 줄을 더함 |
-| `tools/` | 프롬프트 생성 → Codex CLI 이미지 생성 → 줄이기·자르기·등록, 배경음·퉁소 만들기, 부분 글꼴 만들기 | Python 3, PowerShell, Codex CLI, ffmpeg, Node(프롬프트용 장면 목록 읽기) |
+| `tools/` | 프롬프트 생성 → Codex CLI 이미지 생성 → 줄이기·자르기·등록, 디지털 이음 원음 받기(`fetch_digitaleum.py`)·배경음·퉁소 만들기, 부분 글꼴 만들기 | Python 3, PowerShell, Codex CLI, ffmpeg, Node(프롬프트용 장면 목록 읽기) |
 | `tests/` | 내용 점검·규칙 점검(브라우저 없이), 화면·완주 점검(Playwright + 설치된 크롬) | Node 20 이상, playwright, `../영웅소설/assets`(있으면 소재 해시 대조) |
 
 - 모듈 사이에는 import가 없다. 모두 전역 `window.G`와 데이터 전역을 쓰고, **스크립트 차례가 곧 의존 차례**다: `core`(util → save → audio → ui → hud → oldmap) → `game`(steps → rules → code → tiles → world → app → poem → sea → notebook → result) → `data` → `places`(prologue가 먼저) → `main.js`.
@@ -66,12 +66,14 @@ tests/ ──(serve.mjs로 서빙 또는 file://)──▶ index.html을 크롬�
 ## 화면 구조
 
 - **타이틀**: 전체 그림 + 붓글씨 제목 + 메뉴(이야기 시작/이어 하기, 이어 하기 글자 넣기, 처음부터, 이야기 수첩, 만든 사람·출처) + 배경음·설정.
-- **탐색 모드**: 맵이 화면 전체(`.mapwrap`), 구석 HUD — 왼쪽 위 옥영 초상 + 연·생 게이지, 가운데 위 한 문장 미션과 목표, 오른쪽 위 수첩·지도·설정, 왼쪽 아래 가상 조이스틱(터치), 오른쪽 아래 행동 단추. 카메라는 HUD 높이만큼 더 물러설 수 있어 맵 가장자리 사람이 HUD에 가리지 않는다.
+- **탐색 모드**: 맵이 화면 전체(`.mapwrap`), 구석 HUD — 왼쪽 위 옥영 초상 + 연·생 게이지, 가운데 위 한 문장 미션과 목표, 오른쪽 위 수첩·지도·전체 화면·설정(전체 화면은 지원하는 브라우저에서만, `G.app.fs`), 왼쪽 아래 가상 조이스틱(터치), 오른쪽 아래 행동 단추. 카메라는 HUD 높이만큼 더 물러설 수 있어 맵 가장자리 사람이 HUD에 가리지 않는다.
 - **사건 모드**: 전체 삽화 한 폭 + 한지 판(짧은 글) + 아래 엄지 자리 트레이(선택지·'다음'). HUD는 위쪽 얇은 게이지 띠로 접힌다. 카드·꿈은 화면 가운데 한 장으로 크게(`cardmode`).
+- **옥영의 얼굴**: 대화 얼굴(`G.ui.face`)과 HUD 왼쪽 위 초상(`G.hud.syncFace`)은 지금 모습(도트 id)에 맞는 초상을 쓴다. 지금 모습은 `G.app.avatar()`가 정한다: 지금 단계의 `avatar` → 맵 위면 목표·거점의 `avatar`(`G.world.avatar`) → 맵 없는 거점·거점 첫 화면이면 그 거점의 `avatar`. 도트 id → 초상 id는 `PEOPLE.okyoung.looks`(sp_okyoung_f→pt_okyoung_f, sp_okyoung_m→pt_okyoung, sp_okyoung_ming→pt_okyoung_ming, sp_okyoung_joseon→pt_okyoung_joseon), 그 초상 파일이 없으면 기본 초상 `pt`.
+- **전체 화면**: 타이틀·HUD 오른쪽 위 아이콘과 설정 줄이 Fullscreen API(웹킷 이름 포함)로 문서 전체를 켜고 끈다. 누름 안에서만 부르고, `fullscreenchange`마다 아이콘·이름·설정 단추가 따라 바뀐다. 휴대폰(굵은 포인터)에서는 들어간 뒤 `screen.orientation.lock('landscape')`를 시도하고 실패는 무시한다. 지원하지 않으면(아이폰 사파리) 단추를 두지 않고 설정에 '홈 화면에 추가' 안내를 보인다(`index.html`의 `apple-mobile-web-app-capable`, manifest의 `display: standalone`).
 - **고지도**: 글자 없는 그림 지도(`assets/ui/oldmap.webp`) 위에 거점 점·지명·뱃길·배를 SVG와 글자로 얹는다. 좌표는 그림 너비·높이에 대한 비율(`OLDMAP`), 땅은 실제 지리대로(서쪽 안남·중국, 가운데 조선, 동쪽 일본).
 - **세로 화면**: `#rotate` 안내만 보이고 맵은 멈춘다.
 
 ## 외부 의존
 
 - 실행 중: 없음(브라우저만).
-- 만들 때: Codex CLI 이미지 생성(그림), 국립국악원 「디지털 이음」(배경음·퉁소 원음, 사람이 내려받음), google/fonts 저장소(글꼴 원본, `tools/fonts_src/`에 이미 있음), ffmpeg(소리), 같은 시리즈의 「영웅의 길」(`../영웅소설`: 엔진의 출처, 배경음 원음, 점검의 소재 해시 대조 — 읽기만).
+- 만들 때: Codex CLI 이미지 생성(그림), 국립국악원 「디지털 이음」(배경음·퉁소 원음, 2026-10-08 사용목적 상업용으로 받음 — 악구는 `tools/fetch_digitaleum.py`), google/fonts 저장소(글꼴 원본, `tools/fonts_src/`에 이미 있음), ffmpeg(소리), 같은 시리즈의 「영웅의 길」(`../영웅소설`: 엔진의 출처, 배경음 원음, 점검의 소재 해시 대조 — 읽기만).

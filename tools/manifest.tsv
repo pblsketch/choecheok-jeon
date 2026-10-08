@@ -54,6 +54,9 @@ sc_orig_ending	1536x1024	design/style-samples/style_picturebook.png	style
 sc_kimyc_moon	1536x1024	design/style-samples/style_picturebook.png	style
 sc_act1_end	1536x1024	design/style-samples/style_picturebook.png	style
 pt_okyoung	1024x1024	assets/raw/ref_okyoung.png	same
+pt_okyoung_f	1024x1024	assets/raw/ref_pt_okyoung.png	face
+pt_okyoung_ming	1024x1024	assets/raw/ref_pt_okyoung.png	face
+pt_okyoung_joseon	1024x1024	assets/raw/ref_pt_okyoung.png	face
 pt_choecheok	1024x1024	assets/raw/ref_okyoung.png	style
 pt_donwoo	1024x1024	assets/raw/ref_okyoung.png	style
 pt_songwoo	1024x1024	assets/raw/ref_okyoung.png	style

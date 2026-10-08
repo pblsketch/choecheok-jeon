@@ -112,10 +112,23 @@ window.G = window.G || {};
   };
 
   // 인물: PEOPLE[id] → 이름·초상
+  //  모습이 여러 벌인 인물(PEOPLE[id].looks = { 도트 id: 초상 id })은 지금 모습에 맞는 초상을 쓴다.
+  //  지금 모습은 sp(대사 줄이 정한 도트 id) → U.lookNow(id)(게임 화면이 정함: G.app.avatar) 차례. 그 초상 파일이 없으면 기본 초상(pt)
   U.person = (id) => (window.PEOPLE || {})[id] || null;
-  U.pt = function (id) {
+  U.lookNow = () => null;
+  U.ptId = function (id, sp) {
     const p = U.person(id);
-    return p ? U.art('pt', p.pt || 'pt_' + id) : null;
+    if (!p) return null;
+    if (p.looks) {
+      const look = sp || U.lookNow(id);
+      const alt = look && p.looks[look];
+      if (alt && U.art('pt', alt)) return alt;
+    }
+    return p.pt || 'pt_' + id;
+  };
+  U.pt = function (id, sp) {
+    const pid = U.ptId(id, sp);
+    return pid ? U.art('pt', pid) : null;
   };
   U.who = function (id) {
     const p = U.person(id);
