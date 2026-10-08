@@ -12,10 +12,10 @@
 |---|---|---|---|
 | 도트 인물·소품 | `assets/sprites/` 54개 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 장면 삽화 | `assets/sc/` 54장 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
-| 대화 초상 | `assets/pt/` 20장 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
+| 대화 초상 | `assets/pt/` 23장(옥영은 옷차림 네 벌) | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 화면 그림 | `assets/ui/` 7장(그림 4장 + 타이틀 그림에서 잘라 만든 앱 아이콘 2장·링크 미리 보기 1장) | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 배경음 | `assets/bgm/` 9곡 | 국립국악원 「디지털 이음」 악구 | 공공누리 제1유형(출처표시) |
-| 퉁소 | (아직 파일 없음, 합성음) | 아래 '소리' 참고 | — |
+| 퉁소 | `assets/sfx/tongso.mp3` + `tongso_data.js` | 국립국악원 「디지털 이음」 단음(퉁소 연주 「애원성」) | 공공누리 제1유형(출처표시) |
 | 효과음 | 파일 없음 | 브라우저 합성 | 자체 제작 |
 | 글꼴 | `assets/fonts/` 5개 + `OFL.txt` | 고운바탕, Noto Serif KR, 나눔손글씨 붓 | SIL Open Font License 1.1 |
 | 원문 | `design/research/원문_*.md` | 위키문헌·규장각·한국고전종합DB | 공유 저작물(구두점은 아래 참고) |
@@ -37,7 +37,7 @@
 | 파일 | 출처 | 이용 조건 | 고친 내용 |
 |---|---|---|---|
 | 장면 54장(`assets/sc/*.webp`): `sc_prologue_*` 5, `sc_namwon_*` 8, `sc_nanggoya_*` 6, `sc_annam_*` 6, `sc_act1_end`, `sc_interlude_*` 4, `sc_hangzhou_*` 7, `sc_letter_*` 3, `sc_sea_*` 5, `sc_island_*` 2, `sc_suncheon_landing`, `sc_ending_*` 4, `sc_orig_ending`, `sc_kimyc_moon` | Codex CLI 이미지 생성(자체 생성), 현대 그림책풍. 프롬프트 `tools/make_prompts.py` → `tools/prompts/sc_*.txt`, 화풍 참조 `design/style-samples/style_picturebook.png` | 자체 생성물(상업 이용 가능) | 1280px 폭으로 줄여 webp로 바꿈(`tools/process_assets.py`) |
-| 초상 20장(`assets/pt/*.webp`): `pt_captive`, `pt_choecheok`, `pt_choesuk`, `pt_donwoo`, `pt_hongdo`, `pt_jangyukbul`, `pt_jinwigyeong`, `pt_joseon_sailor`, `pt_merchant`, `pt_merchant_jp`, `pt_merchant_ming`, `pt_ming_soldier`, `pt_mongseok`, `pt_mongseon`, `pt_okyoung`, `pt_pirate`, `pt_sailor`, `pt_sailor_west`, `pt_simssi`, `pt_songwoo` | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/pt_*.txt`, 참조 그림 `assets/ui/hud_okyoung.webp` | 자체 생성물(상업 이용 가능) | 줄여 webp로 바꿈 |
+| 초상 23장(`assets/pt/*.webp`): `pt_captive`, `pt_choecheok`, `pt_choesuk`, `pt_donwoo`, `pt_hongdo`, `pt_jangyukbul`, `pt_jinwigyeong`, `pt_joseon_sailor`, `pt_merchant`, `pt_merchant_jp`, `pt_merchant_ming`, `pt_ming_soldier`, `pt_mongseok`, `pt_mongseon`, `pt_okyoung`(남복), `pt_okyoung_f`(여복), `pt_okyoung_ming`(명나라 옷·중년), `pt_okyoung_joseon`(조선 옷·중년), `pt_pirate`, `pt_sailor`, `pt_sailor_west`, `pt_simssi`, `pt_songwoo` | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/pt_*.txt`, 참조 그림 `assets/ui/hud_okyoung.webp`(옥영의 다른 세 벌은 남복 초상 `pt_okyoung`을 참조로 같은 얼굴에 옷·머리·나이만 바꿈, `gen.ps1 -RefMode face`) | 자체 생성물(상업 이용 가능) | 줄여 webp로 바꿈. HUD 왼쪽 위 초상도 이 그림을 장면의 옷차림에 맞춰 둥글게 잘라 씀(따로 만든 파일 없음) |
 | 화풍 시안 4장(`design/style-samples/style_{woodblock,ink,documentary,picturebook}.png`)과 모음 그림 `style_compare.png` | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/style_*.txt` | 자체 생성물(상업 이용 가능) | 고르는 데만 씀(게임에는 들어가지 않음) |
 
 그림마다 다시 만든 까닭과 남은 흠은 `design/ui/삽화_검수.md`에 적었습니다. 그림 안에는 글자·낙관·서명을 넣지 않았습니다.
@@ -73,14 +73,18 @@
 | `assets/bgm/reunion.mp3` | 남원 재회 | 가야금 경기민요 도라지·아리랑(세마치) | s1-913-001~002, s1-914-001~004 |
 | `assets/bgm/result.mp3` | 결과 화면 | 가야금 경기민요 천안삼거리·한강수타령·창부타령(굿거리) | s1-915-001~002, s1-916-001~003, s1-918-001~003 |
 
-원음은 같은 만든이의 「영웅의 길」이 2026-09-29에 같은 사이트에서 받은 것을 썼습니다. 그래서 `annam_night`를 뺀 여덟 곡은 「영웅의 길」의 곡과 같은 파일입니다(같은 원음·같은 손질). `annam_night`는 「영웅의 길」의 가문 장면 곡과 같은 원음을 더 작게 다시 만든 것입니다. 「영웅의 길」은 내려받을 때 사용목적을 '비상업용'으로 적었습니다. 이용 조건은 공공누리 제1유형이라 상업 이용이 허락되어 있지만, 납품 기록을 깔끔히 하려면 **사용목적 '상업용'으로 다시 받기를 권합니다**(파일은 같으므로 게임은 바뀌지 않습니다). 자세한 내용은 `design/research/음원_이용조건.md`.
+처음에는 같은 만든이의 「영웅의 길」이 2026-09-29에 '비상업용'으로 적고 받은 원음을 썼습니다. 납품 기록을 맞추려고 **2026-10-08 내려받기 창에 사용목적 '상업용', 사용용도 '어플리케이션 제작', 기관명 '온양여자고등학교'로 적어 악구 63개를 다시 받고**(`tools/fetch_digitaleum.py`) 9곡을 다시 만들었습니다. 다시 만든 곡은 이전 파일과 바이트까지 같습니다. 그래서 `annam_night`를 뺀 여덟 곡은 지금도 「영웅의 길」의 곡과 같은 파일입니다(같은 원음·같은 손질). `annam_night`는 「영웅의 길」의 가문 장면 곡과 같은 원음을 더 작게 다시 만든 것입니다. 자세한 내용은 `design/research/음원_이용조건.md`.
 
 ### 퉁소(안남 포구의 퉁소 가락)
 
-- **지금은 브라우저가 만든 합성음**입니다(계면조 가락에 대금 소리, 굵은 숨소리, 청 울림을 더함, `js/core/audio.js`). 파일이 없어 이용 조건도 따로 없습니다.
-- 디지털 이음에 실제 퉁소 연주가 있습니다. 단음 다운로드 → 관악기 → 퉁소의 **연주 「애원성」(`Tungso_8.wav`, 공공누리 제1유형)** 입니다. 내려받을 때 사용목적·용도·기관명을 직접 적어야 해서 아직 받지 못했습니다.
-- 받는 차례(`design/research/음원_이용조건.md` §3): 받은 파일을 `assets/raw_audio/tongso/`에 넣고 `python tools/make_tongso.py`를 실행합니다. `assets/sfx/tongso.mp3`·`tongso_data.js`가 생기고 `js/data/bgm.js`의 `tongso` 줄이 바뀝니다. 그다음 `credits/audio.tsv`에 두 줄(같은 문서 §3에 적어 둠)을 넣고 `cd tests && node audio.mjs`로 점검합니다. 게임 안 출처 화면의 퉁소 줄은 `bgm.js`를 읽어 저절로 바뀝니다.
-- 퉁소를 받을 수 없으면 같은 조건의 단소·소금·대금 연주로 대신하고, 이야기 수첩과 출처 화면에 "퉁소 대신 ○○ 연주"라고 밝힙니다(`make_tongso.py --instrument 단소`).
+| 파일 | 출처 | 이용 조건 | 고친 내용 |
+|---|---|---|---|
+| `assets/sfx/tongso.mp3` | 국립국악원 「디지털 이음」 단음 다운로드(https://www.gugak.go.kr/digitaleum/front/monotone/list.do) → 관악기 → 퉁소 → **연주 「애원성」(`Tungso_8.wav`)**. 2026-10-08 내려받음(사용목적 상업용·사용용도 어플리케이션 제작·기관명 온양여자고등학교). 연주자: 사이트에 표기 없음(국립국악원 제작 음원) | 공공누리 제1유형(출처표시) | 앞뒤 무음 줄임, 숨 쉬는 틈에서 13초로 자름, 처음 30ms·끝 0.6초 서서히, -16 LUFS, 모노 64kbps mp3(`tools/make_tongso.py`) |
+| `assets/sfx/tongso_data.js` | 위와 같은 소리 | 공공누리 제1유형(출처표시) | `tongso.mp3`를 base64로 담음(`index.html`을 파일로 열 때 씀) |
+
+- 안남 포구에서 이 연주를 또렷함(소리 크기·저역 필터·메아리)과 방향을 바꿔 들려줍니다(`js/core/audio.js`의 `G.audio.tongso`). `js/data/bgm.js`의 `tongso` 줄은 `make_tongso.py`가 씁니다.
+- 파일을 읽지 못하는 기기에서만 브라우저 합성음(계면조 가락에 대금 소리, 굵은 숨소리, 청 울림)으로 대신합니다. 그때 이야기 수첩·출처 화면은 합성음이라고 밝힙니다.
+- 다시 만들 때: 원음을 `assets/raw_audio/tongso/`에 넣고 `python tools/make_tongso.py`. 다른 악기로 바꾸면(`--instrument 단소 --from "…"`) 이야기 수첩과 출처 화면에 "퉁소 대신 ○○ 연주"라고 저절로 밝힙니다.
 
 ### 효과음과 대체 곡
 
@@ -116,7 +120,7 @@
 | 도구 | 쓴 곳 |
 |---|---|
 | Codex CLI 이미지 생성(image_gen) | 도트 시트, 장면 삽화, 초상, 화면 그림, 화풍 시안. 부르는 스크립트 `tools/gen.ps1`·`genqueue.ps1`·`genretry.ps1` |
-| Python(Pillow, SciPy, NumPy) | 도트 손질 `tools/process_sprites.py`, 삽화 줄이기 `tools/process_assets.py`, 배경음·퉁소 `tools/make_bgm.py`·`make_tongso.py` |
+| Python(Pillow, SciPy, NumPy) | 도트 손질 `tools/process_sprites.py`, 삽화 줄이기 `tools/process_assets.py`, 배경음·퉁소 `tools/make_bgm.py`·`make_tongso.py`, 디지털 이음 원음 내려받기 `tools/fetch_digitaleum.py`(표준 라이브러리만) |
 | ffmpeg | 배경음·퉁소 mp3 만들기 |
 | fontTools | 부분 글꼴 `tools/build_fonts.py` |
 | 「영웅의 길」 엔진 | 같은 만든이의 앞선 게임에서 탑다운 맵·대화·단계 실행·저장·소리·화면 부품을 가져와 고침(싸움·기술은 뺌) |

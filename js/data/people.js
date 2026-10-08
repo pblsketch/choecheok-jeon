@@ -4,9 +4,15 @@
 //  - name: 화면에 보이는 이름 · pt: 초상 그림 id(그림 파일이 생기면 window.ART.pt에 경로를 적는다)
 //  - sp: 맵에서 쓰는 도트 인물 그림 id(js/data/sprites.js에 없으면 단색 사람 모양으로 대신 그린다)
 //  - color: 말풍선 이름 색·대신 그리는 사람 모양 색 · role: 누구인가(수첩·교사용 설명)
-//  옥영의 모습은 여러 벌이다: sp_okyoung_m(남복) · sp_okyoung_f(여복) · sp_okyoung_joseon(조선 옷) · sp_okyoung_ming(명나라 옷)
+//  - looks: 모습이 여러 벌인 인물의 { 도트 id: 초상 id }. 엔진이 지금 모습(맵의 옷차림, 맵 없는 장면은 거점의 avatar)에 맞는
+//    초상을 대사 얼굴과 HUD 왼쪽 위 초상에 고른다. 목록에 없는 모습이거나 그 초상 파일이 없으면 pt를 쓴다
+//  옥영의 모습은 네 벌이다: sp_okyoung_f(젊은 날 여복: 남원 회상) · sp_okyoung_m(남복: 피란·낭고야·안남)
+//   · sp_okyoung_ming(중년, 명나라 옷: 막간·항주·귀국 뱃길·섬) · sp_okyoung_joseon(중년, 조선 옷: 조선 배에서 갈아입은 뒤·남원 재회)
 window.PEOPLE = Object.assign(window.PEOPLE || {}, {
-  okyoung: { name: '옥영', pt: 'pt_okyoung', sp: 'sp_okyoung_m', color: '#b3342a', role: '주인공. 최척의 아내. 전란 속에서 가족을 찾아 바다를 두 번 건넌다' },
+  okyoung: {
+    name: '옥영', pt: 'pt_okyoung', sp: 'sp_okyoung_m', color: '#b3342a', role: '주인공. 최척의 아내. 전란 속에서 가족을 찾아 바다를 두 번 건넌다',
+    looks: { sp_okyoung_f: 'pt_okyoung_f', sp_okyoung_m: 'pt_okyoung', sp_okyoung_ming: 'pt_okyoung_ming', sp_okyoung_joseon: 'pt_okyoung_joseon' },
+  },
   choecheok: { name: '최척', pt: 'pt_choecheok', sp: 'sp_choecheok', color: '#36548f', role: '옥영의 남편. 퉁소를 잘 분다' },
   donwoo: { name: '돈우', pt: 'pt_donwoo', sp: 'sp_donwoo', color: '#6d5a2a', role: '옥영을 데려간 일본 상인. 살생을 꺼리는 불자' },
   mongseon: { name: '몽선', pt: 'pt_mongseon', sp: 'sp_mongseon', color: '#2f6b45', role: '옥영과 최척의 둘째 아들. 항주에서 태어났다' },
@@ -50,6 +56,9 @@ window.ART.pt.pt_ming_soldier = 'assets/pt/pt_ming_soldier.webp';
 window.ART.pt.pt_mongseok = 'assets/pt/pt_mongseok.webp';
 window.ART.pt.pt_mongseon = 'assets/pt/pt_mongseon.webp';
 window.ART.pt.pt_okyoung = 'assets/pt/pt_okyoung.webp';
+window.ART.pt.pt_okyoung_f = 'assets/pt/pt_okyoung_f.webp';
+window.ART.pt.pt_okyoung_joseon = 'assets/pt/pt_okyoung_joseon.webp';
+window.ART.pt.pt_okyoung_ming = 'assets/pt/pt_okyoung_ming.webp';
 window.ART.pt.pt_pirate = 'assets/pt/pt_pirate.webp';
 window.ART.pt.pt_sailor = 'assets/pt/pt_sailor.webp';
 window.ART.pt.pt_sailor_west = 'assets/pt/pt_sailor_west.webp';

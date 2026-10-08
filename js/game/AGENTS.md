@@ -5,7 +5,7 @@
 - `rules.js`: 게임 규칙 전부(게이지 자르기, 세 갈래, 지혜의 길 열림, 쓰러짐 세 경우, 막간 회복, 한 번만 반영 장부, 거점 기록, 결말, 원작 궤적, `?act=2` 시작값, 시험 손잡이 `G.rules.test.set`).
 - `code.js`: 이어 하기 글자 부호화·검사·되풀이 되살리기.
 - `tiles.js`·`world.js`: 코드로 그리는 땅 타일과 테마, 탑다운 맵(카메라·충돌·조이스틱·말 걸기·목표 진행·대화창), 시험 손잡이 `G.world.test`.
-- `app.js`: 화면 흐름(타이틀·방식 고르기·거점 차례·사건 화면·고지도 이동·설정·'처음부터'·이미지 내려받기 도구), 걸이 `G.app.hooks`.
+- `app.js`: 화면 흐름(타이틀·방식 고르기·거점 차례·사건 화면·고지도 이동·설정·'처음부터'·이미지 내려받기 도구), 걸이 `G.app.hooks`, 옥영의 지금 모습 `G.app.avatar()`(단계 `avatar` → 맵의 `G.world.avatar` → 지금 거점의 `avatar`, `G.util.lookNow`에 걸려 대화 얼굴·HUD 초상이 따른다), 전체 화면 `G.app.fs`(`supported`·`active`·`enter`·`exit`·`toggle`·`button`·`sync`, 글은 `TEXTS.FULLSCREEN`).
 - `poem.js`(안남 `tongso`·`poem`), `sea.js`(`route`·`stars`, `wonmun` 줄, `{신표}`), `notebook.js`(이야기 수첩·만든 사람·출처), `result.js`(`act1End`·`origEnding`·`kimyc`·`result`, 글자 넣기 창, 결과 화면과 저장 그림).
 
 ## 맡지 않는 것
@@ -26,6 +26,8 @@
 - 단계 도중 새로고침 대비: `runSteps`가 단계 시작 값을 `snap`에 뜨고, 다시 열면 되돌린다. 단계 안에서 바뀌는 새 저장 칸은 `G.save.snapKeys`에 넣는다.
 - 결과 화면 그래프는 같은 그리기 함수로 화면(SVG)과 저장 그림(캔버스)에 그린다. 그림 파일을 쓰지 않아 `file://`에서도 저장된다.
 - 대화창을 닫은 뒤 300ms(`W.closedAt`) 동안 E·Enter·Space·Z를 말 걸기로 받지 않는다(같은 대화가 곧바로 다시 열리지 않게).
+- 전체 화면은 사용자 누름 안에서만 부른다(`G.app.fs.toggle`을 누름 처리기에서 곧바로). 지원하지 않으면 `fs.button()`이 `null`을 돌려 단추를 두지 않는다. 가로 고정(`screen.orientation.lock`)은 휴대폰에서만 시도하고 실패를 삼킨다. 콘솔 오류를 내지 않는다.
+- 옥영의 모습을 바꾸는 곳은 거점·목표·단계 자료의 `avatar`뿐이다. 엔진에서 거점 id로 모습을 정하지 않는다. 새 모습은 도트(`sp_okyoung_…`)와 초상, `PEOPLE.okyoung.looks` 한 줄을 함께 더한다(`tests/content.mjs`가 거점마다 모습이 정해졌고 looks에 있는지 본다).
 - 화면은 그림책풍 미술 방향을 따른다: 전체 화면 맵 + 구석 HUD, 사건 화면은 삽화 + 한지 판 + 엄지 자리 트레이. 맵/패널로 나누는 배치나 기본 회색 단추를 만들지 않는다.
 
 ## 이 폴더의 방식

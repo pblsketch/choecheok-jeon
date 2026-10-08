@@ -7,6 +7,7 @@ window.PLACES = window.PLACES || {};
 (function () {
   PLACES.interlude = {
     name: '막간 — 항주의 몇 해', act: 2, node: 'hangzhou',
+    avatar: 'sp_okyoung_ming', // 항주에서 명나라 옷을 입고 산 세월(대사 얼굴·HUD 초상이 따른다)
     music: 'hangzhou',
     cover: 'sc_interlude_hangzhou',
     intro: '안남에서 다시 만난 최척과 옥영은 송우를 따라 중국 항주에 자리를 잡았다. 그 뒤로 스무 해 가까운 세월이 흘렀다.',

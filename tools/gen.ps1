@@ -9,7 +9,8 @@ param(
   [string]$Size = "1536x1024",
   [string]$Quality = "high",
   [string]$Image = "",
-  # same: 참조 이미지의 인물을 그대로(표정만 바꿈) / style: 화풍만 따르고 다른 인물 / scene: 화풍과 등장인물 디자인을 따름
+  # same: 참조 이미지의 인물을 그대로(표정만 바꿈) / face: 같은 얼굴·화풍에 옷·머리·나이만 프롬프트대로(옥영의 다른 모습 초상)
+  # style: 화풍만 따르고 다른 인물 / scene: 화풍과 등장인물 디자인을 따름(「영웅의 길」 인물 문구라 이 게임에서는 쓰지 않음)
   [string]$RefMode = "same",
   # 이미지 생성을 부를 모델(비우면 ~/.codex/config.toml의 모델). 환경변수 HERO_CODEX_MODEL로도 정할 수 있다
   [string]$UseModel = ""
@@ -43,6 +44,7 @@ if ($Image -ne "") {
   $imgArgs = @("--image=$ch\ref.png")
   $refNote = switch ($RefMode) {
     "style" { " The attached image is an ART STYLE reference only: pass it to image_gen as the reference image and match its painting style, line work, colors and paper texture exactly, but draw the new character described in the prompt, not the people in the reference." }
+    "face" { " The attached image shows the SAME PERSON as the one in the prompt: pass it to image_gen as the reference image and keep her face, facial features, skin tone, proportions and the art style (brush work, colored-pencil texture, colors, background treatment) identical, so she is clearly recognizable as the same person, but change her clothing, hairstyle, headwear and age exactly as the prompt describes (do not copy the clothing or headwear of the reference)." }
     "char" { " The attached image shows the CHARACTER DESIGN only: pass it to image_gen as the reference image and keep the same costume, colors, hairstyle, headwear and accessories, but redraw the character completely in the pixel art sprite style described in the prompt (do not copy the painting style of the reference)." }
     "scene" { " The attached image is the art style and character design reference: pass it to image_gen as the reference image, match its painting style exactly, and whenever a character from the reference appears (the young male general in dark-gold scale armor and crimson robe, the young woman commander disguised as a man in silver armor and indigo robe, the old white-bearded Taoist master in a grey crane robe, the sly minister in a purple robe and black winged hat), keep their face, costume and colors as in the reference. Other people are new characters drawn in the same style." }
     default { " The attached image is the visual reference: pass it to image_gen as the reference image and keep the character design, face, costume, colors and art style identical." }

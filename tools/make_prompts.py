@@ -4,10 +4,12 @@
     python tools/make_prompts.py
 
 - 프롬프트는 영어(ASCII)만 쓴다. gen.ps1이 명령문에 그대로 넣어 넘기기 때문이다.
-- manifest 열: 이름, 크기, 참조 이미지, 참조 방식(same|style) — gen.ps1의 -RefMode
+- manifest 열: 이름, 크기, 참조 이미지, 참조 방식(same|face|style) — gen.ps1의 -RefMode
+  (face: 남복 초상 assets/pt/pt_okyoung.webp와 같은 얼굴로 옷·머리·나이만 바꾼 옥영의 다른 모습)
   (gen.ps1의 'scene'·'char' 방식은 「영웅의 길」 인물·도트 그림용 문구라 여기서는 쓰지 않는다)
 - 화풍: 현대 그림책풍(design/style-samples/style_picturebook.png, tools/prompts/style_picturebook.txt).
   장면은 그 그림을 화풍 참조로, 초상은 HUD 초상(assets/ui/hud_okyoung.webp → assets/raw/ref_okyoung.png)을 참조로 쓴다.
+  옥영의 다른 모습 초상(pt_okyoung_f·_ming·_joseon)은 남복 초상(assets/pt/pt_okyoung.webp → assets/raw/ref_pt_okyoung.png)을 face 방식으로.
 - 장면 id는 js/data/places/*.js·original.js·kimyc.js의 scenes와 result.js의 sc_act1_end에서 모은다(node로 읽음).
   거기 있는 장면인데 아래 DESC에 없으면 prompt_hint를 그대로 쓰고 경고한다.
 - 인물 모습은 도트 인물(tools/prompts/sp_*.txt)과 HUD·타이틀 그림에 맞춘 공통 문구(아래 인물 상수)를 되풀이해 맞춘다.
@@ -26,6 +28,7 @@ os.makedirs(RAW, exist_ok=True)
 
 STYLE_REF = "design/style-samples/style_picturebook.png"
 FACE_REF = "assets/raw/ref_okyoung.png"   # assets/ui/hud_okyoung.webp를 png로(아래 make_refs)
+PT_REF = "assets/raw/ref_pt_okyoung.png"  # assets/pt/pt_okyoung.webp를 png로: 옥영의 다른 모습 초상(face 방식)의 참조
 
 
 def make_refs():
@@ -34,6 +37,11 @@ def make_refs():
     src = os.path.join(ROOT, "assets", "ui", "hud_okyoung.webp")
     dst = os.path.join(ROOT, FACE_REF)
     if not os.path.exists(dst):
+        im = Image.open(src).convert("RGB")
+        im.resize((im.width * 2, im.height * 2), Image.LANCZOS).save(dst)
+    src = os.path.join(ROOT, "assets", "pt", "pt_okyoung.webp")
+    dst = os.path.join(ROOT, PT_REF)
+    if os.path.exists(src) and not os.path.exists(dst):
         im = Image.open(src).convert("RGB")
         im.resize((im.width * 2, im.height * 2), Image.LANCZOS).save(dst)
 
@@ -371,6 +379,23 @@ PT = {
     "pt_okyoung": (OK_M + ". Expression: calm and gentle, with quiet longing and resolve. Draw the same person as in "
                    "the reference image (same face, white cloth headband and topknot), but show her head and "
                    "shoulders a little wider, with the white-grey jacket collar visible.", FACE_REF, "same"),
+    # 옥영의 다른 모습(장면에 맞춰 엔진이 고른다: js/data/people.js의 looks). 남복 초상과 같은 얼굴로(face 방식)
+    "pt_okyoung_f": (OK_F.replace("about 20", "about 18") + ", no headband and no topknot, her hair parted in the "
+                     "middle and gathered into the low bun. Expression: soft, shy happiness on a moonlit spring "
+                     "night. Draw the same person as in the reference image (same face, eyes, nose and rosy cheeks), "
+                     "but now in women's clothes, with the pale-yellow jeogori and its light green collar ribbon "
+                     "visible.", PT_REF, "face"),
+    "pt_okyoung_ming": (OK_MING + ", no headband. She is clearly about twenty years older than in the reference "
+                        "image: a visibly middle-aged woman of about 40 with a slightly fuller face and jawline, "
+                        "gentle fine lines at the eye corners and beside the mouth, and a calm dignified look. Expression: calm, gentle and quietly resolute. Draw the same "
+                        "person as in the reference image (same face shape, eyes and nose), with the high crossed "
+                        "teal collar visible.", PT_REF, "face"),
+    "pt_okyoung_joseon": (OK_JOSEON + ", no headband and no topknot. She is clearly about twenty-five years older "
+                          "than in the reference image: a mature woman of about 45 with faint fine lines at the eyes "
+                          "and a slightly weathered face from a long sea voyage. Expression: tired but hopeful and "
+                          "determined. Draw the same person as in the reference image (same face shape, eyes and "
+                          "nose), with the ochre-brown jeogori collar and the white head cloth visible.", PT_REF,
+                          "face"),
     "pt_choecheok": (CH_MING + "; the top of the flute rests against his shoulder. Expression: gentle, thoughtful.",),
     "pt_donwoo": (DONWOO + " (the beads may be shown around his wrist at the bottom edge). Expression: warm, kind "
                   "smile.",),

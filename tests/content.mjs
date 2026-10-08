@@ -192,6 +192,30 @@ const DATA = { PLACES, NOTES, TEXTS, HISTORY, ORIGINAL, KIMYC, POEM, PEOPLE, FLO
   ok(bad.length === 0, `맵 ${nMaps}장: 격자 줄 길이·소품·사람 스프라이트·곡이 맞고, 목표 ${nTargets}개의 대상이 그 맵에 있으며 시작 자리에서 걸어서 닿는다` + (bad.length ? ': ' + list(bad, 12) : ''));
 }
 {
+  // 옥영의 모습: 거점·목표·단계의 avatar(문자열 또는 상태 함수)가 도트 그림이 있는 모습이고, 그 모습의 초상이 looks에 있다
+  //  (대사 얼굴과 HUD 초상이 모습에 맞춰 바뀐다 — js/data/people.js의 looks, js/game/app.js의 G.app.avatar)
+  const looks = (PEOPLE.okyoung || {}).looks || {};
+  const bad = [], seen = new Set();
+  const chk = (a, at) => {
+    const vals = typeof a === 'function' ? [a({ done: {} }), a({ done: new Proxy({}, { get: () => true }) })] : [a];
+    for (const v of vals) {
+      if (v == null) continue;
+      seen.add(v);
+      if (!SPRITES[v]) bad.push(`${at}: 도트 그림 없음 ${v}`);
+      if (!looks[v]) bad.push(`${at}: 옥영 초상(looks)에 없는 모습 ${v}`);
+    }
+  };
+  for (const pid of ORDER) {
+    const P = PLACES[pid];
+    if (P.avatar == null) bad.push(`${pid}: 거점 avatar가 없음(맵 없는 장면의 대사 얼굴·HUD 초상을 정하지 못함)`);
+    chk(P.avatar, pid);
+    for (const b of P.beats || []) chk(b.avatar, pid + '/' + b.id);
+    for (const s of P.steps || []) chk(s.avatar, pid + '/' + s.id);
+  }
+  for (const pt of Object.values(looks)) if (!(ART.pt || {})[pt]) bad.push(`looks의 초상 ${pt}이 그림 목록(ART.pt)에 없음`);
+  ok(bad.length === 0 && Object.keys(looks).length > 0, `옥영의 모습 ${[...seen].join('·')}마다 도트 그림과 초상이 있고, 모든 거점이 모습을 정한다` + (bad.length ? ': ' + list(bad) : ''));
+}
+{
   // 장면 삽화: 단계·줄·거점 표지·꿈·원작 결말·김영철전·1차시 끝
   const ids = new Map();
   const add = (id, at) => { if (typeof id === 'string' && id) ids.set(id, at); };

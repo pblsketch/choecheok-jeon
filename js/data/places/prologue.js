@@ -51,6 +51,7 @@ PLACES.prologue = {
   name: '서막 — 흩어지는 밤',
   act: 1,
   node: 'namwon',
+  avatar: 'sp_okyoung_m', // 피란처에서 사내 옷으로 갈아입은 뒤의 모습(대사 얼굴·HUD 초상이 따른다)
   mission: '최척을 다시 만나라.',
   music: 'flight',
   cover: 'sc_prologue_fall',
