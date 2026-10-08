@@ -121,7 +121,7 @@ cd tests && node audio.mjs && node content.mjs
 
 ## 올리기
 
-- 아직 어디에도 올리지 않았다. 올릴 곳(지학사 사이트 탑재 또는 공개 웹 주소)은 정해지지 않았다.
+- GitHub Pages: https://pblsketch.github.io/choecheok-jeon/ (저장소 설정의 Pages 원천 = `main` 브랜치 뿌리, `.nojekyll`). `main`에 푸시하면 몇 분 뒤 다시 올라간다. 확인: `gh api repos/pblsketch/choecheok-jeon/pages/builds/latest`의 `status`가 `built`이고 `commit`이 방금 푸시한 커밋인지. 지학사 사이트 탑재는 아직 정해지지 않았다.
 - 올리는 방법은 어디든 같다: 저장소 폴더의 정적 파일을 그대로 올린다. 경로가 모두 상대 경로라 도메인 뿌리·하위 폴더·`file://` 어디서든 돈다. 서버 설정·빌드가 필요 없다.
 - 올릴 때 빼도 되는 것: `tests/`, `tools/`, `design/`, `credits/`(내용은 `CREDITS.md`와 게임 안 출처 화면에 있음). 꼭 함께 올릴 것: `index.html`, `manifest.webmanifest`, `css/`, `js/`, `assets/`(특히 `assets/fonts/OFL.txt`), `CREDITS.md`.
 - 정적 서버가 `.webp`·`.woff2`·`.mp3`·`.webmanifest`를 올바른 형식으로 보내는지 확인한다(이미지·글꼴이 안 보이면 MIME 설정부터 본다).
