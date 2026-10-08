@@ -45,13 +45,13 @@
     st.done[k] = true;
     delete st.snap[k];
   };
-  // 결말 이름과 한 줄(거점 파일 namwon_final의 endings가 먼저)
+  // 결말 이름과 한 줄(js/data/notes.js의 NOTES.endings)
   E.endingInfo = function (id) {
-    const P = (window.PLACES || {}).namwon_final;
-    const pe = (P && P.endings && P.endings[id]) || {};
     const ne = (N().endings || {})[id] || {};
-    return { id, name: T(pe.name || pe.title || ne.name || id || ''), line: T(pe.line || pe.summary || ne.line || '') };
+    return { id, name: T(ne.name || id || ''), line: T(ne.line || '') };
   };
+  // 결과 화면·저장 그림 바닥 줄: 게임 이름 · 만든이(NOTES.credits.maker 하나를 함께 쓴다)
+  const footLine = () => [(N().result || {}).foot, (N().credits || {}).maker].filter(Boolean).join(' · ');
   function gaugeMini(st) {
     return h('div.oe-gauges', ['yeon', 'saeng'].map((k) => {
       const v = G.util.clamp(Number(st[k]) || 0, 0, 10);
@@ -77,7 +77,7 @@
     save();
     const A = N().act1End || {};
     if (ctx.el) ctx.el.classList.add('cardmode', 'endcard', 'a1mode');
-    scene(ctx, o.scene || 'sc_act1_end', { sc_act1_end: { caption: '새벽 안남 포구, 나란히 선 두 척의 배' } });
+    scene(ctx, o.scene || 'sc_act1_end', { sc_act1_end: { caption: A.caption || '' } });
     ctx.main.innerHTML = '';
     const pretty = G.code.pretty(code);
     ctx.main.appendChild(h('div.act1end', { 'data-code': code },
@@ -191,19 +191,20 @@
     const O = OR();
     const deep = st.mode === 'deep';
     const me = E.endingInfo(st.ending);
+    const NR = N().result || {};
     scene(ctx, O.scene, O.scenes);
     if (ctx.el) ctx.el.classList.add('cardmode', 'rcardmode', 'endcard', 'oemode');
     ctx.main.innerHTML = '';
     ctx.main.appendChild(h('div.orig-end',
-      h('div.oe-head', h('span.pc-act', O.kicker || ''), h('h2', '나의 결말과 원작의 결말')),
+      h('div.oe-head', h('span.pc-act', O.kicker || ''), h('h2', NR.pairTitle || '')),
       h('div.oe-pair',
         h('div.card.rcard.note.oe-mine',
-          h('span.kind', '나의 결말'),
+          h('span.kind', NR.ending || ''),
           h('h3.oe-name', me.name),
           me.line ? h('p', boldNodes(me.line)) : null,
-          h('p.oe-k', '남원에 닿았을 때'),
+          h('p.oe-k', NR.pairAt || ''),
           gaugeMini(st),
-          h('p.oe-foot', chip('게임 설정'), '재회는 어느 길에서나 일어나요. 두 게이지가 그 빛깔만 바꿔요.')),
+          h('p.oe-foot', chip('게임 설정'), NR.pairFoot || '')),
         h('div.card.rcard.orig.oe-orig',
           h('span.seal-mark.corner', '原作'),
           h('span.kind', O.title || '원작의 결말'),
@@ -409,7 +410,8 @@
     pen.text(L + pw, Y(high) - 8, '결말 기준 ' + high, { size: 10, color: COLORS.warn, align: 'right' });
     // 거점 이름
     D.labels.forEach((t, i) => pen.text(X(i), CH - B + 20, t, { size: 12, color: COLORS.ink2, align: 'center' }));
-    // 원작 궤적(보라, 원작에 없는 장면 구간은 점선)
+    // 원작 궤적(보라). 원작에 없는 장면만 지나 원작 값이 그대로 이어지는 구간은 점선
+    //  (원작에 가까운 쪽으로 따라가 값이 바뀌는 구간 — 뱃길 고르기 → 바다길 — 은 실선)
     const o = D.orig[key], m = D.mine[key];
     for (let i = 1; i < n; i++) {
       if (o[i - 1] == null || o[i] == null) continue;
@@ -492,9 +494,9 @@
     const nameIn = h('input.rs-name-in', { type: 'text', value: st.name || '', maxlength: 30, placeholder: NR.namePlaceholder || '', 'aria-label': NR.nameLabel || '이름' });
     nameIn.addEventListener('input', () => { st.name = nameIn.value; save(); });
     const legend = h('div.rs-legend',
-      h('span.lg.mine', h('i.lg-line'), h('i.lg-dot'), '나의 궤적'),
-      h('span.lg.orig', h('i.lg-line'), h('i.lg-dia'), '원작 옥영의 궤적', chip('해석')),
-      h('span.lg.dash', h('i.lg-line'), '원작에 없는 장면을 지나는 구간'));
+      h('span.lg.mine', h('i.lg-line'), h('i.lg-dot'), NR.legendMine || ''),
+      h('span.lg.orig', h('i.lg-line'), h('i.lg-dia'), NR.legendOrig || '', chip('해석')),
+      h('span.lg.dash', h('i.lg-line'), NR.legendDash || ''));
     const charts = h('div.rs-charts', { html: E.chartSVG(D.graph, 'yeon') + E.chartSVG(D.graph, 'saeng') });
     const table = h('table.rs-table',
       h('thead', h('tr', h('th', '장면'), h('th', '내 선택'), h('th', '원작의 옥영'))),
@@ -526,7 +528,7 @@
         sec(6, 'save', '',
           h('div.rs-save', saveBtn,
             h('div.rs-cap', h('p', NR.capture || ''), h('ul.rs-keys', (NR.shortcuts || []).map(([d, k]) => h('li', h('span', d), h('kbd', k)))))))),
-      h('footer.rs-foot', '두 개의 항로 — 조위한 「최척전」 학습 게임 · 만든이 박준일'));
+      h('footer.rs-foot', footLine()));
     const debrief = h('section.rs-debrief.card.interp',
       h('span.kind', h('span', NR.debriefTitle || '생각 나누기'), ' ', chip('해석')),
       h('p.small.muted', NR.debriefLead || ''),
@@ -593,12 +595,12 @@
     let lx = 560;
     const lgY = y - 9;
     g.strokeStyle = COLORS.ink; g.lineWidth = 4; g.beginPath(); g.moveTo(lx, lgY); g.lineTo(lx + 40, lgY); g.stroke(); pen.circle(lx + 20, lgY, 6, { fill: COLORS.ink2, stroke: '#fbf6ea', width: 2 });
-    txt(lx + 52, y, '나의 궤적', 20, COLORS.ink2); lx += 170;
+    txt(lx + 52, y, NR.legendMine || '', 20, COLORS.ink2); lx += 170;
     g.strokeStyle = COLORS.orig; g.lineWidth = 2.5; g.beginPath(); g.moveTo(lx, lgY); g.lineTo(lx + 40, lgY); g.stroke(); pen.diamond(lx + 20, lgY, 6, { fill: '#fbf6ea', stroke: COLORS.orig, width: 2 });
-    txt(lx + 52, y, '원작 옥영의 궤적', 20, COLORS.ink2);
+    txt(lx + 52, y, NR.legendOrig || '', 20, COLORS.ink2);
     pen.rect(lx + 212, lgY - 13, 48, 26, { fill: COLORS.orig, rx: 5 }); txt(lx + 236, y - 1, '해석', 16, '#fff8ec', 700, 'center'); lx += 290;
     g.strokeStyle = COLORS.orig; g.lineWidth = 2.5; g.setLineDash([7, 6]); g.beginPath(); g.moveTo(lx, lgY); g.lineTo(lx + 40, lgY); g.stroke(); g.setLineDash([]);
-    txt(lx + 52, y, '원작에 없는 장면 구간', 20, COLORS.ink2);
+    txt(lx + 52, y, NR.legendDash || '', 20, COLORS.ink2);
     const sc = (W - PAD * 2 - 40) / 2 / CW;
     ['yeon', 'saeng'].forEach((k, i) => {
       g.save(); g.translate(PAD + i * (CW * sc + 40), y + 25); g.scale(sc, sc);
@@ -666,7 +668,7 @@
       y += rowH;
     });
     // 바닥
-    txt(PAD, H - 66, '두 개의 항로 — 조위한 「최척전」 학습 게임 · 만든이 박준일(온양여자고등학교 국어 교사)', 18, COLORS.ink3);
+    txt(PAD, H - 66, footLine(), 18, COLORS.ink3);
     txt(W - PAD, H - 66, D.date, 18, COLORS.ink3, 400, 'right');
     // 붉은 낙관
     g.font = `400 92px ${brush}`;

@@ -199,7 +199,7 @@ window.PLACES = window.PLACES || {};
         options: [
           {
             id: 'ask', type: 'yeon', label: '직접 조선말로 묻는다', desc: '식구들 소식을 들을지 모른다. 대신 정체가 드러날 위험이 있다.',
-            fx: { frag: { 3: '會須共御靑鸞去' } },
+            fx: { frag: 3 },
             reply: [
               { who: 'captive', t: '남원 사람이오? 연곡 골짜기에서 끌려온 사람이 여럿 있소. 다 죽은 건 아니라더이다.' },
               { who: 'captive', t: '…그런데 당신, 목소리가 좀 이상하구려. 정말 사내 맞소?' },
@@ -214,7 +214,7 @@ window.PLACES = window.PLACES || {};
           {
             id: 'wisdom', type: 'wisdom', label: '돈우를 통해 에둘러 묻는다', desc: '살생을 꺼리는 돈우라면, 포로들의 사정을 대신 물어 줄지도 모른다.',
             need: 'h-nanggoya-donwoo', lockHint: '돈우가 무엇을 믿고 어떻게 사는 사람인지 알면 열려요',
-            fx: { frag: { 3: '會須共御靑鸞去' } },
+            fx: { frag: 3 },
             reply: [
               '옥영은 돈우에게 말했다. "저 짐꾼들이 어디서 왔는지, 다친 데는 없는지 마음이 쓰입니다."',
               { who: 'donwoo', t: '(고개를 끄덕이며) 산 목숨은 다 귀한 법이지. 내가 물어봐 주마.' },

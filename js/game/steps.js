@@ -101,14 +101,14 @@
   };
 
   // ───────── 상태 바꾸기 ─────────
-  //  fx: { set:{…}(최상위 값), flags:{…}, gauge:{ yeon:+1, saeng:-2 }, token:{id,name}|[…], frag:{ 1:'시구' } }
+  //  fx: { set:{…}(최상위 값), flags:{…}, gauge:{ yeon:+1, saeng:-2 }, token:{id,name}|[…], frag:2|[2,3](시구 조각 행 번호) }
   //  다른 파일이 효과를 더할 수 있다: G.steps.effects.이름 = (값, ctx, state) => {}
   steps.effects = {
     set: (v, ctx, st) => Object.assign(st, v),
     flags: (v, ctx, st) => Object.assign(st.flags, v),
     gauge: (v) => G.hud.change(v),
     token: (v) => { for (const t of [].concat(v)) G.hud.addToken(t); },
-    frag: (v) => { for (const n in v) G.hud.setFrag(n, v[n]); },
+    frag: (v) => { for (const n of G.rules.fragRows(v)) G.hud.setFrag(n, true); },
   };
   steps.apply = function (fx, ctx) {
     if (!fx) return;
@@ -368,7 +368,7 @@
   });
 
   // ───────── frag: 시구 조각 얻기 ─────────
-  //  { id, type:'frag', n:1~4, text:'시구', lines?:[줄…] }
+  //  { id, type:'frag', n:1~4, lines?:[줄…] } — 조각의 글(원문·풀이)은 정답 시(js/data/poem.js의 POEM.lines)의 n행
   steps.register('frag', async function (step, ctx) {
     if (step.scene && ctx.setScene) ctx.setScene(step.scene);
     G.rules.applyStep(step, { place: placeOf(ctx), key: keyOf(ctx, step) });

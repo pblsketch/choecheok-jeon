@@ -3,12 +3,12 @@
 ## 맡는 것
 - `flow.js`: 제목·두 방식 이름·거점 차례(`FLOW.order`)·막 미션, 고지도 위 거점·뱃길·나라 이름 자리(`OLDMAP`, 그림에 대한 0~1 비율).
 - `places/*.js`: 거점 여덟(`PLACES[id]`) — 맵 격자·소품·자리·사람·목표(beats)·단계(steps)·삽화 설명(scenes). 차례: `prologue`, `namwon`, `nanggoya`, `annam`, `interlude`, `hangzhou`, `sea`, `namwon_final`.
-- `texts.js`: 규칙 숫자 `TEXTS.RULES`(선택지 폭, 쓰러진 뒤 생, 막간 생, 결말 기준, 더듬기 값, 보이는 횟수 끝, 1막·2막 거점, 거점 기록 자리, 준비·뱃길 딜레마 id)와 공통 글(장육불 꿈·떠올리는 글·안남 예외·잠김 실마리·대조 카드 틀·글자 오류 문구·표기 색).
+- `texts.js`: 규칙 숫자 `TEXTS.RULES`(선택지 폭, 쓰러진 뒤 생, 막간 생, 결말 기준, 더듬기 값, 보이는 횟수 끝, 1막·2막 거점, 거점 기록 자리, 준비·뱃길 딜레마 id)와 공통 글(얻은 것 알림 `GOT`·장육불 꿈·떠올리는 글·안남 예외·잠김 실마리·대조 카드 틀·글자 오류 문구·표기 색).
 - `poem.js`(정답 시·함정 A·B·C·더듬기 후보·패 함정 수·알아듣는 소리·또렷함), `history.js`(역사 카드 7장, `review`는 교사 검수 거리), `original.js`(원작 결말), `kimyc.js`(「김영철전」 대목·활동·깊이 읽기 물음), `notes.js`(표기 다섯 가지, 결말 이름, 결과 화면 비교표 문안, 1차시 끝·글자 넣기 글, 디브리핑, 게임 설정 카드, 수첩·선생님 안내), `people.js`(인물 이름·초상·도트·색), `bgm.js`(장면별 배경음, 퉁소 파일 자리), `credits.js`(게임 안 출처 화면).
 - 생성 파일: `sprites.js` 전체(`tools/process_sprites.py`), `people.js`의 `// ART:BEGIN`~`// ART:END`(`tools/process_assets.py`), `bgm.js`의 `tongso:` 한 줄(`tools/make_tongso.py`). 손으로 고치지 않는다.
 
 ## 맡지 않는 것
-- 규칙의 동작(게이지 계산, 쓰러짐 처리, 한 번만 반영, 글자 부호화)은 `js/game/`에 있다. 여기서는 숫자와 글만 바꾼다. 예외: `places/prologue.js` 머리가 1막 공용 확장(대사 줄 `learnStep`, 효과 `tongsoSound`)을 엔진에 등록하고, `places/annam.js`·`namwon_final.js`·`sea.js`가 `when`에 작은 함수(`heard`, `endIs`, `hasToken`)를 쓴다.
+- 규칙의 동작(게이지 계산, 쓰러짐 처리, 한 번만 반영, 글자 부호화)은 `js/game/`에 있다. 여기서는 숫자와 글만 바꾼다. 예외: `places/prologue.js` 머리가 1막 공용 확장(대사 줄 `learnStep`, 효과 `tongsoSound`)을 엔진에 등록하고, `when`에 작은 함수를 쓰는 곳이 있다: `places/annam.js`(`heard`·`hearAt`), `places/namwon_final.js`(`endIs`·`endNot`·`hasToken`), `places/sea.js`(섬 목표의 선택 조건).
 - 그림·소리 파일과 그 크레딧(`assets/`, `credits/*.tsv`)은 도구와 크레딧 표의 일이다. 그림 id를 여기 적어도 파일과 그림 목록이 없으면 빈 종이 판으로 보인다.
 
 ## 지켜야 할 것
@@ -23,13 +23,15 @@
   - 갈림에 따라 달라지는 단계는 단계 자체에 `when`을 단다(목표의 `when`은 되살릴 때 보이지 않는다).
 - **id는 바꾸지 않는다**(거점·목표·단계·딜레마·선택지·지식·인물·장면). 진행 중인 저장 열쇠(`s:거점:단계`, `b:거점:목표`), 이어 하기 글자, 그림 목록, 점검용 자료(`tests/fixtures/places.js`)가 id로 묶여 있다. 새 것은 새 id로 더한다.
 - **숫자 원칙**: 지혜의 길 폭(+1/+1)은 다른 두 길(±2)보다 작게. 원작대로(떠남·준비) 걸으면 뱃길 앞 생이 바다길 문턱(`sea.js`의 `TUNE.seaMin`) 이상: 5(막간) − 2 + 1 + 2(항주 `h-boat`) = 6.
-- 장면 id는 `sc_<거점>_<무엇>`, 초상은 `pt_<인물 id>`, 도트는 `sp_…`, 소품은 `pr_…`. 거점 `scenes`에 `caption`(그림 설명)과 `prompt_hint`(영어, 그림 안에 글자 없음)를 적어야 그림 도구가 프롬프트를 만든다.
+- 장면 id는 `sc_<거점>_<무엇>`(그 밖에 1차시 끝 `sc_act1_end`, 결말 넷 `sc_ending_<결말>`, 항주 소식 카드 `sc_letter_<무엇>`, 원작 결말 `sc_orig_ending`, 「김영철전」 `sc_kimyc_<무엇>`, 순천 상륙 `sc_suncheon_landing`), 초상은 `pt_<인물 id>`, 도트는 `sp_…`, 소품은 `pr_…`. 거점 `scenes`에 `caption`(그림 설명)과 `prompt_hint`(영어, 그림 안에 글자 없음)를 적어야 그림 도구가 프롬프트를 만든다.
 - 붓글씨로 보일 이름은 `name: '…'` 꼴로 적는다(글꼴 도구가 그 꼴만 찾는다).
 
 ## 이 폴더의 방식
 - 파일마다 전역 하나를 채운다(`window.PLACES.namwon = {…}`, `window.TEXTS.RULES = {…}`). 거점 파일은 `G.world.mk`가 없으면(엔진 없이 실릴 때) 조용히 빠진다.
 - 대사 줄: `'서술'`, `{ who, t }`, `{ card:{ kind, title, han, ko, body, src } }`, `{ wonmun:{ 원문, 풀이 } }`, `{ when, … }`, `{ fx }`, `{ learnStep }`. 깊이 읽기 전용은 `when: { mode: 'deep' }`, 처음 배우기 전용은 `{ mode: 'basic' }`.
-- 딜레마 대조 카드: `card: { title, summary, quote:{원문,풀이}, quoteLong?(깊이 읽기), extraGloss?(처음 배우기), variant?(이본 노트), interp?(해석), src }`.
+- 딜레마 대조 카드: `card: { title, summary, quote:{원문,풀이}, quoteLong(깊이 읽기), extraGloss(처음 배우기), variant?(이본 노트), interp?(해석), src }`. 딜레마마다 `extraGloss`와 `quoteLong`이 있어야 한다(`tests/content.mjs`). 원문이 없는 창작 딜레마만 `quoteLong` 대신 `noQuoteLong: '까닭'`을 적고 더 긴 해석은 `interp`로 둔다. 원문은 `design/research/01_원문_사실확인.md`에서만 가져오고 지어내지 않는다.
+- 시구 조각은 행 번호로만 적는다: `frag` 단계는 `n`, 선택지는 `fx: { frag: 2 }`. 글(원문·풀이)은 `poem.js`의 `lines`에서 엔진이 꺼내 알림·수첩·시구 맞추기에 함께 보인다. 조각 글을 따로 적지 않는다.
+- 이야기 중 원작 장면 카드를 수첩에 모으려면 `type:'card'` 단계로 둔다(`card.id`, `kind:'orig'`). 지식을 주지 않는 카드 단계는 1막 거점에 더해도 이어 하기 글자 되풀이에서 늘 실행되어 어긋나지 않는다(단계 배열 차례만 지킨다).
 - 확정 못 한 사실은 가장 그럴듯한 쪽을 쓰고 역사 카드면 `review`에, 그 밖은 README 교사 검수 목록과 `design/research/01_원문_사실확인.md` §9에 '⚠ 검수 필요'로 올린다.
 
 ## 고친 뒤

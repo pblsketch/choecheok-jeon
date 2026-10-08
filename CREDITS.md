@@ -13,7 +13,7 @@
 | 도트 인물·소품 | `assets/sprites/` 54개 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 장면 삽화 | `assets/sc/` 54장 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 대화 초상 | `assets/pt/` 20장 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
-| 화면 그림 | `assets/ui/` 4장 | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
+| 화면 그림 | `assets/ui/` 7장(그림 4장 + 타이틀 그림에서 잘라 만든 앱 아이콘 2장·링크 미리 보기 1장) | Codex CLI 이미지 생성(자체 생성) | 자체 생성물 |
 | 배경음 | `assets/bgm/` 9곡 | 국립국악원 「디지털 이음」 악구 | 공공누리 제1유형(출처표시) |
 | 퉁소 | (아직 파일 없음, 합성음) | 아래 '소리' 참고 | — |
 | 효과음 | 파일 없음 | 브라우저 합성 | 자체 제작 |
@@ -50,6 +50,8 @@
 | `assets/ui/oldmap.webp` 고지도 | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/ui_oldmap.txt` | 자체 생성물(상업 이용 가능) | webp(품질 80)로 바꿈. 지명·뱃길은 그림에 없고 화면 글자로 얹음. 2026-10-07 조선 반도를 크게, 지리를 더 정확히 다시 생성 |
 | `assets/ui/hud_okyoung.webp` 옥영 초상(HUD) | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/ui_portrait.txt` | 자체 생성물(상업 이용 가능) | 얼굴 둘레만 잘라 256px webp로 바꿈 |
 | `assets/ui/paper.webp` 한지 무늬 | Codex CLI 이미지 생성(자체 생성). 프롬프트 `tools/prompts/ui_paper.txt` | 자체 생성물(상업 이용 가능) | 512px로 줄이고 반 칸 밀어 겹쳐 이음새를 없앤 뒤 webp로 바꿈 |
+| `assets/ui/icon-192.png`·`icon-512.png` 앱 아이콘 | 타이틀 그림 `assets/ui/title.webp`(자체 생성물)에서 잘라 만듦 | 자체 생성물(상업 이용 가능) | 옥영의 얼굴과 등불 둘레를 정사각형으로 잘라 192px·512px PNG로(Pillow). 글자 없음 |
+| `assets/ui/og-thumb.jpg` 링크 미리 보기 | 타이틀 그림 `assets/ui/title.webp`(자체 생성물)에서 잘라 만듦 | 자체 생성물(상업 이용 가능) | 위아래를 조금 잘라 1200×630 JPG로(Pillow). 글자 없음 |
 
 ## 소리 (`credits/audio.tsv`)
 

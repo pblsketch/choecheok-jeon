@@ -26,7 +26,7 @@ tests/ ──(serve.mjs로 서빙 또는 file://)──▶ index.html을 크롬�
 | `assets/` | 도트 인물·소품(`sprites`), 장면 삽화(`sc`), 대화 초상(`pt`), 화면 그림(`ui`), 배경음(`bgm`), 퉁소 파일 자리(`sfx`), 부분 글꼴(`fonts`) | — |
 | `credits/*.tsv` | 소재 파일마다 출처·이용 조건·고친 내용 | 사람이 적거나 도구가 줄을 더함 |
 | `tools/` | 프롬프트 생성 → Codex CLI 이미지 생성 → 줄이기·자르기·등록, 배경음·퉁소 만들기, 부분 글꼴 만들기 | Python 3, PowerShell, Codex CLI, ffmpeg, Node(프롬프트용 장면 목록 읽기) |
-| `tests/` | 내용 점검·규칙 점검(브라우저 없이), 화면·완주 점검(Playwright + 설치된 크롬) | Node, playwright, `../영웅소설/assets`(소재 해시 대조) |
+| `tests/` | 내용 점검·규칙 점검(브라우저 없이), 화면·완주 점검(Playwright + 설치된 크롬) | Node 20 이상, playwright, `../영웅소설/assets`(있으면 소재 해시 대조) |
 
 - 모듈 사이에는 import가 없다. 모두 전역 `window.G`와 데이터 전역을 쓰고, **스크립트 차례가 곧 의존 차례**다: `core`(util → save → audio → ui → hud → oldmap) → `game`(steps → rules → code → tiles → world → app → poem → sea → notebook → result) → `data` → `places`(prologue가 먼저) → `main.js`.
 - 확장은 등록으로 한다. 단계 종류 `G.steps.register(type, fn)`, 조건 `G.steps.conds`, 효과 `G.steps.effects`, 줄 종류 `G.steps.lineKinds`, 저장 칸 `G.save.extend`, 화면 걸이 `G.app.hooks.{notebook,codeEntry,credits,finish}`, 주소 바로가기 `G.boot.routes`. 등록되지 않은 단계 종류·비어 있는 거점·없는 걸이는 오류 없이 '준비 중'으로 보인다.

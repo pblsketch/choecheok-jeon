@@ -167,7 +167,7 @@ window.PLACES = window.PLACES || {};
         },
       },
       {
-        id: 'n-frag1', type: 'frag', n: 1, text: '王子吹簫月欲低', fx: { flags: { tongsoMemory: true } },
+        id: 'n-frag1', type: 'frag', n: 1, fx: { flags: { tongsoMemory: true } },
         lines: ['퉁소 가락과 함께, 시의 첫 구절이 마음 깊이 새겨졌다. 이 가락만은 어디서 들어도 알아들을 것 같았다.'],
       },
       {
@@ -272,7 +272,7 @@ window.PLACES = window.PLACES || {};
         options: [
           {
             id: 'sinpyo', type: 'yeon', label: '신표를 챙긴다', desc: '최척과 나눈 가락지 한 짝. 다시 만날 날의 표지다.',
-            fx: { frag: { 2: '碧天如海露凄凄' }, token: { id: 'sinpyo', name: '신표 — 가락지 한 짝', desc: '혼인날 받은 쌍가락지 가운데 한 짝. 다른 한 짝은 최척이 지니고 있다.' } },
+            fx: { frag: 2, token: { id: 'sinpyo', name: '신표 — 가락지 한 짝', desc: '혼인날 받은 쌍가락지 가운데 한 짝. 다른 한 짝은 최척이 지니고 있다.' } },
             reply: ['가락지를 움켜쥐자, 그 봄밤 시의 둘째 구절이 또렷이 떠올랐다. "바다 같은 푸른 하늘, 이슬은 차갑게 내리네."', '대신 보리 자루는 움막에 두고 나왔다. 빈속으로 긴 밤을 걸어야 한다.'],
           },
           {

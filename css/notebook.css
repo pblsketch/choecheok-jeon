@@ -59,8 +59,8 @@
 .nb-pane .pocket-view { margin-top: 0; }
 .nb-pane .pv-h { font-weight: 700; font-size: .88em; color: var(--ink-2); display: flex; align-items: center; gap: .45em; }
 .nb-pane .pv-h::before { content: ''; width: .38rem; height: .38rem; background: var(--lantern); transform: rotate(45deg); }
-.nb-pane .frags { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.nb-pane .frag { min-height: 2.6rem; font-size: .95em; letter-spacing: .06em; }
+.nb-pane .frags { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nb-pane .frag { min-height: 2.6rem; font-size: .95em; }
 .nb-tally { display: flex; gap: .6rem; flex-wrap: wrap; margin: .75rem 0 .2rem; }
 .nb-stat { flex: 1 1 9rem; padding: .45rem .9rem .5rem; border-radius: .85rem; background: var(--plaque); color: var(--hanji); border: 1.5px solid var(--plaque-line); display: flex; flex-direction: column; box-shadow: 0 3px 0 rgba(8, 10, 26, .45); }
 .nb-stat b { font-size: 1.3rem; color: var(--lantern-hi); line-height: 1.3; }

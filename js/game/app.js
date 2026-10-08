@@ -127,7 +127,7 @@
         h('div.hint', h('span.ic', { html: ICON.ear }), F.hint || ''),
         h('div.credits-line',
           st.teacher ? h('div.credit.teacher', '선생님용이 켜져 있어요') : null,
-          h('div.credit.maker', '만든이 박준일(온양여자고등학교 국어 교사)'))),
+          h('div.credit.maker', ((window.NOTES || {}).credits || {}).maker || ''))),
       h('div.title-tools', musicToggle(), iconBtn('gear', '설정', () => app.settings()))));
   };
   // 타이틀 그림(현대 그림책풍: 밤바다 뱃머리의 옥영). 다른 그림으로 바꾸려면 이 값을 고친다

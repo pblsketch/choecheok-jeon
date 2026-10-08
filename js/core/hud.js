@@ -94,19 +94,42 @@
     const st = S();
     tokEl.innerHTML = '';
     const toks = st.tokens || [];
-    if (!toks.length) tokEl.appendChild(h('span.empty', '아직 챙긴 신표가 없어요'));
+    if (!toks.length) tokEl.appendChild(h('span.empty', got('token').empty || ''));
     for (const t of toks) tokEl.appendChild(h('span.token', { title: (t && t.desc) || '' }, h('i', { html: ICON.token, 'aria-hidden': 'true' }), (t && (t.name || t.id)) || String(t)));
     fragEl.innerHTML = '';
     for (let n = 1; n <= hud.FRAG_SLOTS; n++) {
       const f = (st.frags || {})[n];
-      fragEl.appendChild(h('span.frag' + (f ? '.got' : ''), { title: f ? String(f) : n + '번째 조각 — 아직 없음' }, f ? String(f) : h('span.fn', String(n))));
+      if (!f) { fragEl.appendChild(h('span.frag', { title: fillN(got('frag').empty, n) }, h('span.fn', String(n)))); continue; }
+      const l = hud.fragLine(n, f);
+      fragEl.appendChild(h('span.frag.got', { title: l.원문 + (l.풀이 ? ' — ' + l.풀이 : '') }, h('span.fh', l.원문), l.풀이 ? h('span.fk', l.풀이) : null));
     }
   }
+  // 얻은 것 알림 글(js/data/texts.js의 TEXTS.GOT)
+  const got = (kind) => (((window.TEXTS || {}).GOT) || {})[kind] || {};
+  const fillN = (tpl, n) => String(tpl || '').replace('{n}', String(n)).replace('{all}', String(hud.FRAG_SLOTS));
+  hud.gotText = got;
+  // 시구 조각 n행의 글: 정답 시(js/data/poem.js의 POEM.lines)의 원문과 풀이. 저장 칸에는 행 번호만 둔다
+  //  (예전 저장에 글이 들어 있어도 행 번호로 다시 찾는다. 시 자료가 없을 때만 저장된 글을 그대로 쓴다)
+  hud.fragLine = function (n, stored) {
+    const l = (((window.POEM || {}).lines) || [])[Number(n) - 1];
+    if (l && l.원문) return { n: Number(n), 원문: l.원문, 풀이: l.풀이 || '' };
+    return { n: Number(n), 원문: typeof stored === 'string' ? stored : String(n), 풀이: '' };
+  };
+  // 크게 알리기: 신표 · 시구 조각(원문과 풀이를 함께)
+  hud.announceToken = function (t) {
+    const g = got('token');
+    hud.announce({ kind: 'token', label: g.label || '', name: (t && (t.name || t.id)) || String(t), desc: (t && t.desc) || g.desc || '' });
+  };
+  hud.announceFrag = function (n, stored) {
+    const g = got('frag');
+    const l = hud.fragLine(n, stored);
+    hud.announce({ kind: 'frag', label: fillN(g.label, l.n), name: l.원문, desc: [l.풀이, g.desc].filter(Boolean).join('\n') });
+  };
   // 이야기 수첩 등에서 쓸 '챙긴 신표·얻은 시구 조각' 묶음(새로 만든 요소)
   hud.pocketView = function () {
     const t = h('div.tokens'), f = h('div.frags');
     fillPocket(t, f);
-    return h('div.pocket-view', h('div.pv-h', '챙긴 신표'), t, h('div.pv-h', '얻은 시구 조각'), f);
+    return h('div.pocket-view', h('div.pv-h', got('token').head || ''), t, h('div.pv-h', got('frag').head || ''), f);
   };
 
   // 게이지 바꾸기: 값을 고치고 저장한 뒤 막대가 출렁이게 한다. 바뀐 만큼을 돌려준다
@@ -173,21 +196,21 @@
     const had = st.tokens.some((x) => (x.id || x) === tok.id);
     if (!had) st.tokens.push(tok);
     G.save.write(); hud.refresh();
-    if (!had) hud.announce({ kind: 'token', label: '신표를 챙겼다', name: tok.name || tok.id, desc: tok.desc || '이야기 수첩에 넣어 두었어요.' });
+    if (!had) hud.announceToken(tok);
   };
   hud.removeToken = function (id) {
     const st = S();
     st.tokens = (st.tokens || []).filter((x) => (x.id || x) !== id);
     G.save.write(); hud.refresh();
   };
-  // 시구 조각 칸 n(1~4)에 글 넣기(null이면 비우기)
-  hud.setFrag = function (n, text) {
+  // 시구 조각 칸 n(1~4) 채우기(on이 null·false면 비우기). 저장 칸에는 행 번호를 둔다: frags = { 1:1, 2:2 }
+  hud.setFrag = function (n, on) {
     const st = S();
     st.frags = st.frags || {};
-    const before = st.frags[n];
-    if (text == null) delete st.frags[n]; else st.frags[n] = text;
+    const had = !!st.frags[n];
+    if (on == null || on === false) delete st.frags[n]; else st.frags[n] = Number(n);
     G.save.write(); hud.refresh();
-    if (text != null && before !== text) hud.announce({ kind: 'frag', label: '시구 조각 ' + n + ' / ' + hud.FRAG_SLOTS, name: String(text), desc: '이야기 수첩에 적어 두었어요.' });
+    if (!had && st.frags[n]) hud.announceFrag(n);
   };
 
   // 지금 할 일(목표)·맵 이름·거점 이름
